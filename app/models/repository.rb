@@ -31,7 +31,7 @@ class Repository < ApplicationRecord
 
   def find_default_branch
     if branches.loaded?
-      branches.first { |b| b.name == default_branch }
+      branches.find { |b| b.name == default_branch }
     else
       branches.where(name: default_branch).first
     end

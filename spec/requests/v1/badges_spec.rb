@@ -88,5 +88,17 @@ RSpec.describe "V1::Issues" do
       expect(response).to have_http_status(:ok)
       expect(response.body).to eq "0"
     end
+
+    it "correctly handles preloaded branches (issue #1)" do
+      repo = create(:repository)
+      create(:branch, name: "foo", repository: repo, issues: nil)
+      create(:branch, name: "master", repository: repo, issues: 10)
+
+      get "/v1/repositories/#{repo.name}/badges/issues",
+        headers: authenticated(as: :service)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to eq "10"
+    end
   end
 end
