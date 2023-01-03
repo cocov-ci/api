@@ -1,0 +1,6 @@
+#!/bin/bash
+docker compose run --rm -it \
+    -p 4000:3000 \
+    -e "COCOV_ENTRYPOINT_AUTOMIGRATE=true" \
+    api \
+    rails s -b 0.0.0.0

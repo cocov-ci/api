@@ -1,0 +1,90 @@
+FROM ruby:3.1.2
+LABEL maintainer="Victor Gama <hey@vito.io>"
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+ENV APP_HOME /app
+ENV BUNDLE_JOBS=2
+
+WORKDIR /tmp
+RUN apt update && apt install brotli
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o awscliv2.zip && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf awscliv2.zip aws
+
+WORKDIR /app
+
+RUN bundle config set --global deployment true
+RUN bundle config set --global without development test
+
+ENV GEM_HOME="/usr/local/bundle"
+ENV PATH $GEM_HOME/bin:$GEM_HOME/gems/bin:$PATH
+
+COPY .ruby-version .
+COPY Gemfile* .
+RUN bundle install
+
+COPY app ./app
+COPY bin ./bin
+COPY config ./config
+COPY db ./db
+COPY lib ./lib
+RUN mkdir log
+COPY public ./public
+RUN mkdir tmp
+COPY vendor ./vendor
+COPY config.ru .
+COPY LICENSE .
+COPY Rakefile .
+
+# Garbage Collection Tunning
+
+# Internally, the VM keeps track of malloc_increase, which is the number of
+# bytes that have been allocated but not yet freed. This is effectively the
+# memory growth of the process.
+# This parameter hold the minimum value for GC.stat[:malloc_limit]. If
+# malloc_increase exceeds the malloc_limit a minor GC is triggered.
+#
+# 128000000 = 128MB
+#
+ENV RUBY_GC_MALLOC_LIMIT            128000000
+
+# The old generation memory growth is tracked separately by the VM in
+# oldmalloc_increase.
+#
+# This parameter hold the minimum value for GC.stat[:oldmalloc_limit]. If
+# oldmalloc_increase exceeds the oldmalloc_limit a major GC is triggered.
+#
+# 128000000 = 128MB
+#
+ENV RUBY_GC_OLDMALLOC_LIMIT         128000000
+
+# When the heap needs to be expanded, allocate slots by this factor:
+# (next slots number) = (current slots number) * (this factor)
+#
+ENV RUBY_GC_HEAP_GROWTH_FACTOR      1.25
+
+# Set the maximum number of slots that Ruby is allowed to add to the heap at
+# once. When disabled, Ruby uses the heap growth factor to determine by how much
+# to grow the heap.
+#
+ENV RUBY_GC_HEAP_GROWTH_MAX_SLOTS   300000
+
+# Initial number of slots allocated on Ruby's heap.
+# Increasing this value from its default can reduce GC activity during
+# application boot.
+#
+ENV RUBY_GC_HEAP_INIT_SLOTS         600000
+
+# After a GC execution, the minimum number of free slots that should be
+# available.
+#
+ENV RUBY_GC_HEAP_FREE_SLOTS         600000
+
+ENV RAILS_ENV=production
+ENV PIDFILE=/dev/null
+ENV RAILS_LOG_TO_STDOUT=true
+
+CMD ["rails", "s", "--binding=0.0.0.0", "--pid=/dev/null"]

@@ -1,0 +1,111 @@
+require:
+  - rubocop-performance
+  - rubocop-rails
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.1
+  NewCops: enable
+  Exclude:
+    - spec/fixtures/exec_helper
+    - spec/support/helpers.rb
+    - db/schema.rb
+    - vendor/**/*
+
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  Enabled: true
+  EnforcedStyle: double_quotes
+
+Layout/LineLength:
+  Max: 120
+
+Metrics/BlockLength:
+  Exclude:
+    - db/**/**.rb
+    - spec/**/**.rb
+    - config/routes.rb
+    - lib/tasks/auto_annotate_models.rake
+    - app/**/concerns/*.rb
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Style/Documentation:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Style/HashSyntax:
+  Exclude:
+    - app/views/**/*.jbuilder
+
+Layout/ArgumentAlignment:
+  EnforcedStyle: with_fixed_indentation
+
+Style/NumericLiterals:
+  Exclude:
+    - db/schema.rb
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Naming/MethodParameterName:
+  AllowedNames:
+    - as
+    - at
+    - by
+    - cc
+    - db
+    - id
+    - if
+    - in
+    - io
+    - ip
+    - of
+    - 'on'
+    - os
+    - pp
+    - to
+    - b
+    - ex
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+Metrics/AbcSize:
+  Enabled: false
+
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/VerifiedDoubles:
+  Enabled: false
+
+RSpec/ExpectInHook:
+  Enabled: false
+
+RSpec/SubjectStub:
+  Enabled: false
+
+RSpec/MessageSpies:
+  EnforcedStyle: receive
+
+RSpec/StubbedMock:
+  Enabled: false
+
+RSpec/InstanceVariable:
+  Enabled: false
+
+Rails/NotNullColumn:
+  Exclude:
+    - db/migrate/20221228204002_add_branch_to_history_models.rb

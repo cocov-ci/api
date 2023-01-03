@@ -1,0 +1,560 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe "V1::Issues" do
+  describe "#index" do
+    it "returns 404 when repository does not exist" do
+      get "/v1/repositories/dummy/commits/foo/issues", headers: authenticated
+      expect(response).to have_http_status(:not_found)
+      expect(response).to be_a_json_error(:not_found)
+    end
+
+    it "returns 404 when commit does not exist" do
+      repo = create(:repository)
+      get "/v1/repositories/#{repo.name}/commits/foo/issues", headers: authenticated
+      expect(response).to have_http_status(:not_found)
+      expect(response).to be_a_json_error(:not_found)
+    end
+
+    it "returns an empty array when commit has no registered issues" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: authenticated
+      expect(response).to have_http_status(:ok)
+      expect(response.json[:issues]).to be_empty
+    end
+
+    it "gets issues of a commit" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      issue = create(:issue, commit:)
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: authenticated
+      expect(response).to have_http_status(:ok)
+
+      json = response.json
+
+      expect(json[:issues].count).to eq 1
+      prob = json.dig(:issues, 0)
+      expect(prob[:id]).to eq issue.id
+      expect(prob[:kind]).to eq issue.kind
+      expect(prob[:status]).to eq issue.status
+      expect(prob[:file]).to eq issue.file
+      expect(prob[:uid]).to eq issue.uid
+      expect(prob[:line_start]).to eq issue.line_start
+      expect(prob[:line_end]).to eq issue.line_end
+      expect(prob[:message]).to eq issue.message
+      expect(prob[:check_source]).to eq issue.check_source
+      expect(prob[:status_reason]).to eq issue.status_reason
+      expect(prob[:assignee]).to be_nil
+    end
+
+    it "returns information about the assignee when present" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      issue = create(:issue, commit:)
+      headers = authenticated
+      issue.assign! @user
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: headers
+      expect(response).to have_http_status(:ok)
+
+      json = response.json
+
+      expect(json[:issues].count).to eq 1
+      assig = json.dig(:issues, 0, :assignee)
+      expect(assig[:login]).to eq issue.assignee.login
+    end
+
+    it "filters issues" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      create(:issue, check_source: "test_a", commit:)
+      create(:issue, check_source: "test_b", commit:)
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues",
+        params: { source: "test_a" },
+        headers: authenticated
+
+      expect(response).to have_http_status(:ok)
+      expect(response.json[:issues].length).to eq 1
+      expect(response.json[:issues].first[:check_source]).to eq "test_a"
+    end
+  end
+
+  describe "#patch" do
+    it "returns 404 when repository does not exist" do
+      patch "/v1/repositories/dummy/commits/foo/issues/1",
+        headers: authenticated,
+        params: { status: "resolved" }
+      expect(response).to have_http_status(:not_found)
+      expect(response).to be_a_json_error(:not_found)
+    end
+
+    it "returns 404 when commit does not exist" do
+      repo = create(:repository)
+      patch "/v1/repositories/#{repo.name}/commits/foo/issues/1",
+        headers: authenticated,
+        params: { status: "resolved" }
+      expect(response).to have_http_status(:not_found)
+      expect(response).to be_a_json_error(:not_found)
+    end
+
+    it "returns 404 when issue does not exist" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+
+      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/1",
+        headers: authenticated,
+        params: { status: "resolved" }
+      expect(response).to have_http_status(:not_found)
+      expect(response).to be_a_json_error(:not_found)
+    end
+
+    it "requires an status" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      issue = create(:issue, commit:)
+
+      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}", headers: authenticated
+      expect(response).to have_http_status(:bad_request)
+      expect(response).to be_a_json_error(:issues, :missing_status)
+    end
+
+    it "updates a status" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      issue = create(:issue, commit:)
+
+      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}",
+        headers: authenticated,
+        params: { status: "resolved" }
+      expect(response).to have_http_status(:ok)
+      json = response.json
+      expect(json[:status]).to eq "resolved"
+      expect(json[:assignee][:login]).to eq @user.login
+    end
+  end
+
+  describe "#put" do
+    before { stub_configuration! }
+
+    it "requires a JSON body" do
+      put "/v1/repositories/foo/issues",
+        params: { just_a_param: "value" },
+        headers: authenticated(format: :url_encoded_form, as: :service)
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response).to be_a_json_error(:issues, :json_required)
+    end
+
+    ok_request = {
+      status: "processed",
+      sha: "",
+      issues: {
+        a: [
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" }
+        ]
+      }
+    }.freeze
+
+    cases = {
+      "sha" => ok_request.dup.merge({
+        sha: 0
+      }),
+      "issues" => ok_request.dup.merge({ issues: 0 }),
+      "issues.a.0.uid" => ok_request.dup.merge({
+        issues: {
+          a: [
+            { uid: 0, file: "", line_start: 0, line_end: 0, message: "", kind: "" }
+          ]
+        }
+      }),
+      "issues.a.0.file" => ok_request.dup.merge({
+        issues: {
+          a: [
+            { uid: "", file: 0, line_start: 0, line_end: 0, message: "", kind: "" }
+          ]
+        }
+      }),
+      "issues.a.0.line_start" => ok_request.dup.merge({
+        issues: {
+          a: [
+            { uid: "", file: "", line_start: "", line_end: 0, message: "", kind: "" }
+          ]
+        }
+      }),
+      "issues.a.0.line_end" => ok_request.dup.merge({
+        issues: {
+          a: [
+            { uid: "", file: "", line_start: 0, line_end: "", message: "", kind: "" }
+          ]
+        }
+      }),
+      "issues.a.0.message" => ok_request.dup.merge({
+        issues: {
+          a: [
+            { uid: "", file: "", line_start: 0, line_end: 0, message: 0, kind: "" }
+          ]
+        }
+      }),
+      "issues.a.0.kind" => ok_request.dup.merge({
+        issues: {
+          a: [
+            { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: 0 }
+          ]
+        }
+      })
+    }.freeze
+
+    cases.each do |name, req|
+      it "rejects when #{name} is invalid" do
+        put "/v1/repositories/foo/issues",
+          params: req,
+          headers: authenticated(as: :service),
+          as: :json
+        expect(response).to have_http_status(:bad_request)
+        expect(response).to be_a_json_error(:issues, :validation_error)
+        expect(response.json[:message]).to include(name)
+      end
+    end
+
+    it "stores new issues" do
+      repo = create(:repository)
+      create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
+
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        "65f4e0c879eb83460260637880fb82f188065d11",
+        "failure",
+        description: "1 issue detected",
+        context: "cocov"
+      )
+
+      put "/v1/repositories/#{repo.name}/issues",
+        headers: authenticated(as: :service),
+        as: :json,
+        params: {
+          status: "processed",
+          sha: "65f4e0c879eb83460260637880fb82f188065d11",
+          issues: {
+            a: [
+              { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
+                kind: "bug" }
+            ]
+          }
+        }
+      expect(response).to have_http_status :no_content
+      expect(repo.commits.count).to eq 1
+      expect(repo.commits.first.issues.count).to eq 1
+      probl = repo.commits.first.issues.first
+
+      expect(probl).to be_bug
+      expect(probl).to be_status_new
+      expect(probl.uid).to eq "rubocop-a"
+      expect(probl.file).to eq "app.rb"
+      expect(probl.line_start).to eq 1
+      expect(probl.line_end).to eq 2
+      expect(probl.message).to eq "something is wrong"
+      expect(probl.check_source).to eq "a"
+    end
+
+    it "maintains ignored issues" do
+      repo = create(:repository)
+      create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
+
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        "65f4e0c879eb83460260637880fb82f188065d11",
+        "failure",
+        description: "1 issue detected",
+        context: "cocov"
+      ).ordered
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        "65f4e0c879eb83460260637880fb82f188065d11",
+        "failure",
+        description: "2 issues detected",
+        context: "cocov"
+      ).ordered
+
+      put "/v1/repositories/#{repo.name}/issues",
+        headers: authenticated(as: :service),
+        as: :json,
+        params: {
+          status: "processed",
+          sha: "65f4e0c879eb83460260637880fb82f188065d11",
+          issues: {
+            a: [
+              { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
+                kind: "bug" }
+            ]
+          }
+        }
+
+      expect(response).to have_http_status :no_content
+      expect(repo.commits.count).to eq 1
+      expect(repo.commits.first.issues.count).to eq 1
+      probl = repo.commits.first.issues.first
+      probl.status = :ignored
+      probl.status_reason = "bla"
+      probl.save!
+      put "/v1/repositories/#{repo.name}/issues",
+        headers: authenticated(as: :service),
+        as: :json,
+        params: {
+          status: "processed",
+          sha: "65f4e0c879eb83460260637880fb82f188065d11",
+          issues: {
+            a: [
+              { uid: "rubocop-b", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
+                kind: "bug" }
+            ]
+          }
+        }
+      expect(response).to have_http_status :no_content
+      expect(repo.commits.count).to eq 1
+      expect(repo.commits.first.issues.count).to eq 2
+    end
+
+    it "recycles issues" do
+      repo = create(:repository)
+      create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      2.times do
+        expect(gh_app).to receive(:create_status).with(
+          "#{@github_organization_name}/#{repo.name}",
+          "65f4e0c879eb83460260637880fb82f188065d11",
+          "failure",
+          description: "1 issue detected",
+          context: "cocov"
+        ).ordered
+      end
+
+      request = {
+        headers: authenticated(as: :service),
+        as: :json,
+        params: {
+          status: "processed",
+          sha: "65f4e0c879eb83460260637880fb82f188065d11",
+          issues: {
+            a: [
+              { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
+                kind: "bug" }
+            ]
+          }
+        }
+      }
+
+      put "/v1/repositories/#{repo.name}/issues", **request
+
+      expect(response).to have_http_status :no_content
+      expect(repo.commits.count).to eq 1
+      expect(repo.commits.first.issues.count).to eq 1
+
+      put "/v1/repositories/#{repo.name}/issues", **request
+
+      expect(response).to have_http_status :no_content
+      expect(repo.commits.count).to eq 1
+      expect(repo.commits.first.issues.count).to eq 1
+    end
+
+    it "handles an empty issue list" do
+      repo = create(:repository)
+      create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
+
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        "65f4e0c879eb83460260637880fb82f188065d11",
+        "success",
+        description: "No issues detected",
+        context: "cocov"
+      )
+
+      put "/v1/repositories/#{repo.name}/issues",
+        headers: authenticated(as: :service),
+        as: :json,
+        params: {
+          status: "processed",
+          sha: "65f4e0c879eb83460260637880fb82f188065d11",
+          issues: {}
+        }
+      expect(response).to have_http_status :no_content
+      expect(repo.commits.count).to eq 1
+      expect(repo.commits.first.issues.count).to eq 0
+    end
+
+    it "accepts nil arrays of issues" do
+      payload = {
+        "issues" => {
+          "cocov/brakeman" => [
+            {
+              "kind" => "security",
+              "file" => "app/services/git_service/base_storage.rb",
+              "line_start" => 23,
+              "line_end" => 23,
+              "message" => "Weak hashing algorithm used: SHA1",
+              "uid" => "12a75d7df840a95bd9da0d107848829a0ac67d2ebf0d2f65a4ed9d0ca7d813e6"
+            },
+            {
+              "kind" => "security",
+              "file" => "app/controllers/v1/github_events_controller.rb",
+              "line_start" => 41,
+              "line_end" => 41,
+              "message" => "Possible SQL injection",
+              "uid" => "205e1c2f2546dc345358bb4d2575846621e643e66542fa4fbe5013fb840d72ff"
+            },
+            {
+              "kind" => "security",
+              "file" => "app/controllers/v1/coverage_controller.rb",
+              "line_start" => 38,
+              "line_end" => 38,
+              "message" => "Possible SQL injection",
+              "uid" => "254a5b19feba0aba48e51ce7aa10e699822d9f33d3e0997b29d5cac41ef47054"
+            },
+            {
+              "kind" => "security",
+              "file" => "app/models/application_record.rb",
+              "line_start" => 12,
+              "line_end" => 12,
+              "message" => "Possible SQL injection",
+              "uid" => "361af13dc4740b03b4e07802cc6dde22e383add96d02d6b34dcada0051fcaa1d"
+            },
+            {
+              "kind" => "security",
+              "file" => "app/controllers/v1/github_events_controller.rb",
+              "line_start" => 87,
+              "line_end" => 87,
+              "message" => "Possible SQL injection",
+              "uid" => "3a9713c28f900693d929054037b17cf1464e23c5472b853eb43537c4734cf77b"
+            },
+            {
+              "kind" => "security",
+              "file" => "app/services/git_service.rb",
+              "line_start" => 35,
+              "line_end" => 35,
+              "message" => "Weak hashing algorithm used: SHA1",
+              "uid" => "3e931ec5cd0ebffd5739fe9e9ae6706250784daab812a27c585b15817b5bc5a3"
+            },
+            {
+              "kind" => "security",
+              "file" => "app/controllers/v1/coverage_controller.rb",
+              "line_start" => 42,
+              "line_end" => 42,
+              "message" => "Specify exact keys allowed for mass assignment",
+              "uid" => "483af335c6d4afbdc9bc7b2493e8fd7f97a51988d6bbe1616f5509d9bc4af76a"
+            },
+            {
+              "kind" => "security",
+              "file" => "app/controllers/v1/github_events_controller.rb",
+              "line_start" => 21,
+              "line_end" => 21,
+              "message" => "User controlled method execution",
+              "uid" => "5d138b57cdd2465149a4e7deb968dfa5b9d03624ea7c50b3e22d04788e7c7899"
+            },
+            {
+              "kind" => "security",
+              "file" => "config/environments/production.rb",
+              "line_start" => 1,
+              "line_end" => 1,
+              "message" => "The application does not force use of HTTPS: `config.force_ssl` is not enabled",
+              "uid" => "6a26086cd2400fbbfb831b2f8d7291e320bcc2b36984d2abc359e41b3b63212b"
+            },
+            {
+              "kind" => "security",
+              "file" => "app/lib/cocov/redis.rb",
+              "line_start" => 77,
+              "line_end" => 77,
+              "message" => "Possible SQL injection",
+              "uid" => "dc667765f93bd6c3d3e0927d86ebd960196cf4c099e64ed466db4dbf17053005"
+            }
+          ],
+          "cocov/rubocop" => nil
+        },
+        "sha" => "a36aaecf08cdf39970efd816ebc05d515f8fc391",
+        "status" => "processed",
+        "repo_name" => "api",
+        "issue" => { "status" => "processed" }
+      }
+
+      repo = create(:repository)
+      create(:commit, sha: "a36aaecf08cdf39970efd816ebc05d515f8fc391", repository: repo)
+
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        "a36aaecf08cdf39970efd816ebc05d515f8fc391",
+        "failure",
+        description: "10 issues detected",
+        context: "cocov"
+      )
+
+      put "/v1/repositories/#{repo.name}/issues",
+        headers: authenticated(as: :service),
+        as: :json,
+        params: payload
+
+      expect(response).to have_http_status(:no_content)
+    end
+  end
+
+  describe "#sources" do
+    it "returns sources for current issues" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      sources = %w[foo bar baz]
+
+      sources.each.with_index do |name, idx|
+        n = "cocov-ci/#{name}"
+        create(:check, :succeeded, commit:, plugin_name: n)
+        (idx + 1).times do
+          create(:issue, commit:, check_source: n)
+        end
+      end
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/sources",
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      sources.each.with_index do |n, idx|
+        expect(response.json["cocov-ci/#{n}"]).to eq idx + 1
+      end
+    end
+  end
+
+  describe "#categories" do
+    it "returns categories for current issues" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      categories = %w[security performance style]
+
+      categories.each.with_index do |name, idx|
+        check = create(:check, :succeeded, commit:)
+        (idx + 1).times do
+          create(:issue, commit:, check_source: check.plugin_name, kind: name)
+        end
+      end
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/categories",
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      categories.each.with_index do |n, idx|
+        expect(response.json[n.to_s]).to eq idx + 1
+      end
+    end
+  end
+end

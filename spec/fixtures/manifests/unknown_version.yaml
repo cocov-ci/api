@@ -1,0 +1,10 @@
+version: "bla"
+
+coverage:
+  path: ./coverage/coverage.json
+  format: simplecov
+  min_percent: 90
+
+checks:
+  - plugin: cocov-ci/rubocop:v0.1
+  - plugin: cocov-ci/brakeman:v0.1

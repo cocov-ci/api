@@ -1,0 +1,21 @@
+FROM ruby:3.1.2
+LABEL maintainer="Victor Gama <hey@vito.io>"
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+ENV APP_HOME /app
+ENV BUNDLE_JOBS=2
+
+WORKDIR /tmp
+RUN apt update && apt install brotli
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o awscliv2.zip && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf awscliv2.zip aws
+
+WORKDIR /app
+
+ENTRYPOINT ["/app/script/docker-entrypoint-dev.sh"]
+
+CMD ["rails", "s", "--pid=/dev/null"]

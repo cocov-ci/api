@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+require 'json'
+
+out = { args: ARGV, pwd: Dir.pwd }
+unless ARGV.include? "--fail"
+out.merge! env: ENV.to_h
+end
+
+puts(out.to_json)
+STDERR.puts({ stderr: true }.to_json)
+
+if ARGV.include? "--fail"
+  exit(1)
+end

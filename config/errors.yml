@@ -1,0 +1,124 @@
+errors:
+  not_found:
+    status: not_found
+    message: The requested resource could not be found.
+
+  report:
+    missing_data:
+      status: bad_request
+      message: The parameter "data" is required
+    missing_commit_sha:
+      status: bad_request
+      message: The parameter "commit_sha" is required
+  checks:
+    missing_plugin_name:
+      status: bad_request
+      message: The parameter "plugin_name" is required
+    missing_status:
+      status: bad_request
+      message: The parameter "status" is required
+    invalid_status:
+      status: bad_request
+      message: Invalid "status". Valid opetions are running, succeeded, or errored
+    missing_error_output:
+      status: bad_request
+      message: The parameter "error_output" is required when status is errored
+  private_keys:
+    missing_name:
+      status: bad_request
+      message: The parameter "name" is required
+    missing_key:
+      status: bad_request
+      message: The parameter "key" is requried
+    invalid_key:
+      status: bad_request
+      message: The provided key is invalid
+    name_taken:
+      status: bad_request
+      message: A key with the same provided name already exists
+  secrets:
+    missing_name:
+      status: bad_request
+      message: The parameter "name" is required
+    missing_data:
+      status: bad_request
+      message: The parameter "data" is requried
+    name_taken:
+      status: bad_request
+      message: A secret with the same provided name already exists
+  issues:
+    invalid_seal_status:
+      status: bad_request
+      message: The parameter "status" must be either "success" or "error"
+    missing_status:
+      status: bad_request
+      message: The parameter "status" is required
+    invalid_status:
+      status: bad_request
+      message: "The parameter \"status\" must be equal to one of the following values: resolved, ignored"
+    json_required:
+      status: bad_request
+      message: This endpoint requires a JSON payload
+    validation_error:
+      status: bad_request
+      message: Schema validation failed expected %{expected} for path %{path}, received %{received} instead
+  repositories:
+    already_exists:
+      status: conflict
+      message: Repository already exists on this instance.
+    not_on_github:
+      status: not_found
+      message: Repository could not be found on GitHub. Check spelling and try again.
+    missing_from_date:
+      status: bad_request
+      message: The parameters "from" is required
+    missing_to_date:
+      status: bad_request
+      message: The parameters "to" is required
+    invalid_from_date:
+      status: bad_request
+      message: The value provided to the "from" parameter could not be interpreted as a date.
+    invalid_to_date:
+      status: bad_request
+      message: The value provided to the "to" parameter could not be interpreted as a date.
+    stats_range_too_large:
+      status: bad_request
+      message: Requested range is too large. Please provide a range spanning less than %{max} days.
+  auth:
+    no_authorization:
+      status: unauthorized
+      message: Authorization is required to access this endpoint.
+    invalid_token:
+      status: unauthorized
+      message: The provided authorization token is either expired or invalid
+    forbidden:
+      status: :forbidden
+      message: Access to the requested resource was denied
+  session:
+    no_redirect:
+      status: bad_request
+      message: The parameter "redirect" is required
+    bad_redirect_uri:
+      status: bad_request
+      message: Parameter "redirect" must be a valid URI
+    no_exchange_token:
+      status: bad_request
+      message: Parameter "exchange_token" is required
+    no_state:
+      status: bad_request
+      message: Parameter "state" is required
+    no_code:
+      status: bad_request
+      message: Parameter "code" is required
+    invalid_exchange_token_or_state:
+      status: bad_request
+      message: Invalid "exchange_token" or "state". Please try authenticating again.
+    cannot_exchange:
+      status: bad_request
+      message: Unable to exchange provided token. Please try authenticating again.
+    not_an_org_member:
+      status: forbidden
+      message: You are not allowed to access this resource. Please contact your administrator.
+    outside_collaborator_not_allowed:
+      status: forbidden
+      message: Outside Collaborators are not allowed on this instance. Please contact your administrator.
