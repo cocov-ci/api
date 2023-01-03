@@ -1,0 +1,144 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "205e1c2f2546dc345358bb4d2575846621e643e66542fa4fbe5013fb840d72ff",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/controllers/v1/github_events_controller.rb",
+      "line": 57,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Cocov::Redis.lock(\"commit:#{Repository.find_by(:name => event.dig(:repository, :name)).id}:#{event.dig(:head_commit, :id)}\", 1.minute)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "V1::GithubEventsController",
+        "method": "process_push"
+      },
+      "user_input": "event.dig(:head_commit, :id)",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "At this point, request had its signature verified and should be coming from GitHub"
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "254a5b19feba0aba48e51ce7aa10e699822d9f33d3e0997b29d5cac41ef47054",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/controllers/v1/coverage_controller.rb",
+      "line": 38,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Cocov::Redis.lock(\"commit:#{Repository.find_by(:token => request.headers[\"HTTP_AUTHORIZATION\"].split.last).id}:#{params[:commit_sha]}\", 1.minute)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "V1::CoverageController",
+        "method": "create"
+      },
+      "user_input": "params[:commit_sha]",
+      "confidence": "Medium",
+      "cwe_id": [
+        89
+      ],
+      "note": "False positive"
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "361af13dc4740b03b4e07802cc6dde22e383add96d02d6b34dcada0051fcaa1d",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/application_record.rb",
+      "line": 12,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Cocov::Redis.lock(\"record:#{self.class.name.demodulize}:#{id}\", timeout, &block)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "ApplicationRecord",
+        "method": "locking"
+      },
+      "user_input": "self.class.name.demodulize",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "False positive"
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "3a9713c28f900693d929054037b17cf1464e23c5472b853eb43537c4734cf77b",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/controllers/v1/github_events_controller.rb",
+      "line": 105,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Cocov::Redis.lock(\"github:delivery:#{request.env[\"HTTP_X_GITHUB_DELIVERY\"]}\", 1.minute)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "V1::GithubEventsController",
+        "method": "ignore_duplicated_events"
+      },
+      "user_input": "request.env[\"HTTP_X_GITHUB_DELIVERY\"]",
+      "confidence": "Medium",
+      "cwe_id": [
+        89
+      ],
+      "note": "At this point, request had its signature verified and should be coming from GitHub"
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 70,
+      "fingerprint": "483af335c6d4afbdc9bc7b2493e8fd7f97a51988d6bbe1616f5509d9bc4af76a",
+      "check_name": "MassAssignment",
+      "message": "Specify exact keys allowed for mass assignment instead of using `permit!` which allows any keys",
+      "file": "app/controllers/v1/coverage_controller.rb",
+      "line": 42,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "params[:data].permit!",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "V1::CoverageController",
+        "method": "create"
+      },
+      "user_input": null,
+      "confidence": "Medium",
+      "cwe_id": [
+        915
+      ],
+      "note": "Ignoring since this is sanitised by IssueRegisteringService"
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "dc667765f93bd6c3d3e0927d86ebd960196cf4c099e64ed466db4dbf17053005",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/lib/cocov/redis.rb",
+      "line": 77,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Redlock::Client.new([REDIS_URL]).lock(\"locks:#{resource}\", (timeout.to_i * 1000))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Cocov::Redis",
+        "method": "lock"
+      },
+      "user_input": "resource",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "False positive"
+    }
+  ],
+  "updated": "2023-01-03 21:09:19 +0000",
+  "brakeman_version": "5.4.0"
+}

@@ -17,19 +17,34 @@ module V1
       event = JSON.parse(request.body.read).with_indifferent_access
       method = [:process, @event_name]
       method << event[:action] if WANTED_EVENTS[@event_name].is_a? Array
+      method = method.join("_")
       ActiveRecord::Base.transaction do
-        send(method.join("_"), event)
+        case method
+        when "process_delete"
+          process_delete(event)
+        when "process_pull_request_opened"
+          process_pull_request_opened(event)
+        when "process_push"
+          process_push(event)
+        when "process_repository_renamed"
+          process_repository_renamed(event)
+        when "process_repository_deleted"
+          process_repository_deleted(event)
+        end
       end
       head :ok
     end
 
     private
 
-    def process_delete; end
+    # TODO
+    def process_delete(_event); end
 
-    def process_pull_request_opened; end
+    # TODO
+    def process_pull_request_opened(_event); end
 
-    def process_pull_request_synchronize; end
+    # TODO
+    def process_pull_request_synchronize(_event); end
 
     def process_push(event)
       return unless event[:ref].start_with? "refs/heads/"
@@ -64,9 +79,11 @@ module V1
       ProcessCommitJob.perform_later(commit.id)
     end
 
-    def process_repository_renamed; end
+    # TODO
+    def process_repository_renamed(_event); end
 
-    def process_repository_deleted; end
+    # TODO
+    def process_repository_deleted(_event); end
 
     def check_if_wants_event
       @event_name = request.env["HTTP_X_GITHUB_EVENT"]
