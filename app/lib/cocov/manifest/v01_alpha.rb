@@ -5,6 +5,12 @@ module Cocov
     class V01Alpha
       Coverage = Struct.new(:path, :format, :min_percent, keyword_init: true)
 
+      COVERAGE_KEYS = {
+        path: String,
+        format: String,
+        min_percent: [Integer, NilClass],
+      }.freeze
+
       class Check
         attr_reader :plugin
 
@@ -38,15 +44,25 @@ module Cocov
       end
 
       def validate_coverage!
-        validate_type(:coverage, :path, type: String)
-        validate_type(:coverage, :format, type: String)
-        validate_type(:coverage, :min_percent, type: [Integer, NilClass])
+        validate_type(:coverage, type: Hash)
+        COVERAGE_KEYS.each { |k, v| validate_type(:coverage, k, type: v) }
+        unknown_keys = @data[:coverage].keys.map(&:to_sym) - COVERAGE_KEYS.keys
+        return if unknown_keys.empty?
+
+        unknown_keys = unknown_keys.map(&:to_s).join(', ')
+        raise InvalidManifestError, "Found unexpected keys in 'coverage' mapping: #{unknown_keys}"
       end
 
       def validate_checks!
         validate_type(:checks, type: Array)
         @data[:checks].each_index do |idx|
+          validate_type(:checks, idx, type: Hash)
           validate_type(:checks, idx, :plugin, type: String)
+          unknown_keys = @data.dig(:checks, idx).keys.map(&:to_sym) - [:plugin]
+          next if unknown_keys.empty?
+
+          unknown_keys = unknown_keys.map(&:to_s).join(', ')
+          raise InvalidManifestError, "Found unexpected keys in 'checks.#{idx}' mapping: #{unknown_keys}"
         end
       end
 
@@ -54,7 +70,7 @@ module Cocov
 
       def initialize(data)
         @data = data
-        if @data.key? :coverage
+        if @data.fetch(:coverage, nil)
           validate_coverage!
           @coverage = Coverage.new(**@data[:coverage])
         end
