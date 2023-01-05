@@ -8,3 +8,4 @@ coverage:
 checks:
   - plugin: cocov/rubocop:v0.1
   - plugin: cocov/brakeman:v0.1
+  - plugin: cocov/bundler-audit:v0.1
