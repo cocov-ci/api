@@ -30,6 +30,8 @@ jobs:
       COCOV_API_URL: ${{ secrets.COCOV_API_URL }}
 
     steps:
+      - name: Dump env
+        run: env
       - name: Checkout code
         uses: actions/checkout@v3
 
