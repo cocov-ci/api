@@ -20,7 +20,7 @@ RSpec.describe ProcessCommitJob do
     expect(commit).to receive(:create_github_status)
       .with(:failed, context: "cocov", description: "Could not fetch this commit")
 
-    expect(job).not_to receive(:load_cocov_manifest)
+    expect(ChecksRunService).not_to receive(:call)
 
     expect { job.perform(commit.id) }.to raise_error(StandardError)
       .with_message("boom!")
