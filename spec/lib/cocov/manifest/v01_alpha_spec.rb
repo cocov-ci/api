@@ -26,31 +26,26 @@ RSpec.describe Cocov::Manifest::V01Alpha do
 
   describe "coverage" do
     %i[path format].each do |key|
-      it "rejects when coverage.#{key} is missing" do
+      it "rejects when coverage.#{key} is set, but empty" do
         d = data.dup
-        d[:coverage].delete(key)
+        d[:coverage][key] = ""
 
         expect { spec.new(d) }.to raise_error(Cocov::Manifest::InvalidManifestError)
-          .with_message("coverage.#{key} should not be empty")
+          .with_message("Expected coverage.#{key} to not be blank")
       end
     end
 
     messages = {
-      min_percent: "Expected one of Integer or nil, but found String"
+      min_percent: "Expected coverage.min_percent to match Integer. " \
+                   "Assertion failed due to current object's value: \"a\"",
+      path: "Expected coverage.path to match string. Assertion failed due to current object's value: 0"
     }
     { path: 0, format: 1, min_percent: "a" }.each do |key, value|
       it "rejects when coverage.#{key} has an invalid value" do
         d = data.dup
         d[:coverage][key] = value
-        expected_type = if value.is_a? Integer
-                          String
-                        else
-                          Integer
-                        end
-
         expect { spec.new(d) }.to raise_error(Cocov::Manifest::InvalidManifestError)
-          .with_message("coverage.#{key}: #{messages.fetch(key,
-            "Expected #{expected_type}, but found #{value.class}")}")
+          .with_message(messages[key])
       end
     end
   end
@@ -61,7 +56,7 @@ RSpec.describe Cocov::Manifest::V01Alpha do
       d[:checks][1].delete(:plugin)
 
       expect { spec.new(d) }.to raise_error(Cocov::Manifest::InvalidManifestError)
-        .with_message("checks.1.plugin should not be empty")
+        .with_message("checks.1 is missing a required key: plugin")
     end
 
     it "rejects checks with invalid plugins" do
@@ -69,7 +64,7 @@ RSpec.describe Cocov::Manifest::V01Alpha do
       d[:checks][1][:plugin] = 1
 
       expect { spec.new(d) }.to raise_error(Cocov::Manifest::InvalidManifestError)
-        .with_message("checks.1.plugin: Expected String, but found Integer")
+        .with_message("Expected checks.1.plugin to match string. Assertion failed due to current object's value: 1")
     end
   end
 end

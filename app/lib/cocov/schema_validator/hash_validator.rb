@@ -8,6 +8,12 @@ module Cocov
         @value = value
         @static_keys = value.keys.reject { _1.is_a? BaseValidator }
         @validator_keys = value.keys.filter { _1.is_a? BaseValidator }
+        @reject_extra_keys = false
+      end
+
+      def reject_extra_keys
+        @reject_extra_keys = true
+        self
       end
 
       def inspect
@@ -39,6 +45,10 @@ module Cocov
           # Do nothing
         end
 
+        # If opted-in, emit an error indicating we have an extra key that
+        # shouldn't be there.
+        unexpected_key! key if @reject_extra_keys
+
         # At this point, all checks failed, or the key shouldn't be there.
         # Leave it there as it is, as the clean procedure will get rid of it.
         nil
@@ -56,6 +66,20 @@ module Cocov
           next if value_k.nil?
 
           assert_value(k, v, @value[value_k])
+        end
+
+        @static_keys.each do |k|
+          next if @value[k].is_a? OptValidator # Optional is optional.
+
+          exists = if k.is_a?(String) || k.is_a?(Symbol)
+                     what.key?(k.to_s) || what.key?(k.to_sym)
+                   else
+                     what.key?(k)
+                   end
+
+          next if exists
+
+          raise MissingKeyError.new(join_path, k)
         end
       end
 

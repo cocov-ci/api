@@ -76,6 +76,7 @@ class Commit < ApplicationRecord
 
   def adjust_associated_user!
     return unless (email = UserEmail.find_by(email: author_email))
+
     update! user_id: email.user_id
   end
 

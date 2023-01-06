@@ -53,7 +53,7 @@ class IssueRegisteringService < ApplicationService
     end
 
     Issue.transaction do
-      to_create.values.each { @commit.issues.create! _1 }
+      to_create.each_value { @commit.issues.create! _1 }
 
       @commit.issues_count = @commit.issues.count
       @commit.checks_status = @status

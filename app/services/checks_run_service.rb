@@ -1,15 +1,15 @@
+# frozen_string_literal: true
+
 class ChecksRunService < ApplicationService
   def call(commit)
     commit = case commit
-    when Commit
-      commit
-    when String
-      Commit.find_by! sha: commit
-    when Integer
-      Commit.find commit
-    else
-      commit
-    end
+             when String
+               Commit.find_by! sha: commit
+             when Integer
+               Commit.find commit
+             else
+               commit
+             end
 
     manifest_contents = begin
       GitService.file_for_commit(commit, path: ".cocov.yaml")

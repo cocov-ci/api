@@ -34,17 +34,15 @@ RSpec.describe Cocov::Manifest do
     expect(manifest.load(path)).to be_a Cocov::Manifest::V01Alpha
   end
 
-  it "returns a sane error when extra keys are provided to coverage " do
+  it "returns a sane error when extra keys are provided to coverage" do
     data = File.read(fixture_file_path("manifests", "v0.1alpha", "extra_coverage_keys.yaml"))
-    expect { manifest.parse(data) }.to raise_error(Cocov::Manifest::InvalidManifestError) do |err|
-      expect(err.message).to eq "Found unexpected keys in 'coverage' mapping: unexpected_key"
-    end
+    expect { manifest.parse(data) }.to raise_error(Cocov::Manifest::InvalidManifestError)
+      .with_message("Unexpected extra key `unexpected_key' on `coverage'")
   end
 
   it "returns a sane error when extra keys are provided to a plugin" do
     data = File.read(fixture_file_path("manifests", "v0.1alpha", "extra_check_keys.yaml"))
-    expect { manifest.parse(data) }.to raise_error(Cocov::Manifest::InvalidManifestError) do |err|
-      expect(err.message).to eq "Found unexpected keys in 'checks.1' mapping: unexpected_key"
-    end
+    expect { manifest.parse(data) }.to raise_error(Cocov::Manifest::InvalidManifestError)
+      .with_message("Unexpected extra key `unexpected_key' on `checks.1'")
   end
 end
