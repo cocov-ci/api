@@ -37,19 +37,23 @@ class IssueRegisteringService < ApplicationService
   end
 
   def register_issues!
-    Issue.transaction do
-      @data[:issues].map do |source, probs|
-        next if probs.nil?
+    to_create = {}
+    @data[:issues].map do |source, issues|
+      next if issues.nil?
 
-        probs.each do |prob|
-          @commit.issues.create! prob
-            .slice(:kind, :file, :line_start, :line_end, :message, :uid)
-            .merge({
-              status: Issue.statuses[:new],
-              check_source: source
-            })
-        end
+      issues.each do |issue|
+        db_issue = issue
+          .slice(:kind, :file, :line_start, :line_end, :message, :uid)
+          .merge({
+            status: Issue.statuses[:new],
+            check_source: source
+          })
+        to_create[db_issue[:uid].strip.to_s] = db_issue
       end
+    end
+
+    Issue.transaction do
+      to_create.values.each { @commit.issues.create! _1 }
 
       @commit.issues_count = @commit.issues.count
       @commit.checks_status = @status
