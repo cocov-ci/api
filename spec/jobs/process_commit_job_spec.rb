@@ -18,7 +18,7 @@ RSpec.describe ProcessCommitJob do
       .and_raise(StandardError.new("boom!"))
 
     expect(commit).to receive(:create_github_status)
-      .with(:failed, context: "cocov", description: "Could not fetch this commit")
+      .with(:failure, context: "cocov", description: "Could not fetch this commit")
 
     expect(ChecksRunService).not_to receive(:call)
 
@@ -43,7 +43,7 @@ RSpec.describe ProcessCommitJob do
       .and_return("lolsies, this is an invalid manifest!")
     expect(commit).to receive(:create_github_status).with(:pending, context: "cocov").ordered
     expect(commit).to receive(:create_github_status)
-      .with(:failed, context: "cocov", description: "Invalid manifest: Root should be a mapping")
+      .with(:failure, context: "cocov", description: "Invalid manifest: Root should be a mapping")
       .ordered
 
     job.perform(commit.id)

@@ -48,7 +48,7 @@ class ChecksRunService < ApplicationService
       manifest = Cocov::Manifest.parse(manifest_contents)
     rescue Cocov::Manifest::InvalidManifestError => e
       # TODO: URL?
-      commit.create_github_status(:failed, context: "cocov", description: e.message)
+      commit.create_github_status(:failure, context: "cocov", description: e.message)
       return
     end
 
@@ -57,11 +57,19 @@ class ChecksRunService < ApplicationService
       return
     end
 
-    checks = manifest.checks.map do |check|
-      { plugin: check.plugin, envs: check.envs }.tap do |data|
-        data[:mounts] = prepare_mounts(check)
+    checks = begin
+      manifest.checks.map do |check|
+        { plugin: check.plugin, envs: check.envs }.tap do |data|
+          data[:mounts] = prepare_mounts(check)
+        end
       end
+    rescue Cocov::Manifest::InvalidManifestError => e
+      # TODO: URL?
+      commit.create_github_status(:failure, context: "cocov", description: e.message)
+      nil
     end
+
+    return if checks.nil?
 
     commit.checks.destroy_all
 
