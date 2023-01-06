@@ -1,0 +1,13 @@
+version: "0.1.alpha"
+
+coverage:
+  path: ./coverage/coverage.json
+  format: simplecov
+  min_percent: 90
+
+checks:
+  - plugin: cocov/golangci-lint:v0.1
+    envs:
+      GOPRIVATE: github.com/cocov-ci
+  - plugin: cocov/brakeman:v0.1
+  - plugin: cocov/bundler-audit:v0.1

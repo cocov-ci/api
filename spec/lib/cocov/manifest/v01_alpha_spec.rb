@@ -66,5 +66,20 @@ RSpec.describe Cocov::Manifest::V01Alpha do
       expect { spec.new(d) }.to raise_error(Cocov::Manifest::InvalidManifestError)
         .with_message("Expected checks.1.plugin to match string. Assertion failed due to current object's value: 1")
     end
+
+    it "handles checks with environments" do
+      d = YAML.load(fixture_file("manifests/v0.1alpha/check_envs.yaml")).with_indifferent_access
+      result = spec.new(d)
+      expect(result.checks.first.envs.length).to eq 1
+      expect(result.checks.first.envs["GOPRIVATE"]).to eq "github.com/cocov-ci"
+    end
+
+    it "handles checks with mounts" do
+      d = YAML.load(fixture_file("manifests/v0.1alpha/check_mounts.yaml")).with_indifferent_access
+      result = spec.new(d)
+      expect(result.checks.first.mounts.length).to eq 1
+      expect(result.checks.first.mounts.first.source).to eq "secrets:GIT_CONFIG"
+      expect(result.checks.first.mounts.first.destination).to eq "~/.gitconfig"
+    end
   end
 end

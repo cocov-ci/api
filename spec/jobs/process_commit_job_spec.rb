@@ -73,6 +73,7 @@ RSpec.describe ProcessCommitJob do
 
   it "creates checks and enqueues a new check job" do
     mock_redis!
+    stub_crypto_key!
 
     expect(GitService).to receive(:clone_commit).with(commit)
     fake_manifest = double(:manifest)
@@ -87,6 +88,9 @@ RSpec.describe ProcessCommitJob do
     expect(commit.checks.count).to be_zero
     expect(@redis.llen("cocov:checks")).to be_zero
     allow(SecureRandom).to receive(:uuid).and_return("this-is-an-uuid")
+    allow(SecureRandom).to receive(:hex).with(anything).and_return("23035196471c5ab5b3b5b03ee9bf494215defa61457311d6")
+
+    sec = create(:secret, name: "FOO")
 
     u = create(:user)
     u.emails.create! email: commit.author_email
@@ -106,14 +110,30 @@ RSpec.describe ProcessCommitJob do
       "repo" => commit.repository.name,
       "sha" => commit.sha,
       "checks" => [
-        "cocov-ci/rubocop:v0.1",
-        "cocov-ci/brakeman:v0.1"
+        {
+          "plugin" => "cocov-ci/rubocop:v0.1",
+          "envs" => { "TEST" => "true" },
+          "mounts" => nil
+        },
+        {
+          "plugin" => "cocov-ci/brakeman:v0.1",
+          "envs" => nil,
+          "mounts" => [
+            {
+              "authorization" => "csa_23035196471c5ab5b3b5b03ee9bf494215defa61457311d6",
+              "kind" => "secret",
+              "target" => "~/test"
+            }
+          ]
+        }
       ],
       "git_storage" => {
         "mode" => "local",
         "path" => GitService.storage.commit_path(commit).to_s
       }
     })
+
+    expect(Secret.from_authorization("csa_23035196471c5ab5b3b5b03ee9bf494215defa61457311d6").id).to eq sec.id
 
     expect(commit.reload.user_id).to eq u.id
   end

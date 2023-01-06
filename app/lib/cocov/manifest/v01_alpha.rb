@@ -4,6 +4,8 @@ module Cocov
   module Manifest
     class V01Alpha
       Coverage = Struct.new(:path, :format, :min_percent, keyword_init: true)
+      Check = Struct.new(:plugin, :envs, :mounts, keyword_init: true)
+      CheckMount = Struct.new(:source, :destination, keyword_init: true)
 
       VALIDATOR = SchemaValidator.with do
         hash(
@@ -24,27 +26,34 @@ module Cocov
         ).reject_extra_keys
       end
 
-      class Check
-        attr_reader :plugin
-
-        def initialize(data)
-          @plugin = data[:plugin]
-        end
-      end
-
       attr_reader :coverage, :checks
 
       def initialize(data)
-        @data = data
         begin
           VALIDATOR.validate(data)
         rescue Cocov::SchemaValidator::ValidationError => e
           raise InvalidManifestError, e.message
         end
 
+        @data = data
+
         @coverage = (Coverage.new(**@data[:coverage]) if @data.fetch(:coverage, nil))
 
-        @checks = @data[:checks]&.map { Check.new(_1) } || []
+        @checks = @data.fetch(:checks, []).map do |check|
+          check[:mounts] = check[:mounts]&.map { CheckMount.new(_1) }
+          Check.new(**check)
+        end
+
+        @checks.each do |c|
+          next if c.mounts.blank?
+
+          c.mounts.each do |m|
+            next if /^secrets:/.match?(m.source)
+
+            raise InvalidManifestError, "Invalid mount source `#{m.source} for " \
+                                        "check #{c.plugin}: Only secrets are mountable."
+          end
+        end
       end
     end
   end

@@ -37,6 +37,10 @@ class Repository < ApplicationRecord
     end
   end
 
+  def find_secret(named)
+    secrets.find_by(name: named) || Secret.find_by(name: named, scope: :organization)
+  end
+
   def self.by_fuzzy_name(name)
     find_by_sql [<<-SQL.squish, { name: }]
       SELECT *
