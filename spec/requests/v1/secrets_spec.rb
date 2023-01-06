@@ -282,4 +282,45 @@ RSpec.describe "V1::Secrets" do
       end
     end
   end
+
+  describe "show" do
+    let(:secret) { create(:secret) }
+    let(:auth) { secret.generate_authorization }
+
+    it "rejects non-service tokens" do
+      get "/v1/secrets/data",
+        params: { authorization: auth },
+        headers: authenticated
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response).to be_a_json_error(:auth, :forbidden)
+    end
+
+    it "rejects unknown authorizations" do
+      get "/v1/secrets/data",
+        params: { authorization: "lolsies" },
+        headers: authenticated(as: :service)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response).to be_a_json_error(:secrets, :invalid_authorization)
+    end
+
+    it "rejects expired authorizations" do
+      get "/v1/secrets/data",
+        params: { authorization: "csa_hello_test" },
+        headers: authenticated(as: :service)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response).to be_a_json_error(:secrets, :invalid_authorization)
+    end
+
+    it "returns secret data" do
+      get "/v1/secrets/data",
+        params: { authorization: auth },
+        headers: authenticated(as: :service)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to eq(secret.data)
+    end
+  end
 end

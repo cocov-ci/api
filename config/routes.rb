@@ -11,6 +11,7 @@ Rails.application.routes.draw do
     # Secrets
     get "/secrets", to: "secrets#index"
     post "/secrets", to: "secrets#create"
+    get "/secrets/data", to: "secrets#show"
     patch "/secrets/:id", to: "secrets#patch"
     delete "/secrets/:id", to: "secrets#delete"
 

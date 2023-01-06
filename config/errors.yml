@@ -46,6 +46,9 @@ errors:
     name_taken:
       status: bad_request
       message: A secret with the same provided name already exists
+    invalid_authorization:
+      status: forbidden
+      message: Provided authorization is invalid or expired
   issues:
     invalid_seal_status:
       status: bad_request

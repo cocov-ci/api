@@ -3,11 +3,22 @@
 module V1
   class SecretsController < V1Controller
     before_action :ensure_authentication
+    before_action :ensure_service_token, only: :show
 
     def index
       render "v1/secrets/index", locals: {
         secrets: paginating(secrets.order(name: :asc))
       }
+    end
+
+    def show
+      authorization = params[:authorization]
+      not_found! if authorization.empty?
+      error! :secrets, :invalid_authorization unless authorization.start_with? "csa_"
+      secret = Secret.from_authorization(authorization)
+      error! :secrets, :invalid_authorization if secret.nil?
+
+      render plain: secret.data
     end
 
     def create
