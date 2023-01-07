@@ -11,22 +11,29 @@
 #  secure_data   :binary           not null
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  last_used_at  :datetime
+#  owner_id      :bigint           not null
 #
 # Indexes
 #
 #  index_secrets_on_name                              (name)
+#  index_secrets_on_owner_id                          (owner_id)
 #  index_secrets_on_repository_id                     (repository_id)
 #  index_secrets_on_scope                             (scope)
 #  index_secrets_on_scope_and_name_and_repository_id  (scope,name,repository_id) UNIQUE
 #
 # Foreign Keys
 #
+#  fk_rails_...  (owner_id => users.id)
 #  fk_rails_...  (repository_id => repositories.id)
 #
 require "rails_helper"
 
 RSpec.describe Secret do
-  subject(:secret) { build(:secret) }
+  subject(:secret) do
+    user = create(:user)
+    build(:secret, owner: user)
+  end
 
   before { stub_crypto_key! }
 
@@ -34,16 +41,17 @@ RSpec.describe Secret do
     scope
     name
     data
+    owner
   ]
 
   describe "uniqueness" do
     it "is guaranteed for name + scope" do
       secret.save!
-      new_subject = build(:secret, name: secret.name)
+      new_subject = build(:secret, :with_owner, name: secret.name)
       expect(new_subject).not_to be_valid
 
       repo = create(:repository)
-      other_subject = build(:secret, name: secret.name, scope: :repository, repository: repo)
+      other_subject = build(:secret, :with_owner, name: secret.name, scope: :repository, repository: repo)
       expect(other_subject).to be_valid
     end
 
@@ -53,10 +61,10 @@ RSpec.describe Secret do
       secret.repository = repo
       secret.save!
 
-      new_subject = build(:secret, name: secret.name, scope: :repository, repository: repo)
+      new_subject = build(:secret, :with_owner, name: secret.name, scope: :repository, repository: repo)
       expect(new_subject).not_to be_valid
 
-      other_subject = build(:secret, name: secret.name)
+      other_subject = build(:secret, :with_owner, name: secret.name)
       expect(other_subject).to be_valid
     end
   end

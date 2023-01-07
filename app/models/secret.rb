@@ -11,22 +11,27 @@
 #  secure_data   :binary           not null
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  last_used_at  :datetime
+#  owner_id      :bigint           not null
 #
 # Indexes
 #
 #  index_secrets_on_name                              (name)
+#  index_secrets_on_owner_id                          (owner_id)
 #  index_secrets_on_repository_id                     (repository_id)
 #  index_secrets_on_scope                             (scope)
 #  index_secrets_on_scope_and_name_and_repository_id  (scope,name,repository_id) UNIQUE
 #
 # Foreign Keys
 #
+#  fk_rails_...  (owner_id => users.id)
 #  fk_rails_...  (repository_id => repositories.id)
 #
 class Secret < ApplicationRecord
   enum scope: { organization: 0, repository: 1 }, _suffix: :scope
 
   belongs_to :repository, optional: true
+  belongs_to :owner, class_name: :User
 
   validates :scope, presence: true
   validates :repository, presence: true, if: -> { repository_scope? }

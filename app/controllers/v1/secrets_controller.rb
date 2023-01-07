@@ -28,7 +28,7 @@ module V1
       error! :secrets, :missing_name if name.blank?
       error! :secrets, :missing_data if data.blank?
 
-      sec = Secret.new(name:, data:)
+      sec = Secret.new(name:, data:, owner: @user)
 
       if params[:repo_name]
         repo = Repository

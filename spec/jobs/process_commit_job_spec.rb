@@ -90,7 +90,7 @@ RSpec.describe ProcessCommitJob do
     allow(SecureRandom).to receive(:uuid).and_return("this-is-an-uuid")
     allow(SecureRandom).to receive(:hex).with(anything).and_return("23035196471c5ab5b3b5b03ee9bf494215defa61457311d6")
 
-    sec = create(:secret, name: "FOO")
+    sec = create(:secret, :with_owner, name: "FOO")
 
     u = create(:user)
     u.emails.create! email: commit.author_email

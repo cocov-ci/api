@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_12_28_194926) do
+ActiveRecord::Schema[7.0].define(version: 2023_01_07_164335) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -162,7 +162,10 @@ ActiveRecord::Schema[7.0].define(version: 2022_12_28_194926) do
     t.binary "secure_data", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "last_used_at", precision: nil
+    t.bigint "owner_id", null: false
     t.index ["name"], name: "index_secrets_on_name"
+    t.index ["owner_id"], name: "index_secrets_on_owner_id"
     t.index ["repository_id"], name: "index_secrets_on_repository_id"
     t.index ["scope", "name", "repository_id"], name: "index_secrets_on_scope_and_name_and_repository_id", unique: true
     t.index ["scope"], name: "index_secrets_on_scope"
@@ -226,6 +229,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_12_28_194926) do
   add_foreign_key "issues", "users", column: "assignee_id"
   add_foreign_key "private_keys", "repositories"
   add_foreign_key "secrets", "repositories"
+  add_foreign_key "secrets", "users", column: "owner_id"
   add_foreign_key "service_tokens", "users", column: "owner_id"
   add_foreign_key "user_emails", "users"
   add_foreign_key "user_tokens", "users"

@@ -8,9 +8,9 @@ RSpec.describe "V1::Secrets" do
   describe "#index" do
     describe "organization-scoped" do
       it "lists secrets" do
-        sec = create(:secret)
+        sec = create(:secret, :with_owner)
         repo = create(:repository)
-        create(:secret, repository: repo, scope: :repository)
+        create(:secret, :with_owner, repository: repo, scope: :repository)
 
         get "/v1/secrets", headers: authenticated
         expect(response).to have_http_status(:ok)
@@ -27,9 +27,9 @@ RSpec.describe "V1::Secrets" do
 
     describe "repository-scoped" do
       it "lists secrets" do
-        create(:secret)
+        create(:secret, :with_owner)
         repo = create(:repository)
-        repo_sec = create(:secret, repository: repo, scope: :repository)
+        repo_sec = create(:secret, :with_owner, repository: repo, scope: :repository)
 
         get "/v1/repositories/#{repo.name}/secrets", headers: authenticated
         json = response.json
@@ -68,7 +68,7 @@ RSpec.describe "V1::Secrets" do
       end
 
       it "validates uniqueness" do
-        sec = create(:secret)
+        sec = create(:secret, :with_owner)
         post "/v1/secrets",
           params: { name: sec.name, data: "foo" },
           headers: authenticated
@@ -111,7 +111,7 @@ RSpec.describe "V1::Secrets" do
 
       it "validates uniqueness" do
         repo = create(:repository)
-        sec = create(:secret, repository: repo, scope: :repository)
+        sec = create(:secret, :with_owner, repository: repo, scope: :repository)
         post "/v1/repositories/#{repo.name}/secrets",
           params: { name: sec.name, data: "foo" },
           headers: authenticated
@@ -137,7 +137,7 @@ RSpec.describe "V1::Secrets" do
 
   describe "#patch" do
     describe "organization-scoped" do
-      let(:item) { create(:secret) }
+      let(:item) { create(:secret, :with_owner) }
 
       it "validates data" do
         patch "/v1/secrets/#{item.id}",
@@ -156,7 +156,7 @@ RSpec.describe "V1::Secrets" do
 
       it "returns 404 in case the item is not organization-scoped" do
         repo = create(:repository)
-        item = create(:secret, repository: repo, scope: :repository)
+        item = create(:secret, :with_owner, repository: repo, scope: :repository)
         patch "/v1/secrets/#{item.id}",
           params: { data: "foo" },
           headers: authenticated
@@ -182,7 +182,7 @@ RSpec.describe "V1::Secrets" do
 
     describe "repository-scoped" do
       let(:repo) { create(:repository) }
-      let(:item) { create(:secret, repository: repo, scope: :repository) }
+      let(:item) { create(:secret, :with_owner, repository: repo, scope: :repository) }
 
       it "validates data" do
         patch "/v1/repositories/#{repo.name}/secrets/#{item.id}",
@@ -207,7 +207,7 @@ RSpec.describe "V1::Secrets" do
       end
 
       it "returns 404 in case the item is not repository-scoped" do
-        secret = create(:secret)
+        secret = create(:secret, :with_owner)
         patch "/v1/repositories/#{repo.name}/secrets/#{secret.id}",
           params: { data: "foo" },
           headers: authenticated
@@ -241,13 +241,13 @@ RSpec.describe "V1::Secrets" do
 
       it "returns 404 in case the item is not organization-scoped" do
         repo = create(:repository)
-        item = create(:secret, repository: repo, scope: :repository)
+        item = create(:secret, :with_owner, repository: repo, scope: :repository)
         delete "/v1/secrets/#{item.id}", headers: authenticated
         expect(response).to have_http_status(:not_found)
       end
 
       it "deletes items" do
-        item = create(:secret)
+        item = create(:secret, :with_owner)
         delete "/v1/secrets/#{item.id}", headers: authenticated
         expect(response).to have_http_status(:no_content)
         expect(Secret.where(id: item.id)).not_to be_exists
@@ -268,14 +268,14 @@ RSpec.describe "V1::Secrets" do
 
       it "returns 404 in case the item is not repository-scoped" do
         repo = create(:repository)
-        item = create(:secret)
+        item = create(:secret, :with_owner)
         delete "/v1/repositories/#{repo.name}/secrets/#{item.id}", headers: authenticated
         expect(response).to have_http_status(:not_found)
       end
 
       it "deletes items" do
         repo = create(:repository)
-        item = create(:secret, repository: repo, scope: :repository)
+        item = create(:secret, :with_owner, repository: repo, scope: :repository)
         delete "/v1/repositories/#{repo.name}/secrets/#{item.id}", headers: authenticated
         expect(response).to have_http_status(:no_content)
         expect(Secret.where(id: item.id)).not_to be_exists
@@ -284,7 +284,7 @@ RSpec.describe "V1::Secrets" do
   end
 
   describe "show" do
-    let(:secret) { create(:secret) }
+    let(:secret) { create(:secret, :with_owner) }
     let(:auth) { secret.generate_authorization }
 
     it "rejects non-service tokens" do
