@@ -17,7 +17,8 @@ module V1
       error! :secrets, :invalid_authorization unless authorization.start_with? "csa_"
       secret = Secret.from_authorization(authorization)
       error! :secrets, :invalid_authorization if secret.nil?
-
+      secret.last_used_at = Time.current
+      secret.save
       render plain: secret.data
     end
 
