@@ -53,6 +53,6 @@ class Repository < ApplicationRecord
   private
 
   def ensure_token
-    self.token = SecureRandom.hex(21) if token.blank?
+    self.token = "crt_#{SecureRandom.hex(21)}" if token.blank?
   end
 end
