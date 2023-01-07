@@ -71,6 +71,18 @@ module Cocov
         get_json("auth:#{id}", delete: true)&.dig(:state)
       end
 
+      def register_secret_authorization(id, obj)
+        # TODO: should we hold it unused for 7 days? How long should jobs be
+        # enqueued for?
+        instance.set("cocov:secret_auth:#{id}", obj, ex: 7.days)
+      end
+
+      def void_secret_authorization(id)
+        lock("secret_auth:#{id}", 10.seconds) do
+          instance.getdel("cocov:secret_auth:#{id}")
+        end
+      end
+
       def lock(resource, timeout)
         timeout = timeout.to_i * 1000 if timeout.is_a? ActiveSupport::Duration
         manager = Redlock::Client.new([REDIS_URL])

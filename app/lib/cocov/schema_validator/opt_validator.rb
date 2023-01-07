@@ -3,6 +3,8 @@
 module Cocov
   class SchemaValidator
     class OptValidator < BaseValidator
+      attr_reader :value
+
       def initialize(value)
         super()
         @value = value

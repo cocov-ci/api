@@ -7,8 +7,6 @@ coverage:
 
 checks:
   - plugin: cocov/golangci-lint:v0.1
-    envs:
-      GOPRIVATE: github.com/cocov-ci
     mounts:
       - source: secrets:GIT_CONFIG
         destination: ~/.gitconfig

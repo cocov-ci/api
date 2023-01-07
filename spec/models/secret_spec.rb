@@ -67,4 +67,16 @@ RSpec.describe Secret do
     loaded = described_class.find(secret.id)
     expect(loaded.data).to eq secret.data
   end
+
+  it "handles authorizations" do
+    mock_redis!
+
+    secret.save!
+
+    auth = secret.generate_authorization
+    expect(auth).to start_with("csa_")
+
+    recovered = described_class.from_authorization(auth)
+    expect(recovered.id).to eq secret.id
+  end
 end

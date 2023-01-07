@@ -9,8 +9,5 @@ checks:
   - plugin: cocov/golangci-lint:v0.1
     envs:
       GOPRIVATE: github.com/cocov-ci
-    mounts:
-      - source: secrets:GIT_CONFIG
-        destination: ~/.gitconfig
   - plugin: cocov/brakeman:v0.1
   - plugin: cocov/bundler-audit:v0.1

@@ -45,4 +45,21 @@ class Secret < ApplicationRecord
   def data
     Cocov::Crypto.decrypt(secure_data)
   end
+
+  def generate_authorization
+    auth_id = "csa_#{SecureRandom.hex(24)}"
+    digest = OpenSSL::Digest::SHA256.hexdigest(auth_id)
+    obj_id = Base64.encode64(Cocov::Crypto.encrypt(id.to_s))
+    Cocov::Redis.register_secret_authorization(digest, obj_id)
+
+    auth_id
+  end
+
+  def self.from_authorization(id)
+    digest = OpenSSL::Digest::SHA256.hexdigest(id)
+    obj = Cocov::Redis.void_secret_authorization(digest)
+    return if obj.nil?
+
+    find(Cocov::Crypto.decrypt(Base64.decode64(obj)))
+  end
 end

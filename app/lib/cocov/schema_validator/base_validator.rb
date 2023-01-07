@@ -21,7 +21,7 @@ module Cocov
         # :nocov:
       end
 
-      def join_path(other)
+      def join_path(other = nil)
         @path + [other].flatten.compact
       end
 
@@ -32,7 +32,11 @@ module Cocov
       def err!(expectation) = custom_err!(nil, expectation, @what)
 
       def custom_err!(path, expectation, received)
-        raise ValidationError.new(join_path(path), expectation, received)
+        raise UnsatisfiedExpectationError.new(join_path(path), expectation, received)
+      end
+
+      def unexpected_key!(named)
+        raise UnexpectedKeyError.new(join_path(nil), named)
       end
     end
   end
