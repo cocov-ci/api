@@ -11,11 +11,13 @@
 #  token          :text             not null
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
+#  github_id      :integer          not null
 #
 # Indexes
 #
-#  index_repositories_on_name   (name) UNIQUE
-#  index_repositories_on_token  (token) UNIQUE
+#  index_repositories_on_github_id  (github_id) UNIQUE
+#  index_repositories_on_name       (name) UNIQUE
+#  index_repositories_on_token      (token) UNIQUE
 #
 require "rails_helper"
 
@@ -23,6 +25,7 @@ RSpec.describe Repository do
   subject(:repo) { build(:repository) }
 
   it_behaves_like "a validated model", %i[
+    github_id
     name
     default_branch
   ]
