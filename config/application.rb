@@ -37,5 +37,25 @@ module Cocov
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    if Rails.env.production? && Rails.const_defined?(:Console)
+      puts "             .                     "
+      puts "             *                     "
+      puts "            :*                     "
+      puts "           ::@=-:  *= :            "
+      puts "          -* #--+@+%##@- :         "
+      puts "          +%-:#  .+*-*.=#*         "
+      puts "          .%+.=:    :  . #%-       "
+      puts "            -*:           #:       Cocov API"
+      puts "                -:  +.  .=.        Copyright (c) 2022-2023 - The Cocov Authors"
+      puts "             .**=       %%#=       Licensed under GPL-3.0"
+      puts "            +*. =:   :-=+..        "
+      puts "          .#=    =#=-=%::*         "
+      puts "         -%:      =#. :+*=         "
+      puts "        +#         ##.  .          "
+      puts "       #*          :+@.            "
+      puts "     .%+          :% @+            "
+      puts "    .%=           -@:@*            "
+    end
   end
 end
