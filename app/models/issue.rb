@@ -32,7 +32,16 @@
 #  fk_rails_...  (commit_id => commits.id)
 #
 class Issue < ApplicationRecord
-  enum kind: { style: 0, performance: 1, security: 2, bug: 3, complexity: 4, duplication: 5, convention: 6 }
+  enum kind: {
+    style: 0,
+    performance: 1,
+    security: 2,
+    bug: 3,
+    complexity: 4,
+    duplication: 5,
+    convention: 6,
+    quality: 7
+  }
   enum status: { new: 0, resolved: 1, ignored: 2 }, _prefix: :status
 
   before_validation :ensure_status
