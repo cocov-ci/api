@@ -30,20 +30,15 @@ module V1
     end
 
     def create
-      error! :repositories, :already_exists if Repository.exists?(name: params[:name])
-
       gh_repo = begin
         Cocov::GitHub.app.repo("#{Cocov::GITHUB_ORGANIZATION_NAME}/#{params[:name]}")
       rescue Octokit::NotFound
         error! :repositories, :not_on_github
       end
 
-      repo = Repository.new(
-        name: gh_repo.name,
-        description: gh_repo.description,
-        default_branch: gh_repo.default_branch
-      )
-      repo.save!
+      error! :repositories, :already_exists if Repository.exists?(github_id: gh_repo.id)
+
+      repo = Repository.create_from_github(gh_repo)
 
       render "v1/repositories/create",
         locals: { repo: },

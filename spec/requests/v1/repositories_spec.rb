@@ -24,8 +24,17 @@ RSpec.describe "V1::Repositories" do
 
   describe "#create" do
     it "returns an error in case the repository already exists" do
+      stub_configuration!
+      gh_app = double(:github)
+      expect(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      fake_repo = double(:repo)
+      expect(gh_app).to receive(:repo)
+        .with("#{@github_organization_name}/foobar")
+        .and_return(fake_repo)
+
       repo = create(:repository)
-      post "/v1/repositories", params: { name: repo.name }, headers: authenticated
+      expect(fake_repo).to receive(:id).and_return(repo.github_id)
+      post "/v1/repositories", params: { name: "foobar" }, headers: authenticated
 
       expect(response).to have_http_status :conflict
       expect(response).to be_a_json_error :repositories, :already_exists
@@ -48,11 +57,12 @@ RSpec.describe "V1::Repositories" do
     it "returns the newly created repository on success" do
       stub_configuration!
       gh_app = double(:github)
-      expect(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
       repo = double(:repo)
-      expect(repo).to receive(:name).and_return("foobar")
-      expect(repo).to receive(:default_branch).and_return("master")
-      expect(repo).to receive(:description).and_return("foos the bar")
+      allow(repo).to receive(:name).and_return("foobar")
+      allow(repo).to receive(:default_branch).and_return("master")
+      allow(repo).to receive(:description).and_return("foos the bar")
+      allow(repo).to receive(:id).and_return(10_000)
       expect(gh_app).to receive(:repo).with("#{@github_organization_name}/foobar").and_return(repo)
 
       post "/v1/repositories", params: { name: "foobar" }, headers: authenticated
