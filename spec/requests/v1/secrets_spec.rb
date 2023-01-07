@@ -19,7 +19,9 @@ RSpec.describe "V1::Secrets" do
         expect(json[:secrets].first).to eq({
           "id" => sec.id,
           "name" => sec.name,
+          "owner" => { "login" => sec.owner.login, "avatar_url" => nil },
           "scope" => sec.scope.to_s,
+          "last_used_at" => nil,
           "created_at" => sec.created_at.iso8601
         })
       end
@@ -37,7 +39,9 @@ RSpec.describe "V1::Secrets" do
         expect(json[:secrets].first).to eq({
           "id" => repo_sec.id,
           "name" => repo_sec.name,
+          "owner" => { "login" => repo_sec.owner.login, "avatar_url" => nil },
           "scope" => repo_sec.scope.to_s,
+          "last_used_at" => nil,
           "created_at" => repo_sec.created_at.iso8601
         })
       end
@@ -171,7 +175,9 @@ RSpec.describe "V1::Secrets" do
         expect(response.json).to eq({
           "id" => item.id,
           "name" => item.name,
+          "owner" => { "login" => item.owner.login, "avatar_url" => nil },
           "scope" => item.scope.to_s,
+          "last_used_at" => nil,
           "created_at" => item.created_at.iso8601
         })
 
@@ -223,6 +229,8 @@ RSpec.describe "V1::Secrets" do
           "id" => item.id,
           "name" => item.name,
           "scope" => item.scope.to_s,
+          "owner" => { "login" => item.owner.login, "avatar_url" => nil },
+          "last_used_at" => nil,
           "created_at" => item.created_at.iso8601
         })
 

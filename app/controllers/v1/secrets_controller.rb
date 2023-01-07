@@ -75,13 +75,14 @@ module V1
     end
 
     def secrets
-      @secrets ||= if params[:repo_name]
-                     Repository
-                       .find_by!(name: params[:repo_name])
-                       .secrets
-                   else
-                     Secret.where(repository: nil)
-                   end
+      secrets ||= if params[:repo_name]
+                    Repository
+                      .find_by!(name: params[:repo_name])
+                      .secrets
+                  else
+                    Secret.where(repository: nil)
+                  end
+      @secrets = secrets.includes(:owner)
     end
   end
 end
