@@ -37,12 +37,12 @@ module V1
     private
 
     def process_delete(event)
-      return if event.dig(:ref_type) != "branch"
+      return if event[:ref_type] != "branch"
 
       repo = Repository.find_by(github_id: event.dig(:repository, :id))
       return if repo.nil?
 
-      branch = repo.branches.find_by(name: event.dig(:ref))
+      branch = repo.branches.find_by(name: event[:ref])
       return if branch.nil?
 
       branch.destroy
@@ -97,8 +97,8 @@ module V1
     end
 
     def process_repository_edited(event)
-      wanted_changes = [:description, :default_branch]
-      changes = event.dig(:changes).keys.map(&:to_sym)
+      wanted_changes = %i[description default_branch]
+      changes = event[:changes].keys.map(&:to_sym)
       return if (wanted_changes & changes).empty?
 
       repo = Repository.find_by(github_id: event.dig(:repository, :id))

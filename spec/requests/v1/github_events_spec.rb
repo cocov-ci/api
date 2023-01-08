@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "V1::GithubEvents" do
-  let(:github_repo_id) { 569446274 }
+  let(:github_repo_id) { 569_446_274 }
 
   describe "#process_push" do
     let(:payload) { fixture_file("github/push.json") }
@@ -82,7 +82,7 @@ RSpec.describe "V1::GithubEvents" do
   describe "#process_delete" do
     it "deletes branches" do
       repo = create(:repository, name: "foo", github_id: github_repo_id)
-      branch = create(:branch, name: "test", repository: repo)
+      create(:branch, name: "test", repository: repo)
 
       expect(repo.branches.count).to eq 1
 
@@ -98,7 +98,7 @@ RSpec.describe "V1::GithubEvents" do
 
   describe "#process_repository_deleted" do
     it "deletes a repository" do
-      repo = create(:repository, name: "test", github_id: github_repo_id)
+      create(:repository, name: "test", github_id: github_repo_id)
       expect do
         post "/v1/github/events",
           params: fixture_file("github/repository_deleted.json"),

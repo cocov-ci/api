@@ -90,6 +90,7 @@ class ChecksRunService < ApplicationService
       job_id:,
       org: Cocov::GITHUB_ORGANIZATION_NAME,
       repo: commit.repository.name,
+      repo_id: commit.repository_id,
       sha: commit.sha,
       checks:,
       git_storage: {

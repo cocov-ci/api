@@ -109,3 +109,11 @@ RSpec/InstanceVariable:
 Rails/NotNullColumn:
   Exclude:
     - db/migrate/20221228204002_add_branch_to_history_models.rb
+
+Rails/Output:
+  Exclude:
+    - config/application.rb
+
+Metrics/ClassLength:
+  Exclude:
+    - app/controllers/v1/github_events_controller.rb

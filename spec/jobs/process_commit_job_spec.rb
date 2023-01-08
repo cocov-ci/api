@@ -108,6 +108,7 @@ RSpec.describe ProcessCommitJob do
       "job_id" => "this-is-an-uuid",
       "org" => @github_organization_name,
       "repo" => commit.repository.name,
+      "repo_id" => commit.repository_id,
       "sha" => commit.sha,
       "checks" => [
         {

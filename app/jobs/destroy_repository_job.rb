@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DestroyRepositoryJob < ApplicationJob
   queue_as :default
 

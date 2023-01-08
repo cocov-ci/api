@@ -1,19 +1,24 @@
-require 'rails_helper'
+# frozen_string_literal: true
 
-RSpec.describe DestroyRepositoryJob, type: :job do
+require "rails_helper"
+
+RSpec.describe DestroyRepositoryJob do
   subject(:job) { described_class.new }
 
   it "deletes a repository" do
     stub_crypto_key!
 
     repo = create(:repository)
-    branch = create(:branch, repository: repo)
     commit = create(:commit, repository: repo)
+    create(:branch, repository: repo, head: commit)
+
     create(:secret, :with_owner, repository: repo, scope: :repository)
-    create(:check, commit: commit)
-    create(:issue, commit: commit)
-    create(:coverage_info, :with_file, commit: commit)
+    create(:check, commit:)
+    create(:issue, commit:)
+    create(:coverage_info, :with_file, commit:)
 
     job.perform(repo.id)
+
+    expect(Repository.exists?(id: repo.id)).to eq false
   end
 end

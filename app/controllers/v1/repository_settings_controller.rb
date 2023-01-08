@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module V1
   class RepositorySettingsController < V1Controller
     before_action :ensure_authentication
@@ -20,15 +22,13 @@ module V1
       name_changed = @repository.name_changed?
       @repository.save!
 
-      if name_changed
-        return render json: { new_name: repo.name }
-      end
+      return render json: { new_name: repo.name } if name_changed
 
       head :no_content
     end
 
     def delete
-      @repository.destroy
+      DestroyRepositoryJob.perform_later(@repository.id)
       head :no_content
     end
 
