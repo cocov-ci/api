@@ -3,14 +3,13 @@
 module V1
   class GithubEventsController < V1Controller
     before_action :validate_signature
-    before_action :check_if_wants_event
+    before_action :event_wanted?
     around_action :ignore_duplicated_events
 
     WANTED_EVENTS = {
       delete: :passthrough, # branch deleted
-      pull_request: %i[opened synchronize],
       push: :passthrough, # push created
-      repository: %i[renamed deleted]
+      repository: %i[renamed deleted edited]
     }.freeze
 
     def create
@@ -22,14 +21,14 @@ module V1
         case method
         when "process_delete"
           process_delete(event)
-        when "process_pull_request_opened"
-          process_pull_request_opened(event)
         when "process_push"
           process_push(event)
         when "process_repository_renamed"
           process_repository_renamed(event)
         when "process_repository_deleted"
           process_repository_deleted(event)
+        when "process_repository_edited"
+          process_repository_edited(event)
         end
       end
       head :ok
@@ -37,19 +36,22 @@ module V1
 
     private
 
-    # TODO
-    def process_delete(_event); end
+    def process_delete(event)
+      return if event.dig(:ref_type) != "branch"
 
-    # TODO
-    def process_pull_request_opened(_event); end
+      repo = Repository.find_by(github_id: event.dig(:repository, :id))
+      return if repo.nil?
 
-    # TODO
-    def process_pull_request_synchronize(_event); end
+      branch = repo.branches.find_by(name: event.dig(:ref))
+      return if branch.nil?
+
+      branch.destroy
+    end
 
     def process_push(event)
       return unless event[:ref].start_with? "refs/heads/"
 
-      repo = Repository.find_by(name: event.dig(:repository, :name))
+      repo = Repository.find_by(github_id: event.dig(:repository, :id))
       return if repo.nil?
 
       sha = event.dig(:head_commit, :id)
@@ -79,13 +81,35 @@ module V1
       ProcessCommitJob.perform_later(commit.id)
     end
 
-    # TODO
-    def process_repository_renamed(_event); end
+    def process_repository_renamed(event)
+      repo = Repository.find_by(github_id: event.dig(:repository, :id))
+      return if repo.nil?
 
-    # TODO
-    def process_repository_deleted(_event); end
+      repo.name = event.dig(:repository, :name)
+      repo.save!
+    end
 
-    def check_if_wants_event
+    def process_repository_deleted(event)
+      repo = Repository.find_by(github_id: event.dig(:repository, :id))
+      return if repo.nil?
+
+      repo.destroy
+    end
+
+    def process_repository_edited(event)
+      wanted_changes = [:description, :default_branch]
+      changes = event.dig(:changes).keys.map(&:to_sym)
+      return if (wanted_changes & changes).empty?
+
+      repo = Repository.find_by(github_id: event.dig(:repository, :id))
+      return if repo.nil?
+
+      repo.description = event.dig(:repository, :description)
+      repo.default_branch = event.dig(:repository, :default_branch)
+      repo.save!
+    end
+
+    def event_wanted?
       @event_name = request.env["HTTP_X_GITHUB_EVENT"]
       return head :bad_request if @event_name.blank?
 
