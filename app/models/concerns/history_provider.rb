@@ -4,6 +4,8 @@
 module HistoryProvider
   extend ActiveSupport::Concern
 
+  class NoHistoryError < StandardError; end
+
   class_methods do
     def history_field(name)
       @history_field = name.to_sym
@@ -17,7 +19,30 @@ module HistoryProvider
       date_start = coerce_time_param(date_start)
       date_end = coerce_time_param(date_end)
 
+      last_known = where("repository_id = :id AND created_at < :start", id: repository, start: date_start)
+        .order(created_at: :desc)
+        .limit(1)
+        .pick(@history_field)
+
       params = { repo_id: repository, start: date_start, end: date_end, branch_id: branch }
+
+      entries_between = ActiveRecord::Base.connection.execute(
+        ApplicationRecord.sanitize_sql([<<-SQL.squish, params])
+          SELECT
+            COUNT(*) AS count
+          FROM #{table_name}
+          WHERE
+            repository_id = :repo_id
+            AND branch_id = :branch_id
+            AND DATE_TRUNC('day', created_at) >= DATE_TRUNC('day', :start::timestamp)
+            AND DATE_TRUNC('day', created_at) <= DATE_TRUNC('day', :end::timestamp)
+        SQL
+      ).to_a.first["count"]
+
+      if entries_between.zero? && last_known.nil?
+        raise NoHistoryError, "No history is available for this repository/branch"
+      end
+
       data = ActiveRecord::Base.connection.execute(
         ApplicationRecord.sanitize_sql([<<-SQL.squish, params])
           SELECT
@@ -33,11 +58,6 @@ module HistoryProvider
           ORDER BY date
         SQL
       ).to_a.map { { date: _1["date"].to_date, value: _1["max"] } }
-
-      last_known = where("repository_id = :id AND created_at < :start", id: repository, start: date_start)
-        .order(created_at: :desc)
-        .limit(1)
-        .pick(@history_field) || 0
 
       normalize_time_array(date_array(date_start, date_end), data, last_known)
     end

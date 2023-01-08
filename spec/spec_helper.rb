@@ -11,6 +11,8 @@ RSpec.configure do |config|
 
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
+  config.example_status_persistence_file_path = ".rspec.examples"
+
   config.disable_monkey_patching!
   if config.files_to_run.one?
     # Use the documentation formatter for detailed output,

@@ -59,22 +59,17 @@ RSpec.describe GitService do
   describe "#clone_commit" do
     let(:commit) { create(:commit, :with_repository) }
 
+    before { bypass_redlock! }
+
     it "stops processing in case the commit has already been clonned" do
-      expect(commit).to receive(:locking).with(timeout: 5.minutes) do |&block|
-        Commit.find(commit.id).clone_completed!
-
-        block.call
-      end
-
+      Commit.find(commit.id).clone_completed!
       expect(commit).not_to receive(:clone_in_progress!)
 
       service.clone_commit(commit)
     end
 
     it "updates commit accordingly on success" do
-      expect(commit).to receive(:locking).with(timeout: 5.minutes).and_yield
       expect(commit).not_to receive(:clone_errored!)
-
       expect(commit).to receive(:clone_in_progress!).ordered
       expect(service.storage).to receive(:download_commit).with(commit).ordered
       expect(commit).to receive(:clone_completed!).ordered
@@ -82,7 +77,6 @@ RSpec.describe GitService do
     end
 
     it "updates commit accordingly on error" do
-      expect(commit).to receive(:locking).with(timeout: 5.minutes).and_yield
       expect(commit).not_to receive(:clone_completed!)
 
       expect(commit).to receive(:clone_in_progress!).ordered

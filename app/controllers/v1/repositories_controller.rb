@@ -3,6 +3,7 @@
 module V1
   class RepositoriesController < V1Controller
     before_action :ensure_authentication
+    rescue_from HistoryProvider::NoHistoryError, with: :no_history
 
     def index
       repos = paginating Repository
@@ -70,6 +71,10 @@ module V1
     end
 
     private
+
+    def no_history
+      head :no_content
+    end
 
     def stats_params
       from = params[:from]

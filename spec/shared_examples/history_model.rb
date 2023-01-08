@@ -61,4 +61,13 @@ RSpec.shared_examples "a history model" do |history_field|
       expect(data.first[:value]).to eq 10
     end
   end
+
+  it "indicates when no data is available" do
+    repo = create(:repository)
+    branch = create(:branch, repository: repo)
+    Timecop.freeze do
+      expect { described_class.history_for(repo, branch.id, Time.zone.now, Time.zone.now) }
+        .to raise_error(HistoryProvider::NoHistoryError)
+    end
+  end
 end

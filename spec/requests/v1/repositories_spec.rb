@@ -153,6 +153,18 @@ RSpec.describe "V1::Repositories" do
         expect(response.json.all? { _1 == 80 }).to be true
       end
     end
+
+    it "indicates when no data is available" do
+      mock_redis!
+      r = create(:repository)
+      create(:branch, repository: r)
+
+      Timecop.freeze(today) do
+        get "/v1/repositories/#{r.name}/graph/coverage",
+          headers: authenticated
+        expect(response).to have_http_status :no_content
+      end
+    end
   end
 
   describe "#graph_issues" do
@@ -170,6 +182,18 @@ RSpec.describe "V1::Repositories" do
         expect(response).to have_http_status :ok
         expect(response.json.length).to eq 31
         expect(response.json.all? { _1 == 80 }).to be true
+      end
+    end
+
+    it "indicates when no data is available" do
+      mock_redis!
+      r = create(:repository)
+      create(:branch, repository: r)
+
+      Timecop.freeze(today) do
+        get "/v1/repositories/#{r.name}/graph/issues",
+          headers: authenticated
+        expect(response).to have_http_status :no_content
       end
     end
   end
