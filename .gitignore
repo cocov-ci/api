@@ -25,3 +25,4 @@
 /coverage/*
 .byebug_history
 .git_storage/
+.rspec.examples
