@@ -238,7 +238,7 @@ RSpec.describe "V1::Issues" do
         context: "cocov"
       )
 
-      put "/v1/repositories/#{repo.name}/issues",
+      put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),
         as: :json,
         params: {
@@ -287,7 +287,7 @@ RSpec.describe "V1::Issues" do
         context: "cocov"
       ).ordered
 
-      put "/v1/repositories/#{repo.name}/issues",
+      put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),
         as: :json,
         params: {
@@ -308,7 +308,7 @@ RSpec.describe "V1::Issues" do
       probl.status = :ignored
       probl.status_reason = "bla"
       probl.save!
-      put "/v1/repositories/#{repo.name}/issues",
+      put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),
         as: :json,
         params: {
@@ -356,13 +356,13 @@ RSpec.describe "V1::Issues" do
         }
       }
 
-      put "/v1/repositories/#{repo.name}/issues", **request
+      put "/v1/repositories/#{repo.id}/issues", **request
 
       expect(response).to have_http_status :no_content
       expect(repo.commits.count).to eq 1
       expect(repo.commits.first.issues.count).to eq 1
 
-      put "/v1/repositories/#{repo.name}/issues", **request
+      put "/v1/repositories/#{repo.id}/issues", **request
 
       expect(response).to have_http_status :no_content
       expect(repo.commits.count).to eq 1
@@ -383,7 +383,7 @@ RSpec.describe "V1::Issues" do
         context: "cocov"
       )
 
-      put "/v1/repositories/#{repo.name}/issues",
+      put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),
         as: :json,
         params: {
@@ -502,7 +502,7 @@ RSpec.describe "V1::Issues" do
         context: "cocov"
       )
 
-      put "/v1/repositories/#{repo.name}/issues",
+      put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),
         as: :json,
         params: payload

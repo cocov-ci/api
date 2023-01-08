@@ -144,7 +144,7 @@ RSpec.describe "V1::Checks" do
 
     it "returns 404 in case commit does not exist" do
       repo = create(:repository)
-      patch "/v1/repositories/#{repo.name}/commits/x/checks",
+      patch "/v1/repositories/#{repo.id}/commits/x/checks",
         headers: authenticated(as: :service),
         params: { status: "running", plugin_name: "foo" }
 
@@ -155,7 +155,7 @@ RSpec.describe "V1::Checks" do
     it "returns 404 in case check does not exist" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
-      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks",
+      patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
         headers: authenticated(as: :service),
         params: { status: "running", plugin_name: "foo" }
 
@@ -169,7 +169,7 @@ RSpec.describe "V1::Checks" do
       let(:repo) { check.commit.repository }
 
       it "for status running" do
-        patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks",
+        patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
           headers: authenticated(as: :service),
           params: { status: "running", plugin_name: check.plugin_name }
 
@@ -179,7 +179,7 @@ RSpec.describe "V1::Checks" do
       end
 
       it "for status succeeded" do
-        patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks",
+        patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
           headers: authenticated(as: :service),
           params: { status: "succeeded", plugin_name: check.plugin_name }
 
@@ -190,7 +190,7 @@ RSpec.describe "V1::Checks" do
       end
 
       it "for status errored" do
-        patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks",
+        patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
           headers: authenticated(as: :service),
           params: { status: "errored", error_output: "boom", plugin_name: check.plugin_name }
 

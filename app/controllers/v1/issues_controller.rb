@@ -45,7 +45,7 @@ module V1
           path: e.path.join(".")
       end
 
-      repo = Repository.find_by!(name: params[:repo_name])
+      repo = Repository.find(params[:repo_id])
       IssueRegisteringService.call(data, repo, params[:status])
 
       head :no_content

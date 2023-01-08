@@ -19,6 +19,6 @@ RSpec.describe DestroyRepositoryJob do
 
     job.perform(repo.id)
 
-    expect(Repository.exists?(id: repo.id)).to eq false
+    expect(Repository.exists?(id: repo.id)).to be false
   end
 end

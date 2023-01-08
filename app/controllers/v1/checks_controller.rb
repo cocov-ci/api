@@ -40,7 +40,7 @@ module V1
         status: new_status
       }
 
-      check = Repository.find_by!(name: params[:repo_name])
+      check = Repository.find(params[:repo_id])
         .commits.find_by!(sha: params[:commit_sha])
         .checks
         .find_by!(plugin_name: params[:plugin_name])

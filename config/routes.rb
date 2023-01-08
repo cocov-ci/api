@@ -48,10 +48,10 @@ Rails.application.routes.draw do
     get "/repositories/:repo_name/commits/:commit_sha/checks", to: "checks#index"
     get "/repositories/:repo_name/commits/:commit_sha/checks/summary", to: "checks#summary"
     get "/repositories/:repo_name/commits/:commit_sha/checks/:id", to: "checks#show"
-    patch "/repositories/:repo_name/commits/:commit_sha/checks", to: "checks#patch"
+    patch "/repositories/:repo_id/commits/:commit_sha/checks", to: "checks#patch"
 
     # Issues
-    put "/repositories/:repo_name/issues", to: "issues#put"
+    put "/repositories/:repo_id/issues", to: "issues#put"
     get "/repositories/:repo_name/commits/:commit_sha/issues", to: "issues#index"
     get "/repositories/:repo_name/commits/:commit_sha/issues/sources", to: "issues#sources"
     get "/repositories/:repo_name/commits/:commit_sha/issues/categories", to: "issues#categories"
