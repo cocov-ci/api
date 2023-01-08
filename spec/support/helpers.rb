@@ -80,6 +80,10 @@ module Cocov
         allow(Aws::S3::Resource).to receive(:new).and_return(s3)
       end
     end
+
+    def github_delivery_header(event)
+      { "HTTP_X_GITHUB_EVENT" => event, "HTTP_X_GITHUB_DELIVERY" => SecureRandom.uuid }
+    end
   end
 end
 

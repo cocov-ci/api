@@ -3,35 +3,109 @@
 require "rails_helper"
 
 RSpec.describe "V1::GithubEvents" do
-  let(:payload) { fixture_file("github_push_event.json") }
+  let(:github_repo_id) { 569446274 }
 
-  it "handles incoming push events" do
-    mock_redis!
+  describe "#process_push" do
+    let(:payload) { fixture_file("github/push.json") }
 
-    create(:repository, name: "api")
-    post "/v1/github/events",
-      params: payload,
-      headers: { "HTTP_X_GITHUB_EVENT" => "push", "HTTP_X_GITHUB_DELIVERY" => SecureRandom.uuid }
+    it "handles incoming push events" do
+      mock_redis!
 
-    expect(response).to have_http_status(:ok)
-  end
-
-  it "processes deferred coverages when commit is created on push" do
-    mock_redis!
-
-    sha = "6858adf07e5cd43f9c5d87573369fa354d20a076"
-    repo = create(:repository, name: "api")
-    @redis.set("commit:coverage:#{repo.id}:#{repo.id}:#{sha}", { bla: true }.to_json)
-
-    data = JSON.parse(payload)
-    data["head_commit"]["id"] = sha
-
-    expect do
+      create(:repository, name: "api", github_id: github_repo_id)
       post "/v1/github/events",
-        params: data.to_json,
-        headers: { "HTTP_X_GITHUB_EVENT" => "push", "HTTP_X_GITHUB_DELIVERY" => SecureRandom.uuid }
+        params: payload,
+        headers: github_delivery_header("push")
 
       expect(response).to have_http_status(:ok)
-    end.to have_enqueued_job
+    end
+
+    it "processes deferred coverages when commit is created on push" do
+      mock_redis!
+
+      sha = "6858adf07e5cd43f9c5d87573369fa354d20a076"
+      repo = create(:repository, name: "api", github_id: github_repo_id)
+      @redis.set("commit:coverage:#{repo.id}:#{repo.id}:#{sha}", { bla: true }.to_json)
+
+      data = JSON.parse(payload)
+      data["head_commit"]["id"] = sha
+
+      expect do
+        post "/v1/github/events",
+          params: data.to_json,
+          headers: github_delivery_header("push")
+
+        expect(response).to have_http_status(:ok)
+      end.to have_enqueued_job
+    end
+  end
+
+  describe "#process_repository_edited" do
+    it "updates a repository description" do
+      repo = create(:repository, description: "foo", github_id: github_repo_id)
+
+      post "/v1/github/events",
+        params: fixture_file("github/repository_edit_description.json"),
+        headers: github_delivery_header("repository")
+
+      expect(response).to have_http_status(:ok)
+
+      expect(repo.reload.description).to eq "Cocov's API"
+    end
+
+    it "updates a repository default branch" do
+      repo = create(:repository, default_branch: "foo", github_id: github_repo_id)
+
+      post "/v1/github/events",
+        params: fixture_file("github/repository_edit_default_branch.json"),
+        headers: github_delivery_header("repository")
+
+      expect(response).to have_http_status(:ok)
+
+      expect(repo.reload.default_branch).to eq "master"
+    end
+  end
+
+  describe "#process_repository_renamed" do
+    it "updates a repository name" do
+      repo = create(:repository, name: "foo", github_id: github_repo_id)
+
+      post "/v1/github/events",
+        params: fixture_file("github/repository_renamed.json"),
+        headers: github_delivery_header("repository")
+
+      expect(response).to have_http_status(:ok)
+
+      expect(repo.reload.name).to eq "renamed"
+    end
+  end
+
+  describe "#process_delete" do
+    it "deletes branches" do
+      repo = create(:repository, name: "foo", github_id: github_repo_id)
+      branch = create(:branch, name: "test", repository: repo)
+
+      expect(repo.branches.count).to eq 1
+
+      post "/v1/github/events",
+        params: fixture_file("github/delete.json"),
+        headers: github_delivery_header("delete")
+
+      expect(response).to have_http_status(:ok)
+
+      expect(repo.branches.count).to eq 0
+    end
+  end
+
+  describe "#process_repository_deleted" do
+    it "deletes a repository" do
+      repo = create(:repository, name: "test", github_id: github_repo_id)
+      expect do
+        post "/v1/github/events",
+          params: fixture_file("github/repository_deleted.json"),
+          headers: github_delivery_header("repository")
+
+        expect(response).to have_http_status(:ok)
+      end.to have_enqueued_job
+    end
   end
 end

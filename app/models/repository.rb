@@ -27,10 +27,10 @@ class Repository < ApplicationRecord
   validates :default_branch, presence: true
   validates :token, presence: true, uniqueness: true
 
-  has_many :branches, dependent: :destroy_async
-  has_many :commits, dependent: :destroy_async
-  has_many :secrets, dependent: :destroy_async
-  has_many :private_keys, dependent: :destroy_async
+  has_many :branches, dependent: :destroy
+  has_many :commits, dependent: :destroy
+  has_many :secrets, dependent: :destroy
+  has_many :private_keys, dependent: :destroy
 
   def find_default_branch
     if branches.loaded?

@@ -13,7 +13,7 @@ module V1
     }.freeze
 
     def create
-      event = JSON.parse(request.body.read).with_indifferent_access
+      event = @event
       method = [:process, @event_name]
       method << event[:action] if WANTED_EVENTS[@event_name].is_a? Array
       method = method.join("_")
@@ -93,7 +93,7 @@ module V1
       repo = Repository.find_by(github_id: event.dig(:repository, :id))
       return if repo.nil?
 
-      repo.destroy
+      DestroyRepositoryJob.perform_later(repo.id)
     end
 
     def process_repository_edited(event)
@@ -114,10 +114,17 @@ module V1
       return head :bad_request if @event_name.blank?
 
       @event_name = @event_name.to_sym
+
+      request.body.rewind
+      @event = JSON.parse(request.body.read, symbolize_names: true).with_indifferent_access
+
       return head :ok unless WANTED_EVENTS.key? @event_name
+
       return if WANTED_EVENTS[@event_name] == :passthrough
 
-      return head :ok unless WANTED_EVENTS[@event_name].include? params[:action].to_sym
+      return head :bad_request if @event[:action].blank?
+
+      return head :ok unless WANTED_EVENTS[@event_name].include? @event[:action].to_sym
     end
 
     def ignore_duplicated_events
