@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_01_07_173749) do
+ActiveRecord::Schema[7.0].define(version: 2023_01_12_181743) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -157,6 +157,15 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_07_173749) do
     t.index ["token"], name: "index_repositories_on_token", unique: true
   end
 
+  create_table "repository_members", force: :cascade do |t|
+    t.bigint "repository_id", null: false
+    t.integer "github_member_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["repository_id", "github_member_id"], name: "index_repository_members_on_repository_id_and_github_member_id", unique: true
+    t.index ["repository_id"], name: "index_repository_members_on_repository_id"
+  end
+
   create_table "secrets", force: :cascade do |t|
     t.integer "scope", null: false
     t.citext "name", null: false
@@ -230,6 +239,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_07_173749) do
   add_foreign_key "issues", "commits"
   add_foreign_key "issues", "users", column: "assignee_id"
   add_foreign_key "private_keys", "repositories"
+  add_foreign_key "repository_members", "repositories"
   add_foreign_key "secrets", "repositories"
   add_foreign_key "secrets", "users", column: "owner_id"
   add_foreign_key "service_tokens", "users", column: "owner_id"

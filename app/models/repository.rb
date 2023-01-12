@@ -31,6 +31,7 @@ class Repository < ApplicationRecord
   has_many :commits, dependent: :destroy
   has_many :secrets, dependent: :destroy
   has_many :private_keys, dependent: :destroy
+  has_many :members, class_name: :RepositoryMember, dependent: :destroy
 
   def find_default_branch
     if branches.loaded?
