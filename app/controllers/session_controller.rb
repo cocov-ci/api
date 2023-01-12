@@ -19,7 +19,7 @@ class SessionController < ApplicationController
       client_id: Cocov::GITHUB_OAUTH_CLIENT_ID,
       redirect_uri: redirect_uri.to_s,
       state: keys[:state],
-      scope: "user:email",
+      scope: "user:email,repo",
       allow_signup: false
     }
 

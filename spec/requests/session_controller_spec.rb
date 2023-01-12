@@ -35,7 +35,7 @@ RSpec.describe "Sessions" do
       expect(query["allow_signup"]).to eq "false"
       expect(query["client_id"]).to eq @github_oauth_client_id
       expect(query["redirect_uri"]).to eq "#{@ui_base_url}/test/1?exchange_token=random-value-2"
-      expect(query["scope"]).to eq "user:email"
+      expect(query["scope"]).to eq "user:email,repo"
       expect(query["state"]).to eq "random-value-1"
 
       redis_data = @redis.get_json("auth:random-value-2")
