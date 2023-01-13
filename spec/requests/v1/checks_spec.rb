@@ -12,6 +12,9 @@ RSpec.describe "V1::Checks" do
 
     it "returns 404 when commit does not exist" do
       repo = create(:repository)
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       get "/v1/repositories/#{repo.name}/commits/bla/checks", headers: authenticated
       expect(response).to have_http_status(:not_found)
       expect(response).to be_a_json_error(:not_found)
@@ -26,6 +29,8 @@ RSpec.describe "V1::Checks" do
         create(:check, :succeeded, commit:),
         create(:check, :errored, commit:)
       ]
+      @user = create(:user)
+      grant(@user, access_to: repo)
 
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks", headers: authenticated
       expect(response).to have_http_status(:ok)
@@ -53,6 +58,9 @@ RSpec.describe "V1::Checks" do
 
     it "returns 404 when commit does not exist" do
       repo = create(:repository)
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       get "/v1/repositories/#{repo.name}/commits/bla/checks/bla", headers: authenticated
       expect(response).to have_http_status(:not_found)
       expect(response).to be_a_json_error(:not_found)
@@ -61,6 +69,9 @@ RSpec.describe "V1::Checks" do
     it "returns 404 when check does not exist" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks/bla", headers: authenticated
       expect(response).to have_http_status(:not_found)
       expect(response).to be_a_json_error(:not_found)
@@ -69,7 +80,10 @@ RSpec.describe "V1::Checks" do
     it "returns basic info for non-error checks" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
       check = create(:check, commit:)
+
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks/#{check.id}", headers: authenticated
       expect(response).to have_http_status(:ok)
       expect(response.json).to eq({
@@ -83,6 +97,9 @@ RSpec.describe "V1::Checks" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
       check = create(:check, :errored, commit:)
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks/#{check.id}", headers: authenticated
       expect(response).to have_http_status(:ok)
       expect(response.json).to eq({
@@ -207,6 +224,9 @@ RSpec.describe "V1::Checks" do
     it "returns summaries" do
       repo = create(:repository)
       commit = create(:commit, repository: repo)
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       Timecop.freeze do
         create(:check, commit:, plugin_name: "cocov/rubocop", started_at: 3.seconds.ago, finished_at: Time.zone.now,
           status: :succeeded)

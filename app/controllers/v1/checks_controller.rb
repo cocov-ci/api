@@ -6,7 +6,7 @@ module V1
     before_action :ensure_service_token, only: :patch
 
     def index
-      checks = Repository.find_by!(name: params[:repo_name])
+      checks = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
         .commits.includes(:checks).find_by!(sha: params[:commit_sha])
         .checks
         .order(plugin_name: :asc)
@@ -16,7 +16,9 @@ module V1
     end
 
     def show
-      check = Repository.find_by!(name: params[:repo_name])
+      check = Repository
+        .with_context(auth_context)
+        .find_by!(name: params[:repo_name])
         .commits.find_by!(sha: params[:commit_sha])
         .checks
         .find(params[:id])
@@ -64,7 +66,7 @@ module V1
     end
 
     def summary
-      commit = Repository.find_by!(name: params[:repo_name])
+      commit = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
         .commits.find_by!(sha: params[:commit_sha])
       checks = commit.checks.order(plugin_name: :asc)
       issues_count = commit.issues.group(:check_source).count
