@@ -23,18 +23,6 @@ RSpec.describe MonthlyGrapherService do
       expect(result.last).to eq 10
     end
 
-    it "accepts a repository name" do
-      result = described_class.call(repo.name, :issues)
-      expect(result.length).to be >= 30
-      expect(result.last).to eq 10
-    end
-
-    it "accepts a repository id" do
-      result = described_class.call(repo.id, :issues)
-      expect(result.length).to be >= 30
-      expect(result.last).to eq 10
-    end
-
     it "rejects anything else" do
       expect { described_class.call(:what, :issues) }.to raise_error(ArgumentError)
     end
@@ -42,49 +30,49 @@ RSpec.describe MonthlyGrapherService do
 
   describe "parameter kind" do
     it "accepts :issues" do
-      result = described_class.call(repo.id, :issues)
+      result = described_class.call(repo, :issues)
       expect(result.length).to be >= 30
       expect(result.last).to eq 10
     end
 
     it "accepts :coverage" do
-      result = described_class.call(repo.id, :coverage)
+      result = described_class.call(repo, :coverage)
       expect(result.length).to be >= 30
       expect(result.last).to eq 10
     end
 
     it "rejects anything else" do
-      expect { described_class.call(repo.id, :what) }.to raise_error(ArgumentError)
+      expect { described_class.call(repo, :what) }.to raise_error(ArgumentError)
     end
   end
 
   describe "parameter branch" do
     it "accepts nil" do
-      result = described_class.call(repo.id, :coverage, branch: nil)
+      result = described_class.call(repo, :coverage, branch: nil)
       expect(result.length).to be >= 30
       expect(result.last).to eq 10
     end
 
     it "accepts a Branch instance" do
-      result = described_class.call(repo.id, :coverage, branch:)
+      result = described_class.call(repo, :coverage, branch:)
       expect(result.length).to be >= 30
       expect(result.last).to eq 10
     end
 
     it "accepts a branch id" do
-      result = described_class.call(repo.id, :coverage, branch: branch.id)
+      result = described_class.call(repo, :coverage, branch: branch.id)
       expect(result.length).to be >= 30
       expect(result.last).to eq 10
     end
 
     it "accepts a branch name" do
-      result = described_class.call(repo.id, :coverage, branch: branch.name)
+      result = described_class.call(repo, :coverage, branch: branch.name)
       expect(result.length).to be >= 30
       expect(result.last).to eq 10
     end
 
     it "rejects anything else" do
-      expect { described_class.call(repo.id, :coverage, branch: :what) }.to raise_error(ArgumentError)
+      expect { described_class.call(repo, :coverage, branch: :what) }.to raise_error(ArgumentError)
     end
   end
 end
