@@ -13,6 +13,8 @@ RSpec.describe "V1::Branches" do
     it "lists branches" do
       branch = create(:branch, :with_repository, :with_commit)
       repo = branch.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
 
       get "/v1/repositories/#{repo.name}/branches", headers: authenticated
       expect(response).to have_http_status(:ok)
@@ -38,6 +40,9 @@ RSpec.describe "V1::Branches" do
 
     it "returns 404 when branch does not exist" do
       repo = create(:repository)
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       get "/v1/repositories/#{repo.name}/branches/foo", headers: authenticated
       expect(response).to have_http_status(:not_found)
       expect(response).to be_a_json_error(:not_found)
@@ -46,6 +51,8 @@ RSpec.describe "V1::Branches" do
     it "gets info about a single branch" do
       branch = create(:branch, :with_repository, :with_commit)
       repo = branch.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
 
       get "/v1/repositories/#{repo.name}/branches/#{branch.name}", headers: authenticated
       expect(response).to have_http_status(:ok)
@@ -66,6 +73,8 @@ RSpec.describe "V1::Branches" do
       mock_redis!
       r = create(:repository)
       branch = create(:branch, repository: r)
+      @user = create(:user)
+      grant(@user, access_to: r)
 
       Timecop.freeze(today) do
         CoverageHistory.create!(repository: r, branch:, percentage: 80, created_at: 10.years.ago)
@@ -85,6 +94,8 @@ RSpec.describe "V1::Branches" do
       mock_redis!
       r = create(:repository)
       branch = create(:branch, repository: r)
+      @user = create(:user)
+      grant(@user, access_to: r)
 
       Timecop.freeze(today) do
         IssueHistory.create!(repository: r, branch:, quantity: 80, created_at: 10.years.ago)

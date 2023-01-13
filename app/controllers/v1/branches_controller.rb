@@ -6,6 +6,7 @@ module V1
 
     def index
       branches = paginating Repository
+        .with_context(auth_context)
         .find_by!(name: params[:name])
         .branches
         .includes(head: :user)
@@ -16,6 +17,7 @@ module V1
 
     def show
       branch = Repository
+        .with_context(auth_context)
         .find_by!(name: params[:repo_name])
         .branches
         .includes(head: :user)
@@ -25,11 +27,13 @@ module V1
     end
 
     def graph_coverage
-      render json: MonthlyGrapherService.call(params[:repo_name], :coverage, branch: params[:branch_name])
+      repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
+      render json: MonthlyGrapherService.call(repo, :coverage, branch: params[:branch_name])
     end
 
     def graph_issues
-      render json: MonthlyGrapherService.call(params[:repo_name], :issues, branch: params[:branch_name])
+      repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
+      render json: MonthlyGrapherService.call(repo, :issues, branch: params[:branch_name])
     end
   end
 end
