@@ -72,7 +72,10 @@ module Cocov
 
     # Public: Returns a new Octokit client configured to use the provided token
     def self.for_user(token)
-      Octokit::Client.new(access_token: token)
+      token = token.github_token if token.is_a? User
+      Octokit::Client.new(access_token: token).tap do |app|
+        app.auto_paginate = true
+      end
     end
 
     # Internal: Creates a new JWT token for communicating with GitHub.

@@ -117,3 +117,8 @@ Rails/Output:
 Metrics/ClassLength:
   Exclude:
     - app/controllers/v1/github_events_controller.rb
+
+Rails/SkipsModelValidations:
+  Exclude:
+    - app/jobs/update_user_permissions_job.rb
+    - app/jobs/update_repo_permissions_job.rb
