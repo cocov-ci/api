@@ -108,4 +108,17 @@ RSpec.describe "V1::GithubEvents" do
       end.to have_enqueued_job
     end
   end
+
+  describe "#organization_member_added" do
+    it "schedules users for update" do
+      create(:user, github_id: 39_652_351)
+      expect do
+        post "/v1/github/events",
+          params: fixture_file("github/organization_member_added.json"),
+          headers: github_delivery_header("organization")
+
+        expect(response).to have_http_status(:ok)
+      end.to have_enqueued_job
+    end
+  end
 end
