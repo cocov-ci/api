@@ -25,5 +25,11 @@ module V1
         .page(params[:page] || 1)
         .per(params[:per_page] || nil)
     end
+
+    def auth_context
+      return [:service, nil] if @token.is_a?(ServiceToken)
+
+      [:user, @user]
+    end
   end
 end

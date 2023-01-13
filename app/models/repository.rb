@@ -50,19 +50,27 @@ class Repository < ApplicationRecord
 
   def resync_with_github!
     update_with_github_data!(Cocov::GitHub.app.repo(github_id))
+    UpdateRepoPermissionsJob.perform_later(id)
   end
 
   def find_secret(named)
     secrets.find_by(name: named) || Secret.find_by(name: named, scope: :organization)
   end
 
+  def self.with_context(data)
+    auth, user = data
+    return self if auth == :service
+
+    user_scoped(user)
+  end
+
+  def self.user_scoped(user)
+    joins("INNER JOIN repository_members ON #{table_name}.id = repository_members.repository_id")
+      .where(repository_members: { github_member_id: user.github_id })
+  end
+
   def self.by_fuzzy_name(name)
-    find_by_sql [<<-SQL.squish, { name: }]
-      SELECT *
-      FROM #{table_name}
-      ORDER BY SIMILARITY(name, :name) DESC
-      LIMIT 5
-    SQL
+    order(Arel.sql("SIMILARITY(name, #{connection.quote(name)}) DESC")).limit(5)
   end
 
   def self.create_from_github(repo)
