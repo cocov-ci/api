@@ -33,8 +33,6 @@ class Repository < ApplicationRecord
   has_many :private_keys, dependent: :destroy
   has_many :members, class_name: :RepositoryMember, dependent: :destroy
 
-  after_create :recycle_members
-
   def find_default_branch
     if branches.loaded?
       branches.find { |b| b.name == default_branch }
@@ -56,10 +54,6 @@ class Repository < ApplicationRecord
 
   def find_secret(named)
     secrets.find_by(name: named) || Secret.find_by(name: named, scope: :organization)
-  end
-
-  def recycle_members
-    RecycleRepositoryMembersJob.perform_later(id)
   end
 
   def self.by_fuzzy_name(name)
