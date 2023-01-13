@@ -6,7 +6,7 @@ module V1
     before_action :ensure_repository_token, only: :create
 
     def index
-      repo = Repository.find_by! name: params[:repo_name]
+      repo = Repository.with_context(auth_context).find_by! name: params[:repo_name]
       commit = repo.commits.includes(:coverage).find_by! sha: params[:commit_sha]
       coverage = commit.coverage
       files = commit.coverage&.files&.select(:id, :file, :percent_covered)&.order(:percent_covered)
@@ -16,7 +16,7 @@ module V1
     end
 
     def show
-      repo = Repository.find_by! name: params[:repo_name]
+      repo = Repository.with_context(auth_context).find_by! name: params[:repo_name]
       commit = repo.commits.includes(:coverage).find_by! sha: params[:commit_sha]
       file = commit.coverage.files.find(params[:id])
 
@@ -50,7 +50,7 @@ module V1
     end
 
     def summary
-      cov = Repository.find_by!(name: params[:repo_name])
+      cov = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
         .commits.find_by!(sha: params[:commit_sha])
         .coverage
 

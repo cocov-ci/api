@@ -78,6 +78,8 @@ RSpec.describe "V1::Coverage" do
   describe "#summary" do
     it "returns summary" do
       repo = create(:repository)
+      @user = create(:user)
+      grant(@user, access_to: repo)
       commit = create(:commit, repository: repo)
       ci = create(:coverage_info, commit:, status: :ready)
       perc = 0
@@ -101,6 +103,8 @@ RSpec.describe "V1::Coverage" do
   describe "#index" do
     it "returns a list of files and their percentages" do
       repo = create(:repository)
+      @user = create(:user)
+      grant(@user, access_to: repo)
       commit = create(:commit, repository: repo)
       ci = create(:coverage_info, commit:, status: :ready)
       perc = 0
@@ -123,6 +127,8 @@ RSpec.describe "V1::Coverage" do
   describe "#show" do
     it "returns coverage information" do
       repo = create(:repository)
+      @user = create(:user)
+      grant(@user, access_to: repo)
       commit = create(:commit, repository: repo)
       ci = create(:coverage_info, commit:, status: :ready)
       file = create(:coverage_file, coverage: ci, percent_covered: 50)
