@@ -12,6 +12,7 @@
 #
 # Indexes
 #
+#  index_repository_members_on_github_member_id                    (github_member_id)
 #  index_repository_members_on_repository_id                       (repository_id)
 #  index_repository_members_on_repository_id_and_github_member_id  (repository_id,github_member_id) UNIQUE
 #
