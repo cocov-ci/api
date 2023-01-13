@@ -7,6 +7,7 @@ module V1
 
     def index
       repos = paginating Repository
+        .with_context(auth_context)
         .includes(:branches)
         .order(name: :asc)
 
@@ -18,14 +19,17 @@ module V1
       term = params[:term]
       error! :repositories, :missing_term if term.blank?
 
-      repos = Repository.by_fuzzy_name(term)
+      repos = Repository.with_context(auth_context).by_fuzzy_name(term)
 
       render "v1/repositories/search",
         locals: { repos: }
     end
 
     def show
-      repo = Repository.includes(:branches).find_by!(name: params[:name])
+      repo = Repository
+        .with_context(auth_context)
+        .includes(:branches)
+        .find_by!(name: params[:name])
       render "v1/repositories/show",
         locals: { repo: }
     end
@@ -39,7 +43,13 @@ module V1
 
       error! :repositories, :already_exists if Repository.exists?(github_id: gh_repo.id)
 
-      repo = Repository.create_from_github(gh_repo)
+      repo = Repository.transaction do
+        Repository.create_from_github(gh_repo).tap do |r|
+          RepositoryMember.create(repository: r, github_member_id: @user.github_id) if @user
+        end
+      end
+
+      UpdateRepoPermissionsJob.perform_later(repo.id)
 
       render "v1/repositories/create",
         locals: { repo: },
@@ -47,11 +57,13 @@ module V1
     end
 
     def graph_coverage
-      render json: MonthlyGrapherService.call(params[:name], :coverage)
+      repo = Repository.with_context(auth_context).find_by! name: params[:name]
+      render json: MonthlyGrapherService.call(repo, :coverage)
     end
 
     def graph_issues
-      render json: MonthlyGrapherService.call(params[:name], :issues)
+      repo = Repository.with_context(auth_context).find_by! name: params[:name]
+      render json: MonthlyGrapherService.call(repo, :issues)
     end
 
     def stats_coverage
@@ -97,7 +109,10 @@ module V1
 
       error! :repositories, :stats_range_too_large, max: 100 if (to.to_date - from.to_date).to_i > 100
 
-      repo = Repository.includes(:branches).find_by!(name: params[:name])
+      repo = Repository
+        .with_context(auth_context)
+        .includes(:branches)
+        .find_by!(name: params[:name])
       branch_id = repo.find_default_branch&.id || 0
 
       yield repo, branch_id, from, to

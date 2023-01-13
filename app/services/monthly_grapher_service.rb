@@ -2,16 +2,7 @@
 
 class MonthlyGrapherService < ApplicationService
   def call(repo, kind, branch: nil)
-    repo = case repo
-           when Repository
-             repo
-           when String
-             Repository.includes(:branches).find_by!(name: repo)
-           when Integer
-             Repository.includes(:branches).find(repo)
-           else
-             raise ArgumentError, "invalid value `#{repo}' for parameter 'repo'"
-           end
+    raise ArgumentError, "Expected a repository instance" unless repo.is_a? Repository
 
     model = case kind
             when :issues

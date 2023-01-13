@@ -9,6 +9,9 @@ RSpec.describe "V1::Repositories" do
       create(:repository)
       repo.branches.create! name: "master", issues: 2, coverage: 90
 
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       get "/v1/repositories", params: { per_page: 1 }, headers: authenticated
       expect(response).to have_http_status :ok
       json = response.json
@@ -87,6 +90,9 @@ RSpec.describe "V1::Repositories" do
 
     it "omits branch information when it is absent" do
       repo = create(:repository)
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       get "/v1/repositories/#{repo.name}", headers: authenticated
 
       expect(response).to have_http_status :ok
@@ -101,6 +107,8 @@ RSpec.describe "V1::Repositories" do
       it "includes coverage percentage and a count of issues" do
         branch = create(:branch, :with_repository)
         repo = branch.repository
+        @user = create(:user)
+        grant(@user, access_to: repo)
 
         get "/v1/repositories/#{repo.name}", headers: authenticated
         expect(response).to have_http_status :ok
@@ -112,6 +120,8 @@ RSpec.describe "V1::Repositories" do
       it "omits head information when it is absent" do
         branch = create(:branch, :with_repository)
         repo = branch.repository
+        @user = create(:user)
+        grant(@user, access_to: repo)
 
         get "/v1/repositories/#{repo.name}", headers: authenticated
         expect(response).to have_http_status :ok
@@ -124,6 +134,8 @@ RSpec.describe "V1::Repositories" do
         repo.branches.create(name: "master", head: cov.commit)
         cov.commit.coverage_processed!
         cov.commit.checks_processed!
+        @user = create(:user)
+        grant(@user, access_to: repo)
 
         get "/v1/repositories/#{repo.name}", headers: authenticated
         expect(response).to have_http_status :ok
@@ -143,6 +155,8 @@ RSpec.describe "V1::Repositories" do
       mock_redis!
       r = create(:repository)
       branch = create(:branch, repository: r)
+      @user = create(:user)
+      grant(@user, access_to: r)
 
       Timecop.freeze(today) do
         CoverageHistory.create!(repository: r, branch:, percentage: 80, created_at: 10.years.ago)
@@ -158,6 +172,8 @@ RSpec.describe "V1::Repositories" do
       mock_redis!
       r = create(:repository)
       create(:branch, repository: r)
+      @user = create(:user)
+      grant(@user, access_to: r)
 
       Timecop.freeze(today) do
         get "/v1/repositories/#{r.name}/graph/coverage",
@@ -174,6 +190,8 @@ RSpec.describe "V1::Repositories" do
       mock_redis!
       r = create(:repository)
       branch = create(:branch, repository: r)
+      @user = create(:user)
+      grant(@user, access_to: r)
 
       Timecop.freeze(today) do
         IssueHistory.create!(repository: r, branch:, quantity: 80, created_at: 10.years.ago)
@@ -189,6 +207,8 @@ RSpec.describe "V1::Repositories" do
       mock_redis!
       r = create(:repository)
       create(:branch, repository: r)
+      @user = create(:user)
+      grant(@user, access_to: r)
 
       Timecop.freeze(today) do
         get "/v1/repositories/#{r.name}/graph/issues",
@@ -201,8 +221,12 @@ RSpec.describe "V1::Repositories" do
   describe "#stats_coverage" do
     let(:repo) { create(:repository) }
     let(:branch) { create(:branch, repository: repo) }
-
     let(:today) { "2022-12-28T00:00:00Z" }
+
+    before do
+      @user = create(:user)
+      grant(@user, access_to: repo)
+    end
 
     it "requires 'from'" do
       get "/v1/repositories/#{repo.name}/stats/coverage",
@@ -268,6 +292,11 @@ RSpec.describe "V1::Repositories" do
     let(:branch) { create(:branch, repository: repo) }
     let(:today) { "2022-12-28T00:00:00Z" }
 
+    before do
+      @user = create(:user)
+      grant(@user, access_to: repo)
+    end
+
     it "requires 'from'" do
       get "/v1/repositories/#{repo.name}/stats/issues",
         params: { to: "2022-12-28" },
@@ -329,8 +358,10 @@ RSpec.describe "V1::Repositories" do
 
   describe "#search" do
     it "returns results based on fuzzy search" do
+      @user = create(:user)
       %w[api api-helper apiarist].each do |n|
-        create(:repository, name: n)
+        repo = create(:repository, name: n)
+        grant(@user, access_to: repo)
       end
 
       get "/v1/repositories/$search",
