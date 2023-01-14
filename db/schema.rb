@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_01_13_232453) do
+ActiveRecord::Schema[7.0].define(version: 2023_01_14_185524) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -162,6 +162,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_13_232453) do
     t.integer "github_member_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "level", null: false
     t.index ["github_member_id"], name: "index_repository_members_on_github_member_id"
     t.index ["repository_id", "github_member_id"], name: "index_repository_members_on_repository_id_and_github_member_id", unique: true
     t.index ["repository_id"], name: "index_repository_members_on_repository_id"

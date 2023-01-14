@@ -27,6 +27,10 @@ FactoryBot.define do
     github_scopes { "user:email" }
     admin { false }
 
+    trait :admin do
+      admin { true }
+    end
+
     trait :with_emails do
       after :create do |u|
         2.times { create(:user_email, email: "#{SecureRandom.uuid}@example.org", user: u) }

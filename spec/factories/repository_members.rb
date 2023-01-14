@@ -9,6 +9,7 @@
 #  github_member_id :integer          not null
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
+#  level            :integer          not null
 #
 # Indexes
 #
@@ -24,5 +25,10 @@ FactoryBot.define do
   factory :repository_member do
     repository { nil }
     github_member_id { 1 }
+    level { :user }
+
+    trait :admin do
+      level { :admin }
+    end
   end
 end
