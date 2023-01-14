@@ -23,6 +23,6 @@ FactoryBot.define do
   factory :repository do
     name { Faker::App.name.parameterize }
     default_branch { "master" }
-    sequence(:github_id)
+    sequence(:github_id, 10_000)
   end
 end
