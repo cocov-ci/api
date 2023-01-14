@@ -33,6 +33,7 @@ module V1
 
       if params[:repo_name]
         repo = Repository
+          .with_context(auth_context)
           .find_by!(name: params[:repo_name])
 
         error! :secrets, :name_taken if repo.secrets.exists?(name:)
@@ -77,6 +78,7 @@ module V1
     def secrets
       secrets ||= if params[:repo_name]
                     Repository
+                      .with_context(auth_context)
                       .find_by!(name: params[:repo_name])
                       .secrets
                   else

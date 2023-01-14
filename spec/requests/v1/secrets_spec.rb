@@ -31,6 +31,8 @@ RSpec.describe "V1::Secrets" do
       it "lists secrets" do
         create(:secret, :with_owner)
         repo = create(:repository)
+        @user = create(:user)
+        grant(@user, access_to: repo)
         repo_sec = create(:secret, :with_owner, repository: repo, scope: :repository)
 
         get "/v1/repositories/#{repo.name}/secrets", headers: authenticated
@@ -97,6 +99,8 @@ RSpec.describe "V1::Secrets" do
     describe "repository-scoped" do
       it "validates names" do
         repo = create(:repository)
+        @user = create(:user)
+        grant(@user, access_to: repo)
         post "/v1/repositories/#{repo.name}/secrets",
           params: { data: "foo" },
           headers: authenticated
@@ -106,6 +110,8 @@ RSpec.describe "V1::Secrets" do
 
       it "validates data" do
         repo = create(:repository)
+        @user = create(:user)
+        grant(@user, access_to: repo)
         post "/v1/repositories/#{repo.name}/secrets",
           params: { name: "foo" },
           headers: authenticated
@@ -115,6 +121,8 @@ RSpec.describe "V1::Secrets" do
 
       it "validates uniqueness" do
         repo = create(:repository)
+        @user = create(:user)
+        grant(@user, access_to: repo)
         sec = create(:secret, :with_owner, repository: repo, scope: :repository)
         post "/v1/repositories/#{repo.name}/secrets",
           params: { name: sec.name, data: "foo" },
@@ -125,6 +133,8 @@ RSpec.describe "V1::Secrets" do
 
       it "creates items" do
         repo = create(:repository)
+        @user = create(:user)
+        grant(@user, access_to: repo)
         post "/v1/repositories/#{repo.name}/secrets",
           params: { name: "bar", data: "foo" },
           headers: authenticated
@@ -189,6 +199,11 @@ RSpec.describe "V1::Secrets" do
     describe "repository-scoped" do
       let(:repo) { create(:repository) }
       let(:item) { create(:secret, :with_owner, repository: repo, scope: :repository) }
+
+      before do
+        @user = item.owner
+        grant(@user, access_to: repo)
+      end
 
       it "validates data" do
         patch "/v1/repositories/#{repo.name}/secrets/#{item.id}",
@@ -284,6 +299,8 @@ RSpec.describe "V1::Secrets" do
       it "deletes items" do
         repo = create(:repository)
         item = create(:secret, :with_owner, repository: repo, scope: :repository)
+        @user = item.owner
+        grant(@user, access_to: repo)
         delete "/v1/repositories/#{repo.name}/secrets/#{item.id}", headers: authenticated
         expect(response).to have_http_status(:no_content)
         expect(Secret.where(id: item.id)).not_to be_exists
