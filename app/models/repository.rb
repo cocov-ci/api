@@ -58,14 +58,23 @@ class Repository < ApplicationRecord
   end
 
   def self.with_context(data)
-    auth, user = data
+    auth, user, level = data
     return self if auth == :service
+    return self if user.admin?
 
-    user_scoped(user)
+    user_scoped(user, level)
   end
 
-  def self.user_scoped(user)
-    joins("INNER JOIN repository_members ON #{table_name}.id = repository_members.repository_id")
+  def self.user_scoped(user, level)
+    join_clause = "INNER JOIN repository_members ON #{table_name}.id = repository_members.repository_id"
+    if level
+      level_number = RepositoryMember.levels[level]
+      raise ArgumentError, "Invalid level `#{level.inspect}'" unless level_number
+
+      join_clause = "#{join_clause} AND repository_members.level >= #{level_number}"
+    end
+
+    joins(join_clause)
       .where(repository_members: { github_member_id: user.github_id })
   end
 

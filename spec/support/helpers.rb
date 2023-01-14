@@ -67,8 +67,8 @@ module Cocov
       authenticate(@user, **other_headers)
     end
 
-    def grant(user, access_to:)
-      create(:repository_member, repository_id: access_to.id, github_member_id: user.github_id)
+    def grant(user, access_to:, as: :user)
+      create(:repository_member, repository_id: access_to.id, github_member_id: user.github_id, level: as)
     end
 
     def fixture_file_path(*named)

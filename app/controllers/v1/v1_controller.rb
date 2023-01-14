@@ -26,10 +26,18 @@ module V1
         .per(params[:per_page] || nil)
     end
 
-    def auth_context
-      return [:service, nil] if @token.is_a?(ServiceToken)
+    def self.require_permission(level, **kwargs)
+      before_action -> { require_actor_permission(level) }, **kwargs
+    end
 
-      [:user, @user]
+    def require_actor_permission(level)
+      @_required_action_permission_level = level
+    end
+
+    def auth_context
+      return [:service, nil, nil] if @token.is_a?(ServiceToken)
+
+      [:user, @user, @_required_action_permission_level]
     end
   end
 end
