@@ -17,6 +17,7 @@ module V1
       error! :issues, :invalid_status unless Issue.statuses.include? params[:status]
 
       commit = Repository
+        .with_context(auth_context)
         .find_by!(name: params[:repo_name])
         .commits
         .find_by(sha: params[:commit_sha])
@@ -76,7 +77,7 @@ module V1
 
       error! :issues, :invalid_kind if filter.key?(:kind) && !Issue.kinds.key?(filter[:kind])
 
-      @repo = Repository.find_by!(name: params[:repo_name])
+      @repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
       @commit = @repo.commits.find_by!(sha: params[:commit_sha])
 
       @issues = if filter.empty?

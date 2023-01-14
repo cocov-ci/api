@@ -12,6 +12,9 @@ RSpec.describe "V1::Issues" do
 
     it "returns 404 when commit does not exist" do
       repo = create(:repository)
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       get "/v1/repositories/#{repo.name}/commits/foo/issues", headers: authenticated
       expect(response).to have_http_status(:not_found)
       expect(response).to be_a_json_error(:not_found)
@@ -20,6 +23,9 @@ RSpec.describe "V1::Issues" do
     it "returns an empty array when commit has no registered issues" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: authenticated
       expect(response).to have_http_status(:ok)
       expect(response.json[:issues]).to be_empty
@@ -29,6 +35,8 @@ RSpec.describe "V1::Issues" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
       issue = create(:issue, commit:)
+      @user = create(:user)
+      grant(@user, access_to: repo)
 
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: authenticated
       expect(response).to have_http_status(:ok)
@@ -54,10 +62,11 @@ RSpec.describe "V1::Issues" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
       issue = create(:issue, commit:)
-      headers = authenticated
+      @user = create(:user)
+      grant(@user, access_to: repo)
       issue.assign! @user
 
-      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: headers
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: authenticated
       expect(response).to have_http_status(:ok)
 
       json = response.json
@@ -70,6 +79,8 @@ RSpec.describe "V1::Issues" do
     it "filters issues" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
       create(:issue, check_source: "test_a", commit:)
       create(:issue, check_source: "test_b", commit:)
 
@@ -94,6 +105,8 @@ RSpec.describe "V1::Issues" do
 
     it "returns 404 when commit does not exist" do
       repo = create(:repository)
+      @user = create(:user)
+      grant(@user, access_to: repo)
       patch "/v1/repositories/#{repo.name}/commits/foo/issues/1",
         headers: authenticated,
         params: { status: "resolved" }
@@ -104,6 +117,8 @@ RSpec.describe "V1::Issues" do
     it "returns 404 when issue does not exist" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
 
       patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/1",
         headers: authenticated,
@@ -116,6 +131,8 @@ RSpec.describe "V1::Issues" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
       issue = create(:issue, commit:)
+      @user = create(:user)
+      grant(@user, access_to: repo)
 
       patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}", headers: authenticated
       expect(response).to have_http_status(:bad_request)
@@ -126,6 +143,8 @@ RSpec.describe "V1::Issues" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
       issue = create(:issue, commit:)
+      @user = create(:user)
+      grant(@user, access_to: repo)
 
       patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}",
         headers: authenticated,
@@ -515,6 +534,8 @@ RSpec.describe "V1::Issues" do
     it "returns sources for current issues" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
       sources = %w[foo bar baz]
 
       sources.each.with_index do |name, idx|
@@ -539,6 +560,8 @@ RSpec.describe "V1::Issues" do
     it "returns categories for current issues" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
       categories = %w[security performance style]
 
       categories.each.with_index do |name, idx|
