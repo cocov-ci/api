@@ -122,3 +122,9 @@ Rails/SkipsModelValidations:
   Exclude:
     - app/jobs/update_user_permissions_job.rb
     - app/jobs/update_repo_permissions_job.rb
+    - db/migrate/20230114185524_enforce_repository_members_level.rb
+
+Style/CombinableLoops:
+  Exclude:
+    - app/jobs/update_user_permissions_job.rb
+    - app/jobs/update_repo_permissions_job.rb
