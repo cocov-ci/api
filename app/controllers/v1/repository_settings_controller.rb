@@ -5,6 +5,10 @@ module V1
     before_action :ensure_authentication
     before_action :load_repository
 
+    def index
+      # TODO
+    end
+
     def regen_token
       @repository.token = nil
       @repository.save!
@@ -35,7 +39,7 @@ module V1
     private
 
     def load_repository
-      @repository = Repository.find_by! name: params[:name]
+      @repository = Repository.with_context(auth_context).find_by! name: params[:name]
     end
   end
 end

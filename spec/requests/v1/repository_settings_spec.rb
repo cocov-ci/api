@@ -5,6 +5,11 @@ require "rails_helper"
 RSpec.describe "V1::RepositorySettings" do
   let(:repo) { create(:repository) }
 
+  before do
+    @user = create(:user)
+    grant(@user, access_to: repo)
+  end
+
   describe "#regen_token" do
     it "regenerates a repository token" do
       current_token = repo.token

@@ -30,6 +30,7 @@ Rails.application.routes.draw do
     get "/repositories/:name/stats/coverage", to: "repositories#stats_coverage"
     get "/repositories/:name/stats/issues", to: "repositories#stats_issues"
 
+    get "/repositories/:name/settings", to: "repository_settings#index"
     post "/repositories/:name/settings/regen-token", to: "repository_settings#regen_token"
     post "/repositories/:name/settings/sync-github", to: "repository_settings#sync_github"
     post "/repositories/:name/settings/delete", to: "repository_settings#delete"
