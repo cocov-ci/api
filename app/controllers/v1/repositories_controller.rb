@@ -45,7 +45,13 @@ module V1
 
       repo = Repository.transaction do
         Repository.create_from_github(gh_repo).tap do |r|
-          RepositoryMember.create(repository: r, github_member_id: @user.github_id) if @user
+          next unless @user
+
+          # This temporarily grants the user an admin account, which will then
+          # be updated (hopefully soon), by UpdateRepoPermissionsJob.
+          RepositoryMember.create! repository: r,
+            level: :admin,
+            github_member_id: @user.github_id
         end
       end
 
