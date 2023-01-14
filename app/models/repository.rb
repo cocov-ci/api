@@ -48,6 +48,12 @@ class Repository < ApplicationRecord
     save!
   end
 
+  def permission_level_for(user)
+    return :admin if user.admin
+
+    members.find_by(github_member_id: user.github_id)&.level&.to_sym
+  end
+
   def resync_with_github!
     update_with_github_data!(Cocov::GitHub.app.repo(github_id))
     UpdateRepoPermissionsJob.perform_later(id)

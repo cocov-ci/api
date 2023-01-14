@@ -7,7 +7,7 @@ RSpec.describe "V1::RepositorySettings" do
 
   before do
     @user = create(:user)
-    grant(@user, access_to: repo)
+    grant(@user, access_to: repo, as: :admin)
   end
 
   describe "#regen_token" do
@@ -64,6 +64,28 @@ RSpec.describe "V1::RepositorySettings" do
           headers: authenticated
         expect(response).to have_http_status(:no_content)
       end.to have_enqueued_job
+    end
+  end
+
+  describe "#index" do
+    {
+      user: [],
+      maintainer: %i[can_regen_token can_sync_github],
+      admin: %i[can_regen_token can_sync_github can_delete]
+    }.each do |level, opts|
+      it "returns valid options for #{level} level" do
+        @user = create(:user)
+        grant(@user, access_to: repo, as: level)
+
+        get "/v1/repositories/#{repo.name}/settings",
+          headers: authenticated
+        expect(response).to have_http_status :ok
+        received_opts = response.json[:permissions]
+          .to_a
+          .filter(&:last)
+          .map(&:first)
+        expect(received_opts).to eq opts.map(&:to_s)
+      end
     end
   end
 end

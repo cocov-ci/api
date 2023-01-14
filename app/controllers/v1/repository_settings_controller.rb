@@ -3,10 +3,21 @@
 module V1
   class RepositorySettingsController < V1Controller
     before_action :ensure_authentication
+    require_permission(:maintainer, only: %i[regen_token sync_github])
+    require_permission(:admin, only: :delete)
     before_action :load_repository
 
     def index
-      # TODO
+      level = @repository.permission_level_for @user
+      maintainer = %i[admin maintainer].include? level
+      admin = level == :admin
+      render json: {
+        permissions: {
+          can_regen_token: maintainer || admin,
+          can_sync_github: maintainer || admin,
+          can_delete: admin
+        }
+      }
     end
 
     def regen_token
