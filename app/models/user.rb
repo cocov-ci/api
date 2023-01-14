@@ -27,6 +27,9 @@ class User < ApplicationRecord
 
   has_many :emails, class_name: :UserEmail, dependent: :destroy
   has_many :tokens, class_name: :UserToken, dependent: :destroy
+  has_many :commits, dependent: :nullify
+  has_many :service_tokens, dependent: :destroy, foreign_key: :owner_id
+  has_many :secrets, dependent: :destroy, foreign_key: :owner_id
 
   def scopes
     github_scopes.split(",")
