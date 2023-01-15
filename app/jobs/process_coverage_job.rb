@@ -54,12 +54,13 @@ class ProcessCoverageJob < ApplicationJob
       end
     end
 
-    # TODO: urls on statuses
+    coverage_url = "#{Cocov::UI_BASE_URL}/repos/#{r.name}/commits/#{sha}/coverage"
     manifest = ManifestService.manifest_for_commit(commit)
     if manifest.nil? || manifest.coverage.nil?
       commit.create_github_status(:success,
         context: "cocov/coverage",
-        description: "#{cov.percent_covered.round(2)}% covered")
+        description: "#{cov.percent_covered.round(2)}% covered",
+        url: coverage_url)
       return
     end
 
@@ -68,11 +69,13 @@ class ProcessCoverageJob < ApplicationJob
       if cov.percent_covered < min
         commit.create_github_status(:failure,
           context: "cocov/coverage",
-          description: "#{cov.percent_covered.round(2)}% covered (at least #{min}% is required)")
+          description: "#{cov.percent_covered.round(2)}% covered (at least #{min}% is required)",
+          url: coverage_url)
       else
         commit.create_github_status(:success,
           context: "cocov/coverage",
-          description: "#{cov.percent_covered.round(2)}% covered")
+          description: "#{cov.percent_covered.round(2)}% covered",
+          url: coverage_url)
       end
     end
   rescue StandardError => e

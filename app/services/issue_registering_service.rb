@@ -78,8 +78,10 @@ class IssueRegisteringService < ApplicationService
     qty = @commit.issues_count
     name = "issue#{qty == 1 ? "" : "s"}"
 
-    # TODO: url
-    @commit.create_github_status(:failure, context: "cocov", description: "#{qty} #{name} detected")
+    @commit.create_github_status(:failure,
+      context: "cocov",
+      description: "#{qty} #{name} detected",
+      url: "#{Cocov::UI_BASE_URL}/repos/#{@repo.name}/commits/#{@commit.sha}/issues")
   end
 
   def prepare_commit!

@@ -245,7 +245,7 @@ RSpec.describe "V1::Issues" do
 
     it "stores new issues" do
       repo = create(:repository)
-      create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
+      commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
 
       gh_app = double(:github_app)
       allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
@@ -254,7 +254,8 @@ RSpec.describe "V1::Issues" do
         "65f4e0c879eb83460260637880fb82f188065d11",
         "failure",
         description: "1 issue detected",
-        context: "cocov"
+        context: "cocov",
+        target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
       )
 
       put "/v1/repositories/#{repo.id}/issues",
@@ -287,7 +288,7 @@ RSpec.describe "V1::Issues" do
 
     it "maintains ignored issues" do
       repo = create(:repository)
-      create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
+      commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
 
       gh_app = double(:github_app)
       allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
@@ -296,14 +297,16 @@ RSpec.describe "V1::Issues" do
         "65f4e0c879eb83460260637880fb82f188065d11",
         "failure",
         description: "1 issue detected",
-        context: "cocov"
+        context: "cocov",
+        target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
       ).ordered
       expect(gh_app).to receive(:create_status).with(
         "#{@github_organization_name}/#{repo.name}",
         "65f4e0c879eb83460260637880fb82f188065d11",
         "failure",
         description: "2 issues detected",
-        context: "cocov"
+        context: "cocov",
+        target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
       ).ordered
 
       put "/v1/repositories/#{repo.id}/issues",
@@ -347,7 +350,8 @@ RSpec.describe "V1::Issues" do
 
     it "recycles issues" do
       repo = create(:repository)
-      create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
+      commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
+
       gh_app = double(:github_app)
       allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
       2.times do
@@ -356,7 +360,8 @@ RSpec.describe "V1::Issues" do
           "65f4e0c879eb83460260637880fb82f188065d11",
           "failure",
           description: "1 issue detected",
-          context: "cocov"
+          context: "cocov",
+          target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
         ).ordered
       end
 
@@ -509,7 +514,7 @@ RSpec.describe "V1::Issues" do
       }
 
       repo = create(:repository)
-      create(:commit, sha: "a36aaecf08cdf39970efd816ebc05d515f8fc391", repository: repo)
+      commit = create(:commit, sha: "a36aaecf08cdf39970efd816ebc05d515f8fc391", repository: repo)
 
       gh_app = double(:github_app)
       allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
@@ -518,7 +523,8 @@ RSpec.describe "V1::Issues" do
         "a36aaecf08cdf39970efd816ebc05d515f8fc391",
         "failure",
         description: "10 issues detected",
-        context: "cocov"
+        context: "cocov",
+        target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
       )
 
       put "/v1/repositories/#{repo.id}/issues",

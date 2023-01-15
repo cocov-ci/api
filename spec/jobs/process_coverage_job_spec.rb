@@ -20,7 +20,8 @@ RSpec.describe ProcessCoverageJob do
         commit.sha,
         "success",
         context: "cocov/coverage",
-        description: "94.29% covered"
+        description: "94.29% covered",
+        target_url: "#{@ui_base_url}/repos/#{commit.repository.name}/commits/#{commit.sha}/coverage"
       )
 
     job.perform(commit.repository_id, commit.sha, payload)
@@ -46,7 +47,8 @@ RSpec.describe ProcessCoverageJob do
         commit.sha,
         "success",
         context: "cocov/coverage",
-        description: "94.29% covered"
+        description: "94.29% covered",
+        target_url: "#{@ui_base_url}/repos/#{commit.repository.name}/commits/#{commit.sha}/coverage"
       )
 
     job.perform(commit.repository_id, commit.sha, payload)
@@ -66,7 +68,8 @@ RSpec.describe ProcessCoverageJob do
         commit.sha,
         "failure",
         context: "cocov/coverage",
-        description: "94.29% covered (at least 100% is required)"
+        description: "94.29% covered (at least 100% is required)",
+        target_url: "#{@ui_base_url}/repos/#{commit.repository.name}/commits/#{commit.sha}/coverage"
       )
 
     job.perform(commit.repository_id, commit.sha, payload)
