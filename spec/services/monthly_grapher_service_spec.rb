@@ -75,4 +75,20 @@ RSpec.describe MonthlyGrapherService do
       expect { described_class.call(repo, :coverage, branch: :what) }.to raise_error(ArgumentError)
     end
   end
+
+  describe "caching" do
+    it "correctly writes and reads from cache" do
+      expect(@cache.keys).to be_empty
+
+      result = described_class.call(repo, :coverage, branch: branch.name)
+      expect(result.length).to be >= 30
+      expect(result.last).to eq 10
+
+      expect(@cache.keys).not_to be_empty
+
+      result = described_class.call(repo, :coverage, branch: branch.name)
+      expect(result.length).to be >= 30
+      expect(result.last).to eq 10
+    end
+  end
 end

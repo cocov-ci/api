@@ -30,8 +30,8 @@ class MonthlyGrapherService < ApplicationService
     start = stop - 1.month
 
     cache_key = "repo:history:#{kind}:#{repo.id}:#{start.to_i}:#{stop.to_i}"
-    cache_parser = Cocov::Redis.json_parser(symbolize_names: true)
-    Cocov::Redis.cached_value(cache_key, parse: cache_parser) do
+    cache_encoder = Cocov::Redis::JsonEncoder
+    Cocov::Redis.cached_value(cache_key, encoder: cache_encoder) do
       model.history_for(repo, branch, start, stop).pluck(:value)
     end
   end

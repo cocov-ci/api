@@ -20,10 +20,6 @@ module Cocov
 
       # :nocov:
 
-      def json_parser(**opts)
-        ->(data) { JSON.parse(data, **opts) }
-      end
-
       def get_json(key, delete: false)
         data = if delete
                  instance.getdel(key)
@@ -37,17 +33,22 @@ module Cocov
         data
       end
 
-      def cached_value(key, ex: 1.day, parse: nil)
-        raise ArgumentError, "parse must be either nil, or a Proc" if !parse.nil? && !parse.is_a?(Proc)
+      def cached_value(key, ex: 1.day, encoder: nil)
+        raise ArgumentError, "encoder must be either nil, or a Class" if !encoder.nil? && !encoder.is_a?(Class)
 
         return yield if cache.nil?
 
         data = cache.getex(key, ex:)
         if data.nil?
           data = yield
-          cache.set(key, data, ex:)
-        else
-          data = parse[data] unless parse.nil?
+          writeable_data = if encoder
+                             encoder.encode(data)
+                           else
+                             data
+                           end
+          cache.set(key, writeable_data, ex:)
+        elsif encoder
+          data = encoder.decode(data)
         end
         data
       end
