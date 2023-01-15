@@ -364,14 +364,14 @@ RSpec.describe "V1::Repositories" do
         grant(@user, access_to: repo)
       end
 
-      get "/v1/repositories/$search",
-        params: { term: "api" },
+      get "/v1/repositories",
+        params: { search_term: "api" },
         headers: authenticated
       expect(response).to have_http_status :ok
-      expect(response.json.length).to eq 3
-      expect(response.json[0][:name]).to eq "api"
-      expect(response.json[1][:name]).to eq "api-helper"
-      expect(response.json[2][:name]).to eq "apiarist"
+      expect(response.json[:repositories].length).to eq 3
+      expect(response.json[:repositories][0][:name]).to eq "api"
+      expect(response.json[:repositories][1][:name]).to eq "api-helper"
+      expect(response.json[:repositories][2][:name]).to eq "apiarist"
     end
   end
 end

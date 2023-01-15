@@ -6,23 +6,18 @@ module V1
     rescue_from HistoryProvider::NoHistoryError, with: :no_history
 
     def index
-      repos = paginating Repository
+      repos = Repository
         .with_context(auth_context)
         .includes(:branches)
-        .order(name: :asc)
+
+      repos = if (search = params[:search_term])
+                repos.by_fuzzy_name(search)
+              else
+                repos.order(name: :ASC)
+              end
 
       render "v1/repositories/index",
-        locals: { repos: }
-    end
-
-    def search
-      term = params[:term]
-      error! :repositories, :missing_term if term.blank?
-
-      repos = Repository.with_context(auth_context).by_fuzzy_name(term)
-
-      render "v1/repositories/search",
-        locals: { repos: }
+        locals: { repos: paginating(repos) }
     end
 
     def show

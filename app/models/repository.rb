@@ -85,7 +85,7 @@ class Repository < ApplicationRecord
   end
 
   def self.by_fuzzy_name(name)
-    order(Arel.sql("SIMILARITY(name, #{connection.quote(name)}) DESC")).limit(5)
+    order(Arel.sql("SIMILARITY(name, #{connection.quote(name)}) DESC"))
   end
 
   def self.create_from_github(repo)
