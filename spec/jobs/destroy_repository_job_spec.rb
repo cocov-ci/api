@@ -10,11 +10,13 @@ RSpec.describe DestroyRepositoryJob do
 
     repo = create(:repository)
     commit = create(:commit, repository: repo)
-    create(:branch, repository: repo, head: commit)
+    branch = create(:branch, repository: repo, head: commit)
 
     create(:secret, :with_owner, repository: repo, scope: :repository)
     create(:check, commit:)
     create(:issue, commit:)
+    create(:issue_history, repository: repo, branch:)
+    create(:coverage_history, repository: repo, branch:)
     create(:coverage_info, :with_file, commit:)
 
     job.perform(repo.id)

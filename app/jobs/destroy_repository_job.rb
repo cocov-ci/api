@@ -5,6 +5,10 @@ class DestroyRepositoryJob < ApplicationJob
 
   def perform(id)
     r = Repository.find(id)
-    r.destroy!
+    ActiveRecord::Base.transaction do
+      IssueHistory.where(repository: r).delete_all
+      CoverageHistory.where(repository: r).delete_all
+      r.destroy!
+    end
   end
 end
