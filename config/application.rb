@@ -38,6 +38,10 @@ module Cocov
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    config.session_store :cookie_store, key: "_cocov_session"
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use config.session_store, config.session_options
+
     if Rails.env.production? && Rails.const_defined?(:Console)
       puts "             .                     "
       puts "             *                     "

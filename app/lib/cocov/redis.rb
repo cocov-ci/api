@@ -84,6 +84,24 @@ module Cocov
         end
       end
 
+      def register_sidekiq_authorization(id, obj)
+        instance.set("cocov:sidekiq_auth:#{id}", obj, ex: 1.minute)
+      end
+
+      def void_sidekiq_authorization(id)
+        lock("sidekiq_auth:#{id}", 10.seconds) do
+          instance.getdel("cocov:sidekiq_auth:#{id}")
+        end
+      end
+
+      def register_sidekiq_session(id, user)
+        instance.set("cocov:sidekiq_session:#{id}", user, ex: 10.minutes)
+      end
+
+      def get_sidekiq_session(id)
+        instance.getex("cocov:sidekiq_session:#{id}", ex: 10.minutes)
+      end
+
       def lock(resource, timeout)
         timeout = timeout.to_i * 1000 if timeout.is_a? ActiveSupport::Duration
         manager = Redlock::Client.new([REDIS_URL])

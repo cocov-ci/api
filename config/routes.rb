@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require "sidekiq/web"
+
 Rails.application.routes.draw do
   post "/auth/begin", to: "session#begin_authentication"
   post "/auth/exchange", to: "session#exchange"
+
+  mount Sidekiq::Web => "/sidekiq", :constraints => Cocov::SidekiqRouteConstraint.new
 
   namespace :v1 do
     # Ping
@@ -75,6 +79,10 @@ Rails.application.routes.draw do
     get "/repositories/:repo_name/private_keys", to: "private_keys#index"
     post "/repositories/:repo_name/private_keys", to: "private_keys#create"
     delete "/repositories/:repo_name/private_keys/:id", to: "private_keys#delete"
+
+    # Admin
+    post "/admin/sidekiq_panel_token", to: "admin#sidekiq_panel_token"
+    get "/admin/sidekiq_panel", to: "admin#sidekiq_panel"
 
     # GitHub
     post "/github/events", to: "github_events#create"

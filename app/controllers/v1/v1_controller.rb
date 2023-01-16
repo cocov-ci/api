@@ -16,6 +16,10 @@ module V1
       error! :auth, :invalid_token unless @token
     end
 
+    def ensure_administrative_privileges
+      error! :auth, :forbidden unless @user&.admin?
+    end
+
     def ensure_service_token
       error! :auth, :forbidden unless @token.service?
     end
