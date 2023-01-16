@@ -4,8 +4,6 @@
 module HistoryProvider
   extend ActiveSupport::Concern
 
-  class NoHistoryError < StandardError; end
-
   class_methods do
     def history_field(name)
       @history_field = name.to_sym
@@ -39,9 +37,7 @@ module HistoryProvider
         SQL
       ).to_a.first["count"]
 
-      if entries_between.zero? && last_known.nil?
-        raise NoHistoryError, "No history is available for this repository/branch"
-      end
+      return [] if entries_between.zero? && last_known.nil?
 
       data = ActiveRecord::Base.connection.execute(
         ApplicationRecord.sanitize_sql([<<-SQL.squish, params])

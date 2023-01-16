@@ -29,8 +29,7 @@ Rails.application.routes.draw do
     post "/repositories", to: "repositories#create"
     get "/repositories/$search", to: "repositories#search"
     get "/repositories/:name", to: "repositories#show"
-    get "/repositories/:name/graph/coverage", to: "repositories#graph_coverage"
-    get "/repositories/:name/graph/issues", to: "repositories#graph_issues"
+    get "/repositories/:name/graphs", to: "repositories#graphs"
     get "/repositories/:name/stats/coverage", to: "repositories#stats_coverage"
     get "/repositories/:name/stats/issues", to: "repositories#stats_issues"
 

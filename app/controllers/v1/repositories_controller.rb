@@ -3,7 +3,6 @@
 module V1
   class RepositoriesController < V1Controller
     before_action :ensure_authentication
-    rescue_from HistoryProvider::NoHistoryError, with: :no_history
 
     def index
       repos = Repository
@@ -57,14 +56,12 @@ module V1
         status: :created
     end
 
-    def graph_coverage
+    def graphs
       repo = Repository.with_context(auth_context).find_by! name: params[:name]
-      render json: MonthlyGrapherService.call(repo, :coverage)
-    end
+      coverage_points = MonthlyGrapherService.call(repo, :coverage)
+      issues_points = MonthlyGrapherService.call(repo, :issues)
 
-    def graph_issues
-      repo = Repository.with_context(auth_context).find_by! name: params[:name]
-      render json: MonthlyGrapherService.call(repo, :issues)
+      render json: { coverage: coverage_points, issues: issues_points }
     end
 
     def stats_coverage

@@ -148,7 +148,7 @@ RSpec.describe "V1::Repositories" do
     end
   end
 
-  describe "#graph_coverage" do
+  describe "#graphs (coverage)" do
     let(:today) { "2022-12-28T00:00:00Z" }
 
     it "returns data" do
@@ -160,11 +160,12 @@ RSpec.describe "V1::Repositories" do
 
       Timecop.freeze(today) do
         CoverageHistory.create!(repository: r, branch:, percentage: 80, created_at: 10.years.ago)
-        get "/v1/repositories/#{r.name}/graph/coverage",
+        get "/v1/repositories/#{r.name}/graphs",
           headers: authenticated
         expect(response).to have_http_status :ok
-        expect(response.json.length).to eq 31
-        expect(response.json.all? { _1 == 80 }).to be true
+        expect(response.json[:issues]).to be_empty
+        expect(response.json[:coverage].length).to eq 31
+        expect(response.json[:coverage].all? { _1 == 80 }).to be true
       end
     end
 
@@ -176,14 +177,16 @@ RSpec.describe "V1::Repositories" do
       grant(@user, access_to: r)
 
       Timecop.freeze(today) do
-        get "/v1/repositories/#{r.name}/graph/coverage",
+        get "/v1/repositories/#{r.name}/graphs",
           headers: authenticated
-        expect(response).to have_http_status :no_content
+        expect(response).to have_http_status :ok
+        expect(response.json[:issues]).to be_empty
+        expect(response.json[:coverage]).to be_empty
       end
     end
   end
 
-  describe "#graph_issues" do
+  describe "#graphs (issues)" do
     let(:today) { "2022-12-28T00:00:00Z" }
 
     it "returns data" do
@@ -195,11 +198,12 @@ RSpec.describe "V1::Repositories" do
 
       Timecop.freeze(today) do
         IssueHistory.create!(repository: r, branch:, quantity: 80, created_at: 10.years.ago)
-        get "/v1/repositories/#{r.name}/graph/issues",
+        get "/v1/repositories/#{r.name}/graphs",
           headers: authenticated
         expect(response).to have_http_status :ok
-        expect(response.json.length).to eq 31
-        expect(response.json.all? { _1 == 80 }).to be true
+        expect(response.json[:coverage]).to be_empty
+        expect(response.json[:issues].length).to eq 31
+        expect(response.json[:issues].all? { _1 == 80 }).to be true
       end
     end
 
@@ -211,9 +215,11 @@ RSpec.describe "V1::Repositories" do
       grant(@user, access_to: r)
 
       Timecop.freeze(today) do
-        get "/v1/repositories/#{r.name}/graph/issues",
+        get "/v1/repositories/#{r.name}/graphs",
           headers: authenticated
-        expect(response).to have_http_status :no_content
+        expect(response).to have_http_status :ok
+        expect(response.json[:coverage]).to be_empty
+        expect(response.json[:issues]).to be_empty
       end
     end
   end

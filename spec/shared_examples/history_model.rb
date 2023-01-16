@@ -66,8 +66,9 @@ RSpec.shared_examples "a history model" do |history_field|
     repo = create(:repository)
     branch = create(:branch, repository: repo)
     Timecop.freeze do
-      expect { described_class.history_for(repo, branch.id, Time.zone.now, Time.zone.now) }
-        .to raise_error(HistoryProvider::NoHistoryError)
+      data = described_class.history_for(repo, branch.id, Time.zone.now, Time.zone.now)
+      expect(data).to be_empty
+      expect(data).to be_a(Array)
     end
   end
 end
