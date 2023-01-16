@@ -9,10 +9,10 @@ RSpec.describe UpdateUserPermissionsJob do
 
   it "updates accesses for a given user" do
     stub_configuration!
-    r1 = create(:repository, name: 'r1')
-    r2 = create(:repository, name: 'r2')
-    r3 = create(:repository, name: 'r3')
-    r4 = create(:repository, name: 'r4')
+    r1 = create(:repository, name: "r1")
+    r2 = create(:repository, name: "r2")
+    r3 = create(:repository, name: "r3")
+    r4 = create(:repository, name: "r4")
 
     user_permission = double(:user_permission, pull: true, push: true, admin: false, maintain: false)
 

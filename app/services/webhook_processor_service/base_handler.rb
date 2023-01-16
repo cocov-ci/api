@@ -14,7 +14,9 @@ class WebhookProcessorService
     end
 
     def handle
+      # :nocov:
       raise NotImplementedError
+      # :nocov:
     end
 
     def validate
