@@ -10,6 +10,7 @@
 #  owner_id     :bigint           not null
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
+#  last_used_at :datetime
 #
 # Indexes
 #
@@ -25,6 +26,7 @@ require "rails_helper"
 RSpec.describe ServiceToken do
   subject(:token) { build(:service_token, :with_owner) }
 
+  it_behaves_like "a model using LastUsageTracker"
   it_behaves_like "a validated model", %i[
     owner
     description

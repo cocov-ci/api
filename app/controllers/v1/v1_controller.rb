@@ -14,6 +14,7 @@ module V1
       end
 
       error! :auth, :invalid_token unless @token
+      @token.touch_last_used if @token.tracks_last_used?
     end
 
     def ensure_administrative_privileges

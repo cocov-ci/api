@@ -11,6 +11,7 @@
 #  expires_at   :datetime
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
+#  last_used_at :datetime
 #
 # Indexes
 #
@@ -22,6 +23,8 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class UserToken < ApplicationRecord
+  include LastUsageTracker
+
   enum kind: { auth: 0, personal: 1 }
 
   before_validation :ensure_value

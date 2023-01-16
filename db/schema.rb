@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_01_14_185524) do
+ActiveRecord::Schema[7.0].define(version: 2023_01_16_155842) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -190,6 +190,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_14_185524) do
     t.bigint "owner_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "last_used_at", precision: nil
     t.index ["hashed_token"], name: "index_service_tokens_on_hashed_token", unique: true
     t.index ["owner_id"], name: "index_service_tokens_on_owner_id"
   end
@@ -210,6 +211,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_14_185524) do
     t.datetime "expires_at", precision: nil
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "last_used_at", precision: nil
     t.index ["hashed_token"], name: "index_user_tokens_on_hashed_token", unique: true
     t.index ["user_id"], name: "index_user_tokens_on_user_id"
   end

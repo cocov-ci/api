@@ -123,6 +123,7 @@ Rails/SkipsModelValidations:
     - app/jobs/update_user_permissions_job.rb
     - app/jobs/update_repo_permissions_job.rb
     - db/migrate/20230114185524_enforce_repository_members_level.rb
+    - app/models/concerns/last_usage_tracker.rb
 
 Style/CombinableLoops:
   Exclude:

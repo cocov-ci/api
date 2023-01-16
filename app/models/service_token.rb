@@ -10,6 +10,7 @@
 #  owner_id     :bigint           not null
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
+#  last_used_at :datetime
 #
 # Indexes
 #
@@ -21,6 +22,8 @@
 #  fk_rails_...  (owner_id => users.id)
 #
 class ServiceToken < ApplicationRecord
+  include LastUsageTracker
+
   belongs_to :owner, class_name: :User
 
   before_validation :ensure_value

@@ -11,6 +11,7 @@
 #  expires_at   :datetime
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
+#  last_used_at :datetime
 #
 # Indexes
 #
