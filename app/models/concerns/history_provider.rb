@@ -37,6 +37,8 @@ module HistoryProvider
         SQL
       ).to_a.first["count"]
 
+      date_range = date_array(date_start, date_end)
+
       return [] if entries_between.zero? && last_known.nil?
 
       data = ActiveRecord::Base.connection.execute(
@@ -55,7 +57,7 @@ module HistoryProvider
         SQL
       ).to_a.map { { date: _1["date"].to_date, value: _1["max"] } }
 
-      normalize_time_array(date_array(date_start, date_end), data, last_known)
+      normalize_time_array(date_range, data, last_known)
     end
 
     def register_history!(commit, value)

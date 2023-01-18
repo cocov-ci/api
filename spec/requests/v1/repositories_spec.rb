@@ -163,9 +163,9 @@ RSpec.describe "V1::Repositories" do
         get "/v1/repositories/#{r.name}/graphs",
           headers: authenticated
         expect(response).to have_http_status :ok
-        expect(response.json[:issues]).to be_empty
+        expect(response.json[:issues].values.compact).to be_empty
         expect(response.json[:coverage].length).to eq 31
-        expect(response.json[:coverage].all? { _1 == 80 }).to be true
+        expect(response.json[:coverage].values).to be_all(80)
       end
     end
 
@@ -180,8 +180,8 @@ RSpec.describe "V1::Repositories" do
         get "/v1/repositories/#{r.name}/graphs",
           headers: authenticated
         expect(response).to have_http_status :ok
-        expect(response.json[:issues]).to be_empty
-        expect(response.json[:coverage]).to be_empty
+        expect(response.json[:issues].values.compact).to be_empty
+        expect(response.json[:coverage].values.compact).to be_empty
       end
     end
   end
@@ -203,7 +203,7 @@ RSpec.describe "V1::Repositories" do
         expect(response).to have_http_status :ok
         expect(response.json[:coverage]).to be_empty
         expect(response.json[:issues].length).to eq 31
-        expect(response.json[:issues].all? { _1 == 80 }).to be true
+        expect(response.json[:issues].values).to be_all(80)
       end
     end
 
@@ -218,8 +218,8 @@ RSpec.describe "V1::Repositories" do
         get "/v1/repositories/#{r.name}/graphs",
           headers: authenticated
         expect(response).to have_http_status :ok
-        expect(response.json[:coverage]).to be_empty
-        expect(response.json[:issues]).to be_empty
+        expect(response.json[:coverage].compact).to be_empty
+        expect(response.json[:issues].values.compact).to be_empty
       end
     end
   end

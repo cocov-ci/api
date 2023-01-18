@@ -82,7 +82,7 @@ RSpec.describe "V1::Branches" do
           headers: authenticated
         expect(response).to have_http_status :ok
         expect(response.json.length).to eq 31
-        expect(response.json.all? { _1 == 80 }).to be true
+        expect(response.json.values).to be_all(80)
       end
     end
   end
@@ -103,7 +103,7 @@ RSpec.describe "V1::Branches" do
           headers: authenticated
         expect(response).to have_http_status :ok
         expect(response.json.length).to eq 31
-        expect(response.json.all? { _1 == 80 }).to be true
+        expect(response.json.values).to be_all(80)
       end
     end
   end

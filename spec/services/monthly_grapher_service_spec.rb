@@ -20,7 +20,7 @@ RSpec.describe MonthlyGrapherService do
     it "accepts a Repository instance" do
       result = described_class.call(repo, :issues)
       expect(result.length).to be >= 30
-      expect(result.last).to eq 10
+      expect(result.values.last).to eq 10
     end
 
     it "rejects anything else" do
@@ -32,13 +32,13 @@ RSpec.describe MonthlyGrapherService do
     it "accepts :issues" do
       result = described_class.call(repo, :issues)
       expect(result.length).to be >= 30
-      expect(result.last).to eq 10
+      expect(result.values.last).to eq 10
     end
 
     it "accepts :coverage" do
       result = described_class.call(repo, :coverage)
       expect(result.length).to be >= 30
-      expect(result.last).to eq 10
+      expect(result.values.last).to eq 10
     end
 
     it "rejects anything else" do
@@ -50,25 +50,25 @@ RSpec.describe MonthlyGrapherService do
     it "accepts nil" do
       result = described_class.call(repo, :coverage, branch: nil)
       expect(result.length).to be >= 30
-      expect(result.last).to eq 10
+      expect(result.values.last).to eq 10
     end
 
     it "accepts a Branch instance" do
       result = described_class.call(repo, :coverage, branch:)
       expect(result.length).to be >= 30
-      expect(result.last).to eq 10
+      expect(result.values.last).to eq 10
     end
 
     it "accepts a branch id" do
       result = described_class.call(repo, :coverage, branch: branch.id)
       expect(result.length).to be >= 30
-      expect(result.last).to eq 10
+      expect(result.values.last).to eq 10
     end
 
     it "accepts a branch name" do
       result = described_class.call(repo, :coverage, branch: branch.name)
       expect(result.length).to be >= 30
-      expect(result.last).to eq 10
+      expect(result.values.last).to eq 10
     end
 
     it "rejects anything else" do
@@ -82,13 +82,13 @@ RSpec.describe MonthlyGrapherService do
 
       result = described_class.call(repo, :coverage, branch: branch.name)
       expect(result.length).to be >= 30
-      expect(result.last).to eq 10
+      expect(result.values.last).to eq 10
 
       expect(@cache.keys).not_to be_empty
 
       result = described_class.call(repo, :coverage, branch: branch.name)
       expect(result.length).to be >= 30
-      expect(result.last).to eq 10
+      expect(result.values.last).to eq 10
     end
   end
 end
