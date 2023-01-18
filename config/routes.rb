@@ -45,8 +45,8 @@ Rails.application.routes.draw do
     # Branches
     get "/repositories/:name/branches", to: "branches#index"
     get "/repositories/:repo_name/branches/:branch_name", to: "branches#show"
-    get "/repositories/:repo_name/branches/:branch_name/graph/coverage", to: "branches#graph_coverage"
-    get "/repositories/:repo_name/branches/:branch_name/graph/issues", to: "branches#graph_issues"
+    get "/repositories/:repo_name/branches/:branch_name/graphs", to: "branches#graphs"
+    get "/repositories/:repo_name/branches/:branch_name/top_issues", to: "branches#top_issues"
 
     # Checks
     get "/repositories/:repo_name/commits/:commit_sha/checks", to: "checks#index"

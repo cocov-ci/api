@@ -26,14 +26,28 @@ module V1
       render "v1/branches/show", locals: { branch: }
     end
 
-    def graph_coverage
+    def graphs
       repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
-      render json: MonthlyGrapherService.call(repo, :coverage, branch: params[:branch_name])
+      issues = MonthlyGrapherService.call(repo, :issues, branch: params[:branch_name])
+      coverage = MonthlyGrapherService.call(repo, :coverage, branch: params[:branch_name])
+      render json: { issues:, coverage: }
     end
 
-    def graph_issues
-      repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
-      render json: MonthlyGrapherService.call(repo, :issues, branch: params[:branch_name])
+    def top_issues
+      repo = Repository
+        .with_context(auth_context)
+        .find_by!(name: params[:repo_name])
+      branch = Branch.find_by(repository: repo, name: params[:branch_name])
+
+      render json: branch
+        .head
+        .issues
+        .group(:kind)
+        .count
+        .entries
+        .sort_by(&:last)
+        .reverse
+        .to_h
     end
   end
 end

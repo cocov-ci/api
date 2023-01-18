@@ -66,7 +66,7 @@ RSpec.describe "V1::Branches" do
     end
   end
 
-  describe "#graph_coverage" do
+  describe "#graph (coverage)" do
     let(:today) { "2022-12-28T00:00:00Z" }
 
     it "returns data" do
@@ -78,16 +78,17 @@ RSpec.describe "V1::Branches" do
 
       Timecop.freeze(today) do
         CoverageHistory.create!(repository: r, branch:, percentage: 80, created_at: 10.years.ago)
-        get "/v1/repositories/#{r.name}/branches/#{branch.name}/graph/coverage",
+        get "/v1/repositories/#{r.name}/branches/#{branch.name}/graphs",
           headers: authenticated
         expect(response).to have_http_status :ok
-        expect(response.json.length).to eq 31
-        expect(response.json.values).to be_all(80)
+        expect(response.json[:issues]).to be_empty
+        expect(response.json[:coverage].length).to eq 31
+        expect(response.json[:coverage].values).to be_all(80)
       end
     end
   end
 
-  describe "#graph_issues" do
+  describe "#graphs (issues)" do
     let(:today) { "2022-12-28T00:00:00Z" }
 
     it "returns data" do
@@ -99,11 +100,37 @@ RSpec.describe "V1::Branches" do
 
       Timecop.freeze(today) do
         IssueHistory.create!(repository: r, branch:, quantity: 80, created_at: 10.years.ago)
-        get "/v1/repositories/#{r.name}/branches/#{branch.name}/graph/issues",
+        get "/v1/repositories/#{r.name}/branches/#{branch.name}/graphs",
           headers: authenticated
         expect(response).to have_http_status :ok
-        expect(response.json.length).to eq 31
-        expect(response.json.values).to be_all(80)
+        expect(response.json[:coverage]).to be_empty
+        expect(response.json[:issues].length).to eq 31
+        expect(response.json[:issues].values).to be_all(80)
+      end
+    end
+  end
+
+  describe "#top_issues" do
+    let(:today) { "2022-12-28T00:00:00Z" }
+
+    it "returns data" do
+      mock_redis!
+      r = create(:repository)
+      commit = create(:commit, repository: r)
+      branch = create(:branch, repository: r, head: commit)
+      @user = create(:user)
+      grant(@user, access_to: r)
+
+      Timecop.freeze(today) do
+        create(:issue, kind: :security, commit:)
+        create(:issue, kind: :security, commit:)
+        create(:issue, kind: :convention, commit:)
+
+        get "/v1/repositories/#{r.name}/branches/#{branch.name}/top_issues",
+          headers: authenticated
+        expect(response).to have_http_status :ok
+        expect(response.json[:security]).to eq 2
+        expect(response.json[:convention]).to eq 1
       end
     end
   end
