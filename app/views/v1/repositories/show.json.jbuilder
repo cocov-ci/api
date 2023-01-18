@@ -3,8 +3,8 @@
 json.call(repo, :id, :name, :description, :token)
 
 if (branch = repo.find_default_branch)
-  json.coverage = branch.coverage
-  json.issues = branch.issues
+  json.coverage branch.coverage
+  json.issues branch.issues
 
   if (head = branch.head)
     json.head do
