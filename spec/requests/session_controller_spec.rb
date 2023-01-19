@@ -175,7 +175,8 @@ RSpec.describe "Sessions" do
       expect(response).to have_http_status :ok
       expect(response.json).to eq({
         "token" => "coa_lol_random_token",
-        "name" => "dummy"
+        "name" => "dummy",
+        "admin" => false
       })
 
       usr = User.first
@@ -230,7 +231,8 @@ RSpec.describe "Sessions" do
       expect(response).to have_http_status :ok
       expect(response.json).to eq({
         "token" => "coa_lol_random_token",
-        "name" => "dummy"
+        "name" => "dummy",
+        "admin" => false
       })
 
       post "/auth/exchange",
@@ -239,7 +241,8 @@ RSpec.describe "Sessions" do
       expect(response).to have_http_status :ok
       expect(response.json).to eq({
         "token" => "coa_lol_random_token_2",
-        "name" => "dummy"
+        "name" => "dummy",
+        "admin" => false
       })
     end
   end

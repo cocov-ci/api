@@ -55,7 +55,8 @@ class SessionController < ApplicationController
 
     render json: {
       token: auth.value,
-      name: usr_login
+      name: usr_login,
+      admin: user.admin
     }
   end
 end
