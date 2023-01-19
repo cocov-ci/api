@@ -13,6 +13,8 @@ RSpec.describe "V1::Branches" do
     it "lists branches" do
       branch = create(:branch, :with_repository, :with_commit)
       repo = branch.repository
+      create(:branch, repository: repo, name: "a_branch")
+
       @user = create(:user)
       grant(@user, access_to: repo)
 
@@ -21,13 +23,10 @@ RSpec.describe "V1::Branches" do
 
       json = response.json
       expect(json).to have_key :branches
-      expect(json[:branches].count).to eq 1
+      expect(json[:branches].count).to eq 2
 
-      json_bra = json.dig(:branches, 0)
-      expect(json_bra[:id]).to eq branch.id
-      expect(json_bra[:name]).to eq branch.name
-      expect(json_bra[:issues]).to be_nil
-      expect(json_bra[:coverage]).to be_nil
+      expect(json[:branches].first).to eq "master"
+      expect(json[:branches].last).to eq "a_branch"
     end
   end
 

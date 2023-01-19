@@ -5,14 +5,17 @@ module V1
     before_action :ensure_authentication
 
     def index
-      branches = paginating Repository
+      repository = Repository
         .with_context(auth_context)
         .find_by!(name: params[:name])
-        .branches
-        .includes(head: :user)
-        .order(name: :asc)
 
-      render "v1/branches/index", locals: { branches: }
+      branches = repository.branches.pluck(:name).sort
+
+      branches.delete(repository.default_branch)&.tap do |name|
+        branches.prepend(name) if name
+      end
+
+      render json: { branches: }
     end
 
     def show
