@@ -63,6 +63,26 @@ RSpec.describe "V1::Branches" do
       expect(json[:issues]).to be_nil
       expect(json[:coverage]).to be_nil
     end
+
+    it "correctly returns branch data when a head does not have an associated user" do
+      branch = create(:branch, :with_repository, :with_commit)
+      repo = branch.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
+      # remove user from commit
+      commit = branch.head
+      commit.user = nil
+      commit.save!
+
+      get "/v1/repositories/#{repo.name}/branches/#{branch.name}", headers: authenticated
+      expect(response).to have_http_status(:ok)
+
+      json = response.json
+
+      expect(json.dig(:head)).not_to be_nil
+      expect(json.dig(:head, :user)).to be_nil
+    end
   end
 
   describe "#graph (coverage)" do
