@@ -73,5 +73,7 @@ RSpec.describe ProcessCoverageJob do
       )
 
     job.perform(commit.repository_id, commit.sha, payload)
+
+    expect(commit.reload.minimum_coverage).to eq 100
   end
 end

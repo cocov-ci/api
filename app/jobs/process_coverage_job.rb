@@ -66,6 +66,9 @@ class ProcessCoverageJob < ApplicationJob
 
     if manifest.coverage.min_percent.present?
       min = manifest.coverage.min_percent
+      commit.minimum_coverage = min
+      commit.save!
+
       if cov.percent_covered < min
         commit.create_github_status(:failure,
           context: "cocov/coverage",

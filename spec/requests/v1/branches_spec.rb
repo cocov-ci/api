@@ -80,7 +80,7 @@ RSpec.describe "V1::Branches" do
 
       json = response.json
 
-      expect(json.dig(:head)).not_to be_nil
+      expect(json[:head]).not_to be_nil
       expect(json.dig(:head, :user)).to be_nil
     end
   end
