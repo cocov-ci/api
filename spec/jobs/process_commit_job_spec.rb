@@ -69,6 +69,8 @@ RSpec.describe ProcessCommitJob do
     expect(commit).not_to receive(:checks)
 
     job.perform(commit.id)
+
+    expect(commit.reload.checks_status).to eq "not_configured"
   end
 
   it "creates checks and enqueues a new check job" do

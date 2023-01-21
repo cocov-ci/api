@@ -35,7 +35,14 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Commit < ApplicationRecord
-  STATUSES = %i[waiting queued processing processed errored].freeze
+  STATUSES = {
+    waiting: 0,
+    queued: 1,
+    processing: 2,
+    processed: 3,
+    errored: 4,
+    not_configured: 5
+  }.freeze
   enum checks_status: STATUSES, _prefix: :checks
   enum coverage_status: STATUSES, _prefix: :coverage
   enum clone_status: { queued: 0, in_progress: 1, completed: 2, errored: 3 }, _prefix: :clone

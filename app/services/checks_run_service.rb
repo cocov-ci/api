@@ -40,7 +40,10 @@ class ChecksRunService < ApplicationService
       nil
     end
 
-    return if manifest_contents.nil?
+    if manifest_contents.nil?
+      commit.checks_not_configured!
+      return
+    end
 
     commit.create_github_status(:pending, context: "cocov")
 
@@ -53,6 +56,7 @@ class ChecksRunService < ApplicationService
     end
 
     if manifest.checks.empty?
+      commit.checks_not_configured!
       commit.create_github_status(:success, context: "cocov", description: "Looking good!")
       return
     end
