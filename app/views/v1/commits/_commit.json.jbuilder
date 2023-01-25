@@ -4,6 +4,8 @@ json.call(commit, :id, :author_email, :author_name, :checks_status,
   :coverage_status, :sha, :coverage_percent, :issues_count, :condensed_status,
   :minimum_coverage, :message, :created_at)
 
+json.org_name Cocov::GITHUB_ORGANIZATION_NAME
+
 if commit.association(:user).loaded? && commit.user
   json.user do
     json.name commit.user.login
