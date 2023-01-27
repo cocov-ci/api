@@ -41,16 +41,21 @@ module V1
         .with_context(auth_context)
         .find_by!(name: params[:repo_name])
       branch = Branch.find_by(repository: repo, name: params[:branch_name])
+      commit = branch.head
+      data = {}
 
-      render json: branch
-        .head
-        .issues
-        .group(:kind)
-        .count
-        .entries
-        .sort_by(&:last)
-        .reverse
-        .to_h
+      if commit
+        data = commit
+          .issues
+          .group(:kind)
+          .count
+          .entries
+          .sort_by(&:last)
+          .reverse
+          .to_h
+      end
+
+      render json: data
     end
   end
 end
