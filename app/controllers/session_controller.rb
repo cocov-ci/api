@@ -51,6 +51,7 @@ class SessionController < ApplicationController
     end
 
     user = User.with_github_data! usr.user, exchanged
+    UpdateUserPermissionsJob.perform_later(user.id)
     auth = user.make_auth_token!
 
     render json: {
