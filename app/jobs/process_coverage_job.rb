@@ -45,6 +45,7 @@ class ProcessCoverageJob < ApplicationJob
 
     cov = ActiveRecord::Base.transaction do
       prepare_coverage_files(data, cover).tap do |coverage|
+        commit.coverage_percent = coverage.percent_covered
         commit.coverage_processed!
         CoverageHistory.register_history! commit, coverage.percent_covered
         r.branches.where(head_id: commit.id).each do |b|
