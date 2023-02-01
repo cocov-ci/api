@@ -20,7 +20,7 @@ RSpec.describe "V1::Issues" do
     expect(response.body).to eq "unknown"
   end
 
-  describe "coverage" do
+  describe "#coverage" do
     it "returns unknown in case coverage is not set" do
       repo = create(:repository)
       create(:branch, name: "master", repository: repo, coverage: nil)
@@ -55,7 +55,7 @@ RSpec.describe "V1::Issues" do
     end
   end
 
-  describe "issues" do
+  describe "#issues" do
     it "returns unknown in case issues is not set" do
       repo = create(:repository)
       create(:branch, name: "master", repository: repo, issues: nil)
@@ -99,6 +99,58 @@ RSpec.describe "V1::Issues" do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to eq "10"
+    end
+  end
+
+  describe "#index" do
+    let(:repo) { create(:repository) }
+
+    it "returns 204 when not configured" do
+      get "/v1/repositories/#{repo.name}/badges",
+        headers: authenticated
+
+      expect(response).to have_http_status :no_content
+    end
+
+    it "returns data when configured" do
+      stub_configuration!
+
+      get "/v1/repositories/#{repo.name}/badges",
+        headers: authenticated
+
+      expect(response).to have_http_status(:ok)
+      expect(response.json).to eq({
+        "coverage_badge_url" => "#{@badges_base_url}/#{repo.name}/coverage",
+        "coverage_badge_href" => "#{@ui_base_url}/repos/#{repo.name}",
+        "issues_badge_url" => "#{@badges_base_url}/#{repo.name}/issues",
+        "issues_badge_href" => "#{@ui_base_url}/repos/#{repo.name}",
+        "templates" => {
+          "html" => {
+            "coverage" => "<a href=\"#{@ui_base_url}/repos/#{repo.name}\"><img src=\"#{@badges_base_url}/#{repo.name}/coverage\" /></a>\n",
+            "issues" => "<a href=\"#{@ui_base_url}/repos/#{repo.name}\"><img src=\"#{@badges_base_url}/#{repo.name}/issues\" /></a>\n"
+          },
+          "markdown" => {
+            "coverage" => "[![Coverage](#{@badges_base_url}/#{repo.name}/coverage)](#{@ui_base_url}/repos/#{repo.name})\n",
+            "issues" => "[![Issues](#{@badges_base_url}/#{repo.name}/issues)](#{@ui_base_url}/repos/#{repo.name})\n"
+          },
+          "textile" => {
+            "coverage" => "\"!#{@badges_base_url}/#{repo.name}/coverage!\":#{@ui_base_url}/repos/#{repo.name}\n",
+            "issues" => "\"!#{@badges_base_url}/#{repo.name}/issues!\":#{@ui_base_url}/repos/#{repo.name}\n"
+          },
+          "rdoc" => {
+            "coverage" => "{<img src=\"#{@badges_base_url}/#{repo.name}/coverage\" />}[#{@ui_base_url}/repos/#{repo.name}]\n",
+            "issues" => "{<img src=\"#{@badges_base_url}/#{repo.name}/issues\" />}[#{@ui_base_url}/repos/#{repo.name}]\n"
+          },
+          "restructured" => {
+            "coverage" => ".. image:: #{@badges_base_url}/#{repo.name}/coverage\n " \
+                          ":target: #{@ui_base_url}/repos/#{repo.name}\n " \
+                          ":alt: Coverage\n",
+            "issues" => ".. image:: #{@badges_base_url}/#{repo.name}/issues\n " \
+                        ":target: #{@ui_base_url}/repos/#{repo.name}\n " \
+                        ":alt: Issues\n"
+          }
+        }
+      })
     end
   end
 end

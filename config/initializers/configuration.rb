@@ -13,7 +13,7 @@ module Cocov
   GITHUB_WEBHOOK_SECRET_KEY = ENV.fetch("COCOV_GITHUB_WEBHOOK_SECRET_KEY", "")
 
   UI_BASE_URL = ENV.fetch("COCOV_UI_BASE_URL", "http://localhost:4000").gsub(%r{/$}, "")
-  API_BASE_URL = ENV.fetch("COCOV_API_BASE_URL", "http://localhost:3000")
+  BADGES_BASE_URL = ENV.fetch("COCOV_BADGES_BASE_URL", "").gsub(%r{/$}, "")
 
   REDIS_URL = ENV.fetch("COCOV_REDIS_URL", "redis://redis:6379/0")
   REDIS_CACHE_URL = ENV.fetch("COCOV_REDIS_CACHE_URL", "redis://redis:6379/1")

@@ -9,7 +9,7 @@ module Cocov
       @github_oauth_client_id = "gh-oauth-id-#{SecureRandom.hex(10)}"
       @github_oauth_client_secret = "gh-oauth-secret-#{SecureRandom.hex(10)}"
       @ui_base_url = "https://cocov.#{@github_organization_name}.example.com"
-      @api_base_url = "https://cocov-api.#{@github_organization_name}.example.com"
+      @badges_base_url = "https://badges.cocov.#{@github_organization_name}.example.com"
 
       {
         GITHUB_ORGANIZATION_NAME: @github_organization_name,
@@ -18,7 +18,7 @@ module Cocov
         GITHUB_OAUTH_CLIENT_ID: @github_oauth_client_id,
         GITHUB_OAUTH_CLIENT_SECRET: @github_oauth_client_secret,
         UI_BASE_URL: @ui_base_url,
-        API_BASE_URL: @api_base_url
+        BADGES_BASE_URL: @badges_base_url
       }.each do |k, v|
         stub_const("Cocov::#{k}", v)
       end

@@ -41,6 +41,7 @@ Rails.application.routes.draw do
     # Badges
     get "/repositories/:name/badges/coverage", to: "badges#coverage"
     get "/repositories/:name/badges/issues", to: "badges#issues"
+    get "/repositories/:name/badges", to: "badges#index"
 
     # Branches
     get "/repositories/:name/branches", to: "branches#index"
