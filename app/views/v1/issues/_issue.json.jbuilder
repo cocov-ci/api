@@ -7,7 +7,7 @@ json.affected_file do
   range = (line_start..line_end)
 
   begin
-    file_content = GitService.file_for_commit(issue.commit.sha, issue.file, range: range)
+    file_content = GitService.file_for_commit(issue.commit.sha, path: issue.file, range: range)
     line_count = file_content.count("\n")
     json.first_line line_start
     json.last_line line_start + line_count
