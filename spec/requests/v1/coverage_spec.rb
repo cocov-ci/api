@@ -77,6 +77,8 @@ RSpec.describe "V1::Coverage" do
 
   describe "#summary" do
     it "returns summary" do
+      stub_configuration!
+
       repo = create(:repository)
       @user = create(:user)
       grant(@user, access_to: repo)
@@ -92,11 +94,34 @@ RSpec.describe "V1::Coverage" do
         headers: authenticated
 
       expect(response).to have_http_status(:ok)
-      expect(response.json[:status]).to eq "ready"
-      expect(response.json[:percent_covered]).to eq 50
-      expect(response.json[:lines_total]).to eq 100
-      expect(response.json[:least_covered].first[:percent_covered]).to eq 0
-      expect(response.json[:least_covered].last[:percent_covered]).to eq 90
+      json = response.json
+
+      response_repo = json[:repository]
+      expect(response_repo[:id]).to eq repo.id
+      expect(response_repo[:name]).to eq repo.name
+      expect(response_repo[:description]).to eq repo.description
+      expect(response_repo[:token]).to eq repo.token
+      expect(response_repo[:default_branch]).to eq repo.default_branch
+
+      response_commit = json[:commit]
+      expect(response_commit[:id]).to eq commit.id
+      expect(response_commit[:author_email]).to eq commit.author_email
+      expect(response_commit[:author_name]).to eq commit.author_name
+      expect(response_commit[:checks_status]).to eq commit.checks_status
+      expect(response_commit[:coverage_status]).to eq commit.coverage_status
+      expect(response_commit[:sha]).to eq commit.sha
+      expect(response_commit[:coverage_percent]).to eq commit.coverage_percent
+      expect(response_commit[:issues_count]).to eq commit.issues_count
+      expect(response_commit[:condensed_status]).to eq commit.condensed_status.to_s
+      expect(response_commit[:minimum_coverage]).to eq commit.minimum_coverage
+      expect(response_commit[:message]).to eq commit.message
+      expect(response_commit[:org_name]).to eq @github_organization_name
+
+      expect(json[:status]).to eq "ready"
+      expect(json[:percent_covered]).to eq 50
+      expect(json[:lines_total]).to eq 100
+      expect(json[:least_covered].first[:percent_covered]).to eq 0
+      expect(json[:least_covered].last[:percent_covered]).to eq 90
     end
   end
 

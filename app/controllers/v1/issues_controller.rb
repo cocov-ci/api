@@ -8,7 +8,9 @@ module V1
 
     def index
       render "v1/issues/index", locals: {
-        issues: paginating(@issues)
+        issues: paginating(@issues),
+        repo: @repo,
+        commit: @commit
       }
     end
 
@@ -78,7 +80,7 @@ module V1
       error! :issues, :invalid_kind if filter.key?(:kind) && !Issue.kinds.key?(filter[:kind])
 
       @repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
-      @commit = @repo.commits.find_by!(sha: params[:commit_sha])
+      @commit = @repo.commits.includes(:user).find_by!(sha: params[:commit_sha])
 
       @issues = if filter.empty?
                   @commit.issues

@@ -50,9 +50,9 @@ module V1
     end
 
     def summary
-      cov = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
-        .commits.find_by!(sha: params[:commit_sha])
-        .coverage
+      repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
+      commit = repo.commits.find_by!(sha: params[:commit_sha])
+      cov = commit.coverage
 
       return head :no_content unless cov
 
@@ -60,7 +60,7 @@ module V1
       least_covered = cov.files.order(percent_covered: :asc).limit(10) if cov.ready?
 
       render "v1/coverage/summary",
-        locals: { cov:, least_covered: }
+        locals: { cov:, least_covered:, repo:, commit: }
     end
 
     private
