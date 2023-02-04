@@ -61,3 +61,7 @@ gem "sidekiq", "~> 7.0"
 
 gem "rubocop-rails", "~> 2.17"
 gem "rubocop-rspec", "~> 2.16"
+
+gem "github-linguist", "~> 7.24"
+
+gem "rouge", "~> 4.0"

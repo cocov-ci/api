@@ -8,7 +8,7 @@ ENV APP_HOME /app
 ENV BUNDLE_JOBS=2
 
 WORKDIR /tmp
-RUN apt update && apt install brotli
+RUN apt update && apt install brotli cmake
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o awscliv2.zip && \
     unzip awscliv2.zip && \
     ./aws/install && \
