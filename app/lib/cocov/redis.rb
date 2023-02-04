@@ -48,13 +48,26 @@ module Cocov
                            end
           cache.set(key, writeable_data, ex:)
         elsif encoder
-          data = encoder.decode(data)
+          begin
+            data = encoder.decode(data)
+          rescue StandardError
+            cache.del(key)
+            return nil
+          end
         end
         data
       end
 
       def cached_file(key, &)
-        cached_value(key, ex: CACHED_FILE_EXPIRATION, &)
+        cached_value(key, ex: CACHED_FILE_EXPIRATION, encoder: JsonEncoder, &)
+      end
+
+      def cached_file_language(key, &)
+        cached_value(key, ex: CACHED_FILE_EXPIRATION, encoder: JsonEncoder, &)
+      end
+
+      def cached_formatted_file(key, &)
+        cached_value(key, ex: CACHED_FILE_EXPIRATION, encoder: JsonEncoder, &)
       end
 
       def make_authentication_keys

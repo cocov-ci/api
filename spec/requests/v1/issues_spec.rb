@@ -35,10 +35,16 @@ RSpec.describe "V1::Issues" do
       stub_configuration!
 
       commit = create(:commit, :with_repository)
+      commit.clone_completed!
       repo = commit.repository
-      issue = create(:issue, commit:)
+      issue = create(:issue, commit:, line_start: 4, line_end: 4)
       @user = create(:user)
       grant(@user, access_to: repo)
+
+      the_file = Base64.decode64("Y2xhc3MgSGVsbG8KICBhdHRyX2FjY2Vzc29yIDpi" \
+                                 "YXIKICAKICBkZWYgZm9vCiAgICBiYXIKICBlbmQKZW5k")
+
+      allow(GitService.storage).to receive(:file_for_commit).and_return(the_file)
 
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: authenticated
       expect(response).to have_http_status(:ok)
@@ -67,6 +73,7 @@ RSpec.describe "V1::Issues" do
       expect(response_commit[:org_name]).to eq @github_organization_name
 
       expect(json[:issues].count).to eq 1
+
       prob = json.dig(:issues, 0)
       expect(prob[:id]).to eq issue.id
       expect(prob[:kind]).to eq issue.kind
@@ -79,6 +86,18 @@ RSpec.describe "V1::Issues" do
       expect(prob[:check_source]).to eq issue.check_source
       expect(prob[:status_reason]).to eq issue.status_reason
       expect(prob[:assignee]).to be_nil
+      expect(prob[:affected_file][:status]).to eq "ok"
+
+      expect(prob[:affected_file][:content]).to eq [
+        { "type" => "line", "line" => 2,
+          "source" => "<pre>  <span class=\"nb\">attr_accessor</span> <span class=\"ss\">:bar</span>\n</pre>" },
+        { "type" => "line", "line" => 3, "source" => "<pre>  \n</pre>" },
+        { "type" => "line", "line" => 4,
+          "source" => "<pre>  <span class=\"k\">def</span> <span class=\"nf\">foo</span>\n</pre>" },
+        { "type" => "warn", "text" => "something is wrong", "padding" => "  " },
+        { "type" => "line", "line" => 5, "source" => "<pre>    <span class=\"n\">bar</span>\n</pre>" },
+        { "type" => "line", "line" => 6, "source" => "<pre>  <span class=\"k\">end</span>\n</pre>" }
+      ]
     end
 
     it "returns information about the assignee when present" do

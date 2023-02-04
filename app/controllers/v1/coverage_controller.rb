@@ -20,7 +20,7 @@ module V1
       commit = repo.commits.includes(:coverage).find_by! sha: params[:commit_sha]
       file = commit.coverage.files.find(params[:id])
 
-      source = GitService.file_for_commit(commit, path: file.file)
+      source = Cocov::Highlighter.new(commit, path: file.file).format
       lines = Cocov::CoverageParser.parse(file.raw_data)
       blocks = Cocov::CoverageParser::BlockComposer.group(lines)
 

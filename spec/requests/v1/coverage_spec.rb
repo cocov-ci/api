@@ -169,7 +169,15 @@ RSpec.describe "V1::Coverage" do
 
       expect(response).to have_http_status :ok
       expect(response.json).to eq({
-        "file" => { "base_path" => "foo/", "name" => "bar.rb", "source" => "def foo\nend" },
+        "file" => {
+          "base_path" => "foo/",
+          "name" => "bar.rb",
+          "source" => [
+            { "line" => 1, "source" => "<pre><span class=\"k\">def</span> <span class=\"nf\">foo</span>\n</pre>",
+              "type" => "line" },
+            { "line" => 2, "source" => "<pre><span class=\"k\">end</span>\n</pre>", "type" => "line" }
+          ]
+        },
         "coverage" => {
           "lines_covered" => 1,
           "lines_total" => 2,

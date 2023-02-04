@@ -35,9 +35,9 @@ RSpec.describe GitService do
       commit = create(:commit, :with_repository)
       commit.clone_completed!
       expected_key = Digest::SHA1.hexdigest [commit.repository.name, commit.sha, "foo/bar"].compact.join
-      @cache.set(expected_key, "contents")
+      @cache.set(expected_key, %w[text contents].to_json)
 
-      expect(service.file_for_commit(commit, path: "foo/bar")).to eq "contents"
+      expect(service.file_for_commit(commit, path: "foo/bar")).to eq %w[text contents]
     end
 
     it "gets data from storage and caches it" do
@@ -51,8 +51,8 @@ RSpec.describe GitService do
       expected_key = Digest::SHA1.hexdigest [commit.repository.name, commit.sha, "foo/bar"].compact.join
 
       expect(@cache.get(expected_key)).to be_nil
-      expect(service.file_for_commit(commit, path: "foo/bar")).to eq "contents"
-      expect(@cache.get(expected_key)).to eq "contents"
+      expect(service.file_for_commit(commit, path: "foo/bar")).to eq %w[text contents]
+      expect(@cache.get(expected_key)).to eq %w[text contents].to_json
     end
   end
 
