@@ -68,7 +68,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker Image
-        run: docker build . -t cocov/api:dev
+        run: docker build . -t cocov/api:dev -f Dockerfile-com
 
       - name: Push docker image
         run: docker push cocov/api:dev
