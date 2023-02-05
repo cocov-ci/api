@@ -23,7 +23,7 @@ ENV GEM_HOME="/usr/local/bundle"
 ENV PATH $GEM_HOME/bin:$GEM_HOME/gems/bin:$PATH
 
 COPY .ruby-version .
-COPY Gemfile* .
+COPY Gemfile* ./
 RUN bundle install
 
 COPY app ./app
