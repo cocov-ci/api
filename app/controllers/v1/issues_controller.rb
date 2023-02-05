@@ -55,7 +55,8 @@ module V1
     end
 
     def sources
-      from_issues = @issues.unscope(:where).group(:check_source).count
+      from_issues = @issues
+        .unscope(:where).where(commit_id: @commit.id).group(:check_source).count
       result = @commit.checks.pluck(:plugin_name).index_with do |name|
         from_issues.fetch(name, 0)
       end
@@ -63,7 +64,8 @@ module V1
     end
 
     def categories
-      from_issues = @issues.unscope(:where).group(:kind).count
+      from_issues = @issues
+        .unscope(:where).where(commit_id: @commit.id).group(:kind).count
       result = Issue.kinds.keys.index_with do |name|
         from_issues.fetch(name, 0)
       end
