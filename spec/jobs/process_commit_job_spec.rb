@@ -40,7 +40,7 @@ RSpec.describe ProcessCommitJob do
     expect(GitService).to receive(:clone_commit).with(commit)
     expect(GitService).to receive(:file_for_commit)
       .with(commit, path: ".cocov.yaml")
-      .and_return("lolsies, this is an invalid manifest!")
+      .and_return(["yaml", "lolsies, this is an invalid manifest!"])
     expect(commit).to receive(:create_github_status).with(:pending, context: "cocov").ordered
     expect(commit).to receive(:create_github_status)
       .with(:failure, context: "cocov", description: "Invalid manifest: Root should be a mapping")
@@ -56,7 +56,7 @@ RSpec.describe ProcessCommitJob do
 
     expect(GitService).to receive(:file_for_commit)
       .with(commit, path: ".cocov.yaml")
-      .and_return(:some_contents)
+      .and_return(["yaml", :some_contents])
     expect(Cocov::Manifest).to receive(:parse)
       .with(:some_contents)
       .and_return(fake_manifest)
@@ -83,7 +83,7 @@ RSpec.describe ProcessCommitJob do
 
     expect(GitService).to receive(:file_for_commit)
       .with(commit, path: ".cocov.yaml")
-      .and_return(fixture_file("manifests/v0.1alpha/complete.yaml"))
+      .and_return(["yaml", fixture_file("manifests/v0.1alpha/complete.yaml")])
 
     expect(commit).to receive(:create_github_status).with(:pending, context: "cocov").ordered
 

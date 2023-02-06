@@ -16,7 +16,7 @@ class ManifestService < ApplicationService
     GitService.clone_commit(commit)
 
     manifest_data = begin
-      GitService.file_for_commit(commit, path: ".cocov.yaml")
+      GitService.file_for_commit(commit, path: ".cocov.yaml").last
     rescue GitService::FileNotFoundError
       nil
     end
