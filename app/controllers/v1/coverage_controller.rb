@@ -7,7 +7,7 @@ module V1
 
     def index
       repo = Repository.with_context(auth_context).find_by! name: params[:repo_name]
-      commit = repo.commits.includes(:coverage).find_by! sha: params[:commit_sha]
+      commit = repo.commits.includes(:coverage, :user).find_by! sha: params[:commit_sha]
       coverage = commit.coverage
       files = commit.coverage&.files&.select(:id, :file, :percent_covered)&.order(:percent_covered)
 
