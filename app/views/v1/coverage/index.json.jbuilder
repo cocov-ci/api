@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+json.repository { json.partial! "v1/repositories/repository", repo: repo }
+json.commit { json.partial! "v1/commits/commit", commit: commit }
+
 json.status commit.coverage_status
 if commit.coverage_processed? && coverage&.ready?
   json.files files do |file|

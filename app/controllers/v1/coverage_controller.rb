@@ -12,7 +12,7 @@ module V1
       files = commit.coverage&.files&.select(:id, :file, :percent_covered)&.order(:percent_covered)
 
       render "v1/coverage/index",
-        locals: { commit:, coverage:, files: }
+        locals: { repo:, commit:, coverage:, files: }
     end
 
     def show
