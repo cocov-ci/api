@@ -39,11 +39,16 @@ module Cocov
         data << {
           type: :warn,
           text: @warning[:message],
-          padding: line.css("pre")[1].children.first.inner_text
+          padding: padding_for(line.css("pre")[1].children.first.inner_text)
         }
       end
 
       data
+    end
+
+    SPACE_MATCHER = /^(\s*)/
+    def padding_for(text)
+      SPACE_MATCHER.match(text)&.captures&.first || ""
     end
 
     def contents = @contents ||= GitService.file_for_commit(@commit, path: @path, range: @range)
