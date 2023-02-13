@@ -6,13 +6,13 @@ module V1
     before_action :ensure_service_token, only: :patch
 
     def index
-      checks = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
-        .commits.includes(:checks).find_by!(sha: params[:commit_sha])
-        .checks
-        .order(plugin_name: :asc)
+      repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
+      commit = repo.commits.includes(:checks, :user).find_by!(sha: params[:commit_sha])
+      checks = commit.checks.order(plugin_name: :asc)
+      issues = commit.issues.group(:check_source).count
 
       render "v1/checks/index",
-        locals: { checks: }
+        locals: { checks:, commit:, repo:, issues: }
     end
 
     def show
