@@ -35,6 +35,12 @@ gem "bootsnap", require: false
 
 gem "aws-sdk-s3", "~> 1.117"
 
+gem "sidekiq", "~> 7.0"
+
+gem "github-linguist", "~> 7.24"
+
+gem "rouge", "~> 4.0"
+
 group :development, :test do
   gem "factory_bot_rails"
   gem "faker"
@@ -42,6 +48,8 @@ group :development, :test do
   gem "rspec-rails", "~> 5.0.0"
   gem "rubocop", require: false
   gem "rubocop-performance", require: false
+  gem "rubocop-rails", "~> 2.17"
+  gem "rubocop-rspec", "~> 2.16"
   gem "simplecov", require: false
   gem "simplecov_json_formatter", require: false
   gem "timecop", "~> 0.9.6"
@@ -56,12 +64,3 @@ group :development do
   gem "listen"
   gem "pry-rails"
 end
-
-gem "sidekiq", "~> 7.0"
-
-gem "rubocop-rails", "~> 2.17"
-gem "rubocop-rspec", "~> 2.16"
-
-gem "github-linguist", "~> 7.24"
-
-gem "rouge", "~> 4.0"
