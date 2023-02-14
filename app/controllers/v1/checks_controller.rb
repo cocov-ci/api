@@ -54,10 +54,10 @@ module V1
       when "succeeded"
         updates[:error_output] = nil
         updates[:started_at] = Time.zone.now if check.started_at.nil?
-        updates[:finished_at] = Time.zone.now
+        updates[:finished_at] = Time.zone.now if check.finished_at.nil?
       when "errored"
         updates[:started_at] = Time.zone.now if check.started_at.nil?
-        updates[:finished_at] = Time.zone.now
+        updates[:finished_at] = Time.zone.now if check.finished_at.nil?
         updates[:error_output] = error_output
       end
       check.update!(**updates)
