@@ -57,7 +57,7 @@ module HistoryProvider
         SQL
       ).to_a.map { { date: _1["date"].to_date, value: _1["max"] } }
 
-      normalize_time_array(date_range, data, last_known || 0)
+      normalize_time_array(date_range, data, last_known)
     end
 
     def register_history!(commit, value)
