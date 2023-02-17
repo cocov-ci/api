@@ -39,7 +39,10 @@ module HistoryProvider
 
       date_range = date_array(date_start, date_end)
 
-      return [] if entries_between.zero? && last_known.nil?
+      if entries_between.zero? && last_known.nil?
+        return normalize_time_array(date_range, {}, last_known)
+            .map { _1.merge(date: _1[:date].to_date) }
+      end
 
       data = ActiveRecord::Base.connection.execute(
         ApplicationRecord.sanitize_sql([<<-SQL.squish, params])

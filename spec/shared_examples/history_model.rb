@@ -67,8 +67,9 @@ RSpec.shared_examples "a history model" do |history_field|
     branch = create(:branch, repository: repo)
     Timecop.freeze do
       data = described_class.history_for(repo, branch.id, Time.zone.now, Time.zone.now)
-      expect(data).to be_empty
       expect(data).to be_a(Array)
+      expect(data.all? { _1[:date].is_a? Date }).to be true
+      expect(data.all? { _1[:value].nil? }).to be true
     end
   end
 
@@ -81,7 +82,7 @@ RSpec.shared_examples "a history model" do |history_field|
 
     Timecop.freeze do
       described_class.register_history!(commit, 10)
-      data = described_class.history_for(repo, branch.id, Time.zone.now - 31.days, Time.zone.now)
+      data = described_class.history_for(repo, branch.id, 31.days.ago, Time.zone.now)
       expect(data.all? { _1[:date].is_a? Date }).to be true
       expect(data.pop[:value]).to eq 10
       expect(data.all? { _1[:value].nil? }).to be true

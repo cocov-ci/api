@@ -110,7 +110,8 @@ RSpec.describe "V1::Branches" do
         get "/v1/repositories/#{r.name}/branches/graphs/#{branch.name}",
           headers: authenticated
         expect(response).to have_http_status :ok
-        expect(response.json[:issues]).to be_empty
+        expect(response.json[:issues]).not_to be_empty
+        expect(response.json[:issues].values.all?(&:nil?)).to be true
         expect(response.json[:coverage].length).to eq 31
         expect(response.json[:coverage].values).to be_all(80)
       end
@@ -132,7 +133,8 @@ RSpec.describe "V1::Branches" do
         get "/v1/repositories/#{r.name}/branches/graphs/#{branch.name}",
           headers: authenticated
         expect(response).to have_http_status :ok
-        expect(response.json[:coverage]).to be_empty
+        expect(response.json[:coverage]).not_to be_empty
+        expect(response.json[:coverage].values.all?(&:nil?)).to be true
         expect(response.json[:issues].length).to eq 31
         expect(response.json[:issues].values).to be_all(80)
       end
