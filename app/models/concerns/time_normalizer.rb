@@ -24,13 +24,13 @@ module TimeNormalizer
           if idx.zero?
             # If the first index does not exist, synthesise it based on the
             # last_known value provided
-            arr << { date: ex, value: last_known }
+            arr << { date: ex.to_date, value: last_known }
             next
           end
 
           # At this point, the item does not exist and we are not on the first
           # index. Just copy the last item's value and be done with it.
-          arr << { date: ex, value: arr.last[:value] }
+          arr << { date: ex.to_date, value: arr.last[:value] }
         end
       end
     end
