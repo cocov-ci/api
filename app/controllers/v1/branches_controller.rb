@@ -31,8 +31,9 @@ module V1
 
     def graphs
       repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
-      issues = MonthlyGrapherService.call(repo, :issues, branch: params[:branch_name])
-      coverage = MonthlyGrapherService.call(repo, :coverage, branch: params[:branch_name])
+      branch = repo.branches.find_by!(name: params[:branch_name])
+      issues = MonthlyGrapherService.call(repo, :issues, branch:)
+      coverage = MonthlyGrapherService.call(repo, :coverage, branch:)
       render json: { issues:, coverage: }
     end
 

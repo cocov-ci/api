@@ -21,7 +21,7 @@ class MonthlyGrapherService < ApplicationService
              when Integer
                branch
              when String
-               Branch.find_by(name: branch, repository: repo).id
+               Branch.find_by!(name: branch, repository: repo).id
              else
                raise ArgumentError, "invalid value `#{branch}' for parameter 'branch'"
              end
