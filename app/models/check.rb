@@ -32,4 +32,6 @@ class Check < ApplicationRecord
   validates :error_output, presence: true, if: -> { errored? }
   validates :finished_at, presence: true, if: -> { succeeded? || errored? }
   validates :started_at, presence: true, if: -> { !waiting? }
+
+  def finished? = succeeded? || errored?
 end

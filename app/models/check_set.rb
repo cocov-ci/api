@@ -4,11 +4,13 @@
 #
 # Table name: check_sets
 #
-#  id         :bigint           not null, primary key
-#  commit_id  :bigint           not null
-#  status     :integer          not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+#  id          :bigint           not null, primary key
+#  commit_id   :bigint           not null
+#  status      :integer          not null
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  finished_at :datetime
+#  started_at  :datetime
 #
 # Indexes
 #
@@ -19,6 +21,8 @@
 #  fk_rails_...  (commit_id => commits.id)
 #
 class CheckSet < ApplicationRecord
+  class InconsistentCheckStatusError < StandardError; end
+
   enum status: {
     waiting: 0,
     queued: 1,
@@ -36,27 +40,38 @@ class CheckSet < ApplicationRecord
   def reset!
     transaction do
       self.status = :waiting
+      self.started_at = Time.zone.now
       checks.destroy_all
       commit.issues.destroy_all
     end
     true
   end
 
-  def wrap_up
+  def wrap_up!
+
+    # Make sure all checks have a valid status before continuing
+    unless checks.all?(&:finished?)
+      raise InconsistentCheckStatusError, "not all checks have a valid finished status"
+    end
+
     transaction do
       commit.reset_counters
       IssueHistory.register_history! commit, commit.issues_count
-      processed!
+      self.finished_at = Time.zone.now
       commit.repository.branches.where(head_id: commit.id).each do |br|
         br.issues = commit.issues_count
         br.save!
       end
     end
 
-    if checks.any?(&:errored)
+    if checks.any?(&:errored?)
+      errored!
       commit.create_github_status(:failure, context: "cocov", description: "An internal error occurred")
       return
-    elsif commit.issues_count.zero?
+    end
+
+    processed!
+    if commit.issues_count.zero?
       commit.create_github_status(:success, context: "cocov", description: "No issues detected")
       return
     end

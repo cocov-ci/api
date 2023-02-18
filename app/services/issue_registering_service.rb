@@ -45,5 +45,6 @@ class IssueRegisteringService < ApplicationService
     return if !to_create || to_create.empty?
 
     Issue.insert_all(to_create)
+    @commit.reset_counters
   end
 end

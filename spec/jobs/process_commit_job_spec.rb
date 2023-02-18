@@ -102,6 +102,7 @@ RSpec.describe ProcessCommitJob do
     expect(commit.checks.count).to eq 2
     expect(commit.checks.where(plugin_name: "cocov-ci/rubocop")).to be_exist
     expect(commit.checks.where(plugin_name: "cocov-ci/brakeman")).to be_exist
+    expect(commit.check_set).to be_queued
 
     expect(@redis.llen("cocov:checks")).to eq 1
 

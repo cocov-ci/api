@@ -90,7 +90,7 @@ class ChecksRunService < ApplicationService
       end
 
       commit.update! check_job_id: job_id
-      commit.check_set.update! status: :queued
+      commit.check_set.queued!
     end
 
     Cocov::Redis.instance.rpush("cocov:checks", {

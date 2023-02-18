@@ -4,11 +4,13 @@
 #
 # Table name: check_sets
 #
-#  id         :bigint           not null, primary key
-#  commit_id  :bigint           not null
-#  status     :integer          not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+#  id          :bigint           not null, primary key
+#  commit_id   :bigint           not null
+#  status      :integer          not null
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  finished_at :datetime
+#  started_at  :datetime
 #
 # Indexes
 #
@@ -26,4 +28,11 @@ RSpec.describe CheckSet do
   it_behaves_like "a validated model", %i[
     commit_id
   ]
+
+  it "refuses to wrap up if a check is still running" do
+    check = create(:check, :running, :with_commit)
+    set = check.check_set
+
+    expect { set.wrap_up! }.to raise_error(CheckSet::InconsistentCheckStatusError)
+  end
 end

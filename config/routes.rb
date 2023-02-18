@@ -54,6 +54,7 @@ Rails.application.routes.draw do
     get "/repositories/:repo_name/commits/:commit_sha/checks/summary", to: "checks#summary"
     get "/repositories/:repo_name/commits/:commit_sha/checks/:id", to: "checks#show"
     patch "/repositories/:repo_id/commits/:commit_sha/checks", to: "checks#patch"
+    post "/repositories/:repo_id/commits/:commit_sha/checks/wrap_up", to: "checks#wrap_job_up"
 
     # Issues
     put "/repositories/:repo_id/issues", to: "issues#put"

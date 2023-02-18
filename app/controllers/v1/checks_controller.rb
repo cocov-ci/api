@@ -3,7 +3,7 @@
 module V1
   class ChecksController < V1Controller
     before_action :ensure_authentication
-    before_action :ensure_service_token, only: :patch
+    before_action :ensure_service_token, only: [:patch, :wrap_job_up]
 
     def index
       repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
@@ -60,6 +60,15 @@ module V1
         updates[:error_output] = error_output
       end
       check.update!(**updates)
+
+      head :no_content
+    end
+
+    def wrap_job_up
+      check_set = Repository.find(params[:repo_id])
+        .commits.find_by!(sha: params[:commit_sha])
+        .check_set
+        .wrap_up!
 
       head :no_content
     end
