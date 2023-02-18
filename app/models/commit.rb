@@ -78,15 +78,6 @@ class Commit < ApplicationRecord
     update! user_id: email.user_id
   end
 
-  def checks_not_configured!
-    if check_set.nil?
-      build_check_set(status: :not_configured)
-    else
-      check_set.status = :not_configured!
-    end
-    check_set.save!
-  end
-
   def reset_check_set!
     check_set&.reset! || create_check_set!
   end
@@ -101,6 +92,11 @@ class Commit < ApplicationRecord
 
   def coverage_status
     coverage&.status || "waiting"
+  end
+
+  def reset_counters
+    Commit.reset_counters(id, :issues)
+    reload
   end
 
   private

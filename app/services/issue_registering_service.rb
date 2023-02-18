@@ -4,101 +4,46 @@ class IssueRegisteringService < ApplicationService
   VALIDATOR = Cocov::SchemaValidator.with do
     hash(
       sha: string,
-      issues: hash(
-        alt(string, symbol) => opt(
-          array(
-            hash(
-              uid: string,
-              kind: string,
-              file: string,
-              line_start: integer,
-              line_end: integer,
-              message: string
-            )
+      source: alt(string, symbol),
+      issues: opt(
+        array(
+          hash(
+            uid: string,
+            kind: string,
+            file: string,
+            line_start: integer,
+            line_end: integer,
+            message: string
           )
         )
       )
     )
   end
 
-  def self.validate(data)
-    VALIDATOR.validate(data)
-  end
+  def self.validate(data) = VALIDATOR.validate(data)
 
-  def call(data, repo, status)
+  def call(data, repo)
     @data = data
     @repo = repo
-    @status = status
 
-    prepare_commit!
-    cleanup_issues!
+    @commit = @repo.commits.find_by!(sha: @data[:sha])
+
     register_issues!
-    update_branches!
   end
 
   def register_issues!
-    to_create = {}
-    @data[:issues].map do |source, issues|
-      next if issues.nil?
-
-      issues.each do |issue|
-        db_issue = issue
-          .slice(:kind, :file, :line_start, :line_end, :message, :uid)
-          .merge({
-            status: Issue.statuses[:new],
-            check_source: source
-          })
-        to_create[db_issue[:uid].strip.to_s] = db_issue
-      end
+    to_create = @data[:issues]&.map do |issue|
+      issue
+        .slice(:kind, :file, :line_start, :line_end, :message, :uid)
+        .merge({
+          status: Issue.statuses[:new],
+          check_source: @data[:source],
+          commit_id: @commit.id,
+        })
     end
 
-    Issue.transaction do
-      to_create.each_value { @commit.issues.create! _1 }
+    return if !to_create || to_create.empty?
 
-      @commit.issues_count = @commit.issues.count
-      @commit.check_set.status = @status
-      @commit.save!
-      IssueHistory.register_history! @commit, @commit.issues_count
-
-      issue_commit_status
-    end
-  end
-
-  def issue_commit_status
-    if @commit.check_set.errored?
-      # TODO: url
-      @commit.create_github_status(:failure, context: "cocov", description: "An internal error occurred")
-      return
-    end
-
-    if @commit.issues_count.zero?
-      @commit.create_github_status(:success, context: "cocov", description: "No issues detected")
-      return
-    end
-    qty = @commit.issues_count
-    name = "issue#{qty == 1 ? "" : "s"}"
-
-    @commit.create_github_status(:failure,
-      context: "cocov",
-      description: "#{qty} #{name} detected",
-      url: "#{Cocov::UI_BASE_URL}/repos/#{@repo.name}/commits/#{@commit.sha}/issues")
-  end
-
-  def prepare_commit!
-    @commit = @repo.commits.find_by!(sha: @data[:sha])
-  end
-
-  def cleanup_issues!
-    @commit
-      .issues
-      .where.not(status: Issue.statuses[:ignored])
-      .delete_all
-  end
-
-  def update_branches!
-    @repo.branches.where(head_id: @commit.id).each do |branch|
-      branch.issues = @commit.issues_count
-      branch.save!
-    end
+    Issue.insert_all(to_create)
   end
 end

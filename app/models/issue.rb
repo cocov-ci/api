@@ -53,8 +53,9 @@ class Issue < ApplicationRecord
   validates :line_end, presence: true
   validates :line_start, presence: true
   validates :message, presence: true
+  validates :uid, presence: true, uniqueness: { scope: :commit_id }
 
-  belongs_to :commit
+  belongs_to :commit, counter_cache: true
   belongs_to :assignee, class_name: :User, optional: true
 
   def assign!(user)

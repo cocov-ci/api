@@ -23,6 +23,8 @@ module Cocov
         err! self unless ok
       end
 
+      def clean(value) = value
+
       def inspect
         result = []
         @opts.each { |opt| result << "#{opt.inspect}," }

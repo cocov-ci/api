@@ -36,8 +36,6 @@ module V1
 
     def put
       error! :issues, :json_required unless request.format.json?
-      error! :issues, :missing_status if params[:status].blank?
-      error! :issues, :invalid_check_status unless CheckSet.statuses.include? params[:status]
 
       data = begin
         IssueRegisteringService.validate(params)
@@ -49,7 +47,7 @@ module V1
       end
 
       repo = Repository.find(params[:repo_id])
-      IssueRegisteringService.call(data, repo, params[:status])
+      IssueRegisteringService.call(data, repo)
 
       head :no_content
     end

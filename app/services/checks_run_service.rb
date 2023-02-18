@@ -65,7 +65,6 @@ class ChecksRunService < ApplicationService
       return
     end
 
-    # FIXME: Can InvalidManifestError be thrown here?
     checks = begin
       manifest.checks.map do |check|
         { plugin: check.plugin, envs: check.envs }.tap do |data|
@@ -78,7 +77,6 @@ class ChecksRunService < ApplicationService
       nil
     end
 
-    # FIXME: Is this condition even possible?
     return if checks.nil?
 
     job_id = SecureRandom.uuid
