@@ -80,7 +80,7 @@ class Commit < ApplicationRecord
     check_set&.reset! || create_check_set!
   end
 
-  def reset_coverage!(status:)
+  def reset_coverage!(status: nil)
     coverage&.reset!(status:) || create_coverage!(status:)
   end
 
