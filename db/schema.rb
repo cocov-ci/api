@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_02_18_202255) do
+ActiveRecord::Schema[7.0].define(version: 2023_02_18_212249) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -36,7 +36,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_18_202255) do
     t.datetime "updated_at", null: false
     t.datetime "finished_at", precision: nil
     t.datetime "started_at", precision: nil
+    t.string "job_id"
     t.index ["commit_id"], name: "index_check_sets_on_commit_id", unique: true
+    t.index ["job_id"], name: "index_check_sets_on_job_id", unique: true
   end
 
   create_table "checks", force: :cascade do |t|
@@ -62,11 +64,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_18_202255) do
     t.integer "issues_count"
     t.integer "coverage_percent"
     t.integer "clone_status", null: false
-    t.string "check_job_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "minimum_coverage"
-    t.index ["check_job_id"], name: "index_commits_on_check_job_id"
     t.index ["repository_id"], name: "index_commits_on_repository_id"
     t.index ["sha", "repository_id"], name: "index_commits_on_sha_and_repository_id", unique: true
     t.index ["sha"], name: "index_commits_on_sha"

@@ -11,10 +11,12 @@
 #  updated_at  :datetime         not null
 #  finished_at :datetime
 #  started_at  :datetime
+#  job_id      :string
 #
 # Indexes
 #
 #  index_check_sets_on_commit_id  (commit_id) UNIQUE
+#  index_check_sets_on_job_id     (job_id) UNIQUE
 #
 # Foreign Keys
 #

@@ -14,14 +14,12 @@
 #  issues_count     :integer
 #  coverage_percent :integer
 #  clone_status     :integer          not null
-#  check_job_id     :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  minimum_coverage :integer
 #
 # Indexes
 #
-#  index_commits_on_check_job_id           (check_job_id)
 #  index_commits_on_repository_id          (repository_id)
 #  index_commits_on_sha                    (sha)
 #  index_commits_on_sha_and_repository_id  (sha,repository_id) UNIQUE
