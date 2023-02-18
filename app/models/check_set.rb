@@ -12,6 +12,7 @@
 #  finished_at :datetime
 #  started_at  :datetime
 #  job_id      :string
+#  canceling   :boolean          default(FALSE), not null
 #
 # Indexes
 #
@@ -31,8 +32,16 @@ class CheckSet < ApplicationRecord
     processing: 2,
     processed: 3,
     errored: 4,
-    not_configured: 5
+    not_configured: 5,
+    canceled: 6
   }
+
+  def finished? = processed? || errored? || canceled?
+
+  def canceling!
+    self.canceling = true
+    save!
+  end
 
   validates :job_id, uniqueness: true, if: -> { job_id.present? }
   belongs_to :commit
@@ -42,8 +51,10 @@ class CheckSet < ApplicationRecord
 
   def reset!
     transaction do
+      self.canceling = false
       self.status = :waiting
       self.started_at = Time.zone.now
+      save!
       checks.destroy_all
       commit.issues.destroy_all
     end
@@ -51,20 +62,26 @@ class CheckSet < ApplicationRecord
   end
 
   def wrap_up!
-
     # Make sure all checks have a valid status before continuing
-    unless checks.all?(&:finished?)
-      raise InconsistentCheckStatusError, "not all checks have a valid finished status"
-    end
+    raise InconsistentCheckStatusError, "not all checks have a valid finished status" unless checks.all?(&:finished?)
 
     transaction do
       commit.reset_counters
-      IssueHistory.register_history! commit, commit.issues_count
       self.finished_at = Time.zone.now
-      commit.repository.branches.where(head_id: commit.id).each do |br|
+
+      next if canceling?
+
+      IssueHistory.register_history! commit, commit.issues_count
+      commit.repository.branches.where(head_id: commit.id).find_each do |br|
         br.issues = commit.issues_count
         br.save!
       end
+    end
+
+    if canceling?
+      canceled!
+      commit.create_github_status(:neutral, context: "cocov", description: "Checks were canceled")
+      return
     end
 
     if checks.any?(&:errored?)

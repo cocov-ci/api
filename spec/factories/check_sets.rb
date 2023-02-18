@@ -12,6 +12,7 @@
 #  finished_at :datetime
 #  started_at  :datetime
 #  job_id      :string
+#  canceling   :boolean          default(FALSE), not null
 #
 # Indexes
 #

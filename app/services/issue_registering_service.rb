@@ -38,11 +38,11 @@ class IssueRegisteringService < ApplicationService
         .merge({
           status: Issue.statuses[:new],
           check_source: @data[:source],
-          commit_id: @commit.id,
+          commit_id: @commit.id
         })
     end
 
-    return if !to_create || to_create.empty?
+    return if to_create.blank?
 
     Issue.insert_all(to_create)
     @commit.reset_counters

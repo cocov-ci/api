@@ -128,6 +128,7 @@ Rails/SkipsModelValidations:
     - db/migrate/20230114185524_enforce_repository_members_level.rb
     - app/models/concerns/last_usage_tracker.rb
     - db/migrate/20230218160149_move_checks_to_check_set.rb
+    - app/services/issue_registering_service.rb
 
 Style/CombinableLoops:
   Exclude:

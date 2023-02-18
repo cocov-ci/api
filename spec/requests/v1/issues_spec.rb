@@ -347,7 +347,7 @@ RSpec.describe "V1::Issues" do
         params: {
           sha: "65f4e0c879eb83460260637880fb82f188065d11",
           source: :a,
-          issues: [],
+          issues: []
         }
 
       expect(response).to have_http_status :no_content
@@ -441,7 +441,7 @@ RSpec.describe "V1::Issues" do
           }
         ],
         "sha" => "a36aaecf08cdf39970efd816ebc05d515f8fc391",
-        "repo_name" => "api",
+        "repo_name" => "api"
       }
 
       repo = create(:repository)

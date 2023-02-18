@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_02_18_212249) do
+ActiveRecord::Schema[7.0].define(version: 2023_02_18_214943) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -37,6 +37,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_18_212249) do
     t.datetime "finished_at", precision: nil
     t.datetime "started_at", precision: nil
     t.string "job_id"
+    t.boolean "canceling", default: false, null: false
     t.index ["commit_id"], name: "index_check_sets_on_commit_id", unique: true
     t.index ["job_id"], name: "index_check_sets_on_job_id", unique: true
   end

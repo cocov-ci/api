@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class MoveJobIdToCheckSet < ActiveRecord::Migration[7.0]
   def change
     reversible do |dir|

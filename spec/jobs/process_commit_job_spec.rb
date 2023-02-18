@@ -78,9 +78,6 @@ RSpec.describe ProcessCommitJob do
     stub_crypto_key!
 
     expect(GitService).to receive(:clone_commit).with(commit)
-    fake_manifest = double(:manifest)
-    allow(fake_manifest).to receive(:checks).and_return([])
-
     expect(GitService).to receive(:file_for_commit)
       .with(commit, path: ".cocov.yaml")
       .and_return(["yaml", fixture_file("manifests/v0.1alpha/complete.yaml")])

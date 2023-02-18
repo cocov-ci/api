@@ -79,8 +79,6 @@ class ChecksRunService < ApplicationService
 
     return if checks.nil?
 
-    job_id = SecureRandom.uuid
-
     ActiveRecord::Base.transaction do
       manifest.checks.each do |check|
         commit.check_set.checks.create!(
@@ -89,14 +87,14 @@ class ChecksRunService < ApplicationService
         )
       end
 
-      commit.check_set.job_id = job_id
+      commit.check_set.job_id ||= SecureRandom.uuid
       commit.check_set.status = :queued
       commit.check_set.save!
     end
 
     Cocov::Redis.instance.rpush("cocov:checks", {
       check_set_id: commit.check_set.id,
-      job_id:,
+      job_id: commit.check_set.job_id,
       org: Cocov::GITHUB_ORGANIZATION_NAME,
       repo: commit.repository.name,
       repo_id: commit.repository_id,

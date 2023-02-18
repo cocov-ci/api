@@ -3,7 +3,7 @@
 module V1
   class ChecksController < V1Controller
     before_action :ensure_authentication
-    before_action :ensure_service_token, only: [:patch, :wrap_job_up]
+    before_action :ensure_service_token, only: %i[patch wrap_job_up cancel re_run]
 
     def index
       repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
@@ -50,7 +50,7 @@ module V1
       case new_status
       when "running"
         updates[:started_at] = Time.zone.now
-      when "succeeded"
+      when "succeeded", "canceled"
         updates[:error_output] = nil
         updates[:started_at] = Time.zone.now if check.started_at.nil?
         updates[:finished_at] = Time.zone.now if check.finished_at.nil?
@@ -65,7 +65,7 @@ module V1
     end
 
     def wrap_job_up
-      check_set = Repository.find(params[:repo_id])
+      Repository.find(params[:repo_id])
         .commits.find_by!(sha: params[:commit_sha])
         .check_set
         .wrap_up!
@@ -81,6 +81,39 @@ module V1
 
       render "v1/checks/summary",
         locals: { checks:, issues_count: }
+    end
+
+    def re_run
+      set = Repository.find(params[:repo_id])
+        .commits.includes(:check_set).find_by!(sha: params[:commit_sha])
+        .check_set
+
+      set.locking(timeout: 5.seconds) do
+        error! :checks, :cannot_re_run_while_running unless set.reload.finished?
+        ChecksRunService.call(set.commit)
+      end
+
+      head :no_content
+    end
+
+    def cancel
+      set = Repository.find(params[:repo_id])
+        .commits.find_by!(sha: params[:commit_sha])
+        .check_set
+
+      set.locking(timeout: 5.seconds) do
+        set.reload
+        next if set.canceling? || set.finished?
+
+        set.canceling!
+        Cocov::Redis.instance.rpush("cocov:checks_control", {
+          check_set_id: set.id,
+          job_id: set.job_id,
+          operation: :cancel
+        }.to_json)
+      end
+
+      head :no_content
     end
   end
 end
