@@ -38,18 +38,17 @@ module V1
       error_output = params[:error_output]
       error! :checks, :missing_error_output if new_status == "errored" && error_output.blank?
 
-      updates = {
-        status: new_status
-      }
-
       check = Repository.find(params[:repo_id])
         .commits.find_by!(sha: params[:commit_sha])
         .checks
         .find_by!(plugin_name: params[:plugin_name])
 
+      updates = {
+        status: new_status
+      }
+
       case new_status
       when "running"
-        check.check_set.processing!
         updates[:started_at] = Time.zone.now
       when "succeeded"
         updates[:error_output] = nil
