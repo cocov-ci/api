@@ -459,7 +459,7 @@ RSpec.describe "V1::Checks" do
       expect(gh_app).to receive(:create_status).with(
         "#{@github_organization_name}/#{repo.name}",
         commit.sha,
-        "neutral",
+        "error",
         description: "Checks were canceled",
         context: "cocov"
       )
