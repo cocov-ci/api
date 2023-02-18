@@ -56,7 +56,7 @@ class IssueRegisteringService < ApplicationService
       to_create.each_value { @commit.issues.create! _1 }
 
       @commit.issues_count = @commit.issues.count
-      @commit.checks_status = @status
+      @commit.check_set.status = @status
       @commit.save!
       IssueHistory.register_history! @commit, @commit.issues_count
 
@@ -65,7 +65,7 @@ class IssueRegisteringService < ApplicationService
   end
 
   def issue_commit_status
-    if @commit.checks_errored?
+    if @commit.check_set.errored?
       # TODO: url
       @commit.create_github_status(:failure, context: "cocov", description: "An internal error occurred")
       return

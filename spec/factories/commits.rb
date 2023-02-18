@@ -11,7 +11,6 @@
 #  author_email     :string           not null
 #  message          :text             not null
 #  user_id          :bigint
-#  checks_status    :integer          not null
 #  coverage_status  :integer          not null
 #  issues_count     :integer
 #  coverage_percent :integer
@@ -41,7 +40,6 @@ FactoryBot.define do
     author_email { Faker::Internet.safe_email }
     message { "Commit message" }
     user_id { nil }
-    checks_status { :queued }
     coverage_status { :queued }
     issues_count { 0 }
     coverage_percent { 0 }

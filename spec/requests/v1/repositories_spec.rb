@@ -133,7 +133,8 @@ RSpec.describe "V1::Repositories" do
         repo = cov.commit.repository
         repo.branches.create(name: "master", head: cov.commit)
         cov.commit.coverage_processed!
-        cov.commit.checks_processed!
+        cov.commit.reset_check_set!
+        cov.commit.check_set.processed!
         @user = create(:user)
         grant(@user, access_to: repo)
 

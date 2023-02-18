@@ -107,6 +107,7 @@ RSpec.describe ProcessCommitJob do
 
     op = JSON.parse(@redis.lrange("cocov:checks", 0, 0).first)
     expect(op).to eq({
+      "check_set_id" => commit.check_set.id,
       "job_id" => "this-is-an-uuid",
       "org" => @github_organization_name,
       "repo" => commit.repository.name,

@@ -49,7 +49,7 @@ module V1
 
       case new_status
       when "running"
-        check.commit.checks_processing!
+        check.check_set.processing!
         updates[:started_at] = Time.zone.now
       when "succeeded"
         updates[:error_output] = nil

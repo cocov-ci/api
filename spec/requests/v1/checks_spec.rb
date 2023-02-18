@@ -182,8 +182,8 @@ RSpec.describe "V1::Checks" do
 
     describe "updates check" do
       let(:check) { create(:check, :with_commit) }
-      let(:commit) { check.commit }
-      let(:repo) { check.commit.repository }
+      let(:commit) { check.check_set.commit }
+      let(:repo) { check.check_set.commit.repository }
 
       it "for status running" do
         patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",

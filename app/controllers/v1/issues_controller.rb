@@ -37,7 +37,7 @@ module V1
     def put
       error! :issues, :json_required unless request.format.json?
       error! :issues, :missing_status if params[:status].blank?
-      error! :issues, :invalid_check_status unless Commit.checks_statuses.include? params[:status]
+      error! :issues, :invalid_check_status unless CheckSet.statuses.include? params[:status]
 
       data = begin
         IssueRegisteringService.validate(params)
