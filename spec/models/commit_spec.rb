@@ -11,7 +11,6 @@
 #  author_email     :string           not null
 #  message          :text             not null
 #  user_id          :bigint
-#  coverage_status  :integer          not null
 #  issues_count     :integer
 #  coverage_percent :integer
 #  clone_status     :integer          not null
@@ -80,19 +79,22 @@ RSpec.describe Commit do
 
     describe "determines its condensed status" do
       it "determines yellow status" do
-        c = described_class.new(coverage_status: :waiting)
+        c = described_class.new
+        c.build_coverage(status: :waiting)
         c.build_check_set(status: :waiting)
         expect(c.condensed_status).to eq :yellow
       end
 
       it "determines red status" do
-        c = described_class.new(coverage_status: :errored)
+        c = described_class.new
+        c.build_coverage(status: :errored)
         c.build_check_set(status: :waiting)
         expect(c.condensed_status).to eq :red
       end
 
       it "determines green status" do
-        c = described_class.new(coverage_status: :processed)
+        c = described_class.new
+        c.build_coverage(status: :processed)
         c.build_check_set(status: :processed)
         expect(c.condensed_status).to eq :green
       end

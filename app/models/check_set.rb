@@ -36,8 +36,8 @@ class CheckSet < ApplicationRecord
   def reset!
     transaction do
       self.status = :waiting
-      checks.destroy_all!
-      commit.issues.destroy_all!
+      checks.destroy_all
+      commit.issues.destroy_all
     end
     true
   end

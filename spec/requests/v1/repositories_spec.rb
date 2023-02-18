@@ -129,10 +129,9 @@ RSpec.describe "V1::Repositories" do
       end
 
       it "shows commit information when head is present" do
-        cov = create(:coverage_info, :with_commit, :with_file)
+        cov = create(:coverage_info, :with_commit, :with_file, status: :processed)
         repo = cov.commit.repository
         repo.branches.create(name: "master", head: cov.commit)
-        cov.commit.coverage_processed!
         cov.commit.reset_check_set!
         cov.commit.check_set.processed!
         @user = create(:user)

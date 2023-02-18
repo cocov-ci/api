@@ -25,7 +25,7 @@ FactoryBot.define do
   factory :coverage_info do
     percent_covered { 50 }
     lines_total { 100 }
-    status { :updating }
+    status { :waiting }
 
     trait :with_commit do
       commit { create(:commit, :with_repository) }

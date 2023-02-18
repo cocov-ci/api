@@ -11,7 +11,6 @@
 #  author_email     :string           not null
 #  message          :text             not null
 #  user_id          :bigint
-#  coverage_status  :integer          not null
 #  issues_count     :integer
 #  coverage_percent :integer
 #  clone_status     :integer          not null
@@ -34,16 +33,6 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Commit < ApplicationRecord
-  STATUSES = {
-    waiting: 0,
-    queued: 1,
-    processing: 2,
-    processed: 3,
-    errored: 4,
-    not_configured: 5
-  }.freeze
-
-  enum coverage_status: STATUSES, _prefix: :coverage
   enum clone_status: { queued: 0, in_progress: 1, completed: 2, errored: 3 }, _prefix: :clone
 
   before_validation :ensure_statuses
@@ -99,21 +88,24 @@ class Commit < ApplicationRecord
   end
 
   def reset_check_set!
-    if check_set.nil?
-      create_check_set!
-    else
-      check_set.reset!
-    end
+    check_set&.reset! || create_check_set!
+  end
+
+  def reset_coverage!(status:)
+    coverage&.reset!(status:) || create_coverage!(status:)
   end
 
   def checks_status
     check_set&.status || "waiting"
   end
 
+  def coverage_status
+    coverage&.status || "waiting"
+  end
+
   private
 
   def ensure_statuses
-    self.coverage_status = :waiting if coverage_status.blank?
     self.clone_status = :queued if clone_status.blank?
   end
 end

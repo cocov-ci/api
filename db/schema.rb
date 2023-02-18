@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_02_18_171024) do
+ActiveRecord::Schema[7.0].define(version: 2023_02_18_182119) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -57,7 +57,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_18_171024) do
     t.string "author_email", null: false
     t.text "message", null: false
     t.bigint "user_id"
-    t.integer "coverage_status", null: false
     t.integer "issues_count"
     t.integer "coverage_percent"
     t.integer "clone_status", null: false
