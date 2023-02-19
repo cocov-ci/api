@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_01_21_003917) do
+ActiveRecord::Schema[7.0].define(version: 2023_02_18_214943) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -29,8 +29,20 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_21_003917) do
     t.index ["repository_id"], name: "index_branches_on_repository_id"
   end
 
-  create_table "checks", force: :cascade do |t|
+  create_table "check_sets", force: :cascade do |t|
     t.bigint "commit_id", null: false
+    t.integer "status", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "finished_at", precision: nil
+    t.datetime "started_at", precision: nil
+    t.string "job_id"
+    t.boolean "canceling", default: false, null: false
+    t.index ["commit_id"], name: "index_check_sets_on_commit_id", unique: true
+    t.index ["job_id"], name: "index_check_sets_on_job_id", unique: true
+  end
+
+  create_table "checks", force: :cascade do |t|
     t.citext "plugin_name", null: false
     t.datetime "started_at", precision: nil
     t.datetime "finished_at", precision: nil
@@ -38,8 +50,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_21_003917) do
     t.text "error_output"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["commit_id", "plugin_name"], name: "index_checks_on_commit_id_and_plugin_name", unique: true
-    t.index ["commit_id"], name: "index_checks_on_commit_id"
+    t.bigint "check_set_id", null: false
+    t.index ["check_set_id"], name: "index_checks_on_check_set_id"
+    t.index ["plugin_name", "check_set_id"], name: "index_checks_on_plugin_name_and_check_set_id", unique: true
   end
 
   create_table "commits", force: :cascade do |t|
@@ -49,16 +62,12 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_21_003917) do
     t.string "author_email", null: false
     t.text "message", null: false
     t.bigint "user_id"
-    t.integer "checks_status", null: false
-    t.integer "coverage_status", null: false
     t.integer "issues_count"
     t.integer "coverage_percent"
     t.integer "clone_status", null: false
-    t.string "check_job_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "minimum_coverage"
-    t.index ["check_job_id"], name: "index_commits_on_check_job_id"
     t.index ["repository_id"], name: "index_commits_on_repository_id"
     t.index ["sha", "repository_id"], name: "index_commits_on_sha_and_repository_id", unique: true
     t.index ["sha"], name: "index_commits_on_sha"
@@ -232,7 +241,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_21_003917) do
 
   add_foreign_key "branches", "commits", column: "head_id"
   add_foreign_key "branches", "repositories"
-  add_foreign_key "checks", "commits"
+  add_foreign_key "check_sets", "commits"
+  add_foreign_key "checks", "check_sets"
   add_foreign_key "commits", "repositories"
   add_foreign_key "commits", "users"
   add_foreign_key "coverage_files", "coverage_infos"

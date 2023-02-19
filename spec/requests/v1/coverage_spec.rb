@@ -83,7 +83,7 @@ RSpec.describe "V1::Coverage" do
       @user = create(:user)
       grant(@user, access_to: repo)
       commit = create(:commit, repository: repo)
-      ci = create(:coverage_info, commit:, status: :ready)
+      ci = create(:coverage_info, commit:, status: :processed)
       perc = 0
       10.times do
         create(:coverage_file, coverage: ci, percent_covered: perc)
@@ -117,7 +117,7 @@ RSpec.describe "V1::Coverage" do
       expect(response_commit[:message]).to eq commit.message
       expect(response_commit[:org_name]).to eq @github_organization_name
 
-      expect(json[:status]).to eq "ready"
+      expect(json[:status]).to eq "processed"
       expect(json[:percent_covered]).to eq 50
       expect(json[:lines_total]).to eq 100
       expect(json[:least_covered].first[:percent_covered]).to eq 0
@@ -131,13 +131,13 @@ RSpec.describe "V1::Coverage" do
       @user = create(:user)
       grant(@user, access_to: repo)
       commit = create(:commit, repository: repo)
-      ci = create(:coverage_info, commit:, status: :ready)
+      ci = create(:coverage_info, commit:, status: :processed)
       perc = 0
       10.times do
         create(:coverage_file, coverage: ci, percent_covered: perc)
         perc += 10
       end
-      commit.coverage_processed!
+      commit.coverage.processed!
 
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/coverage",
         headers: authenticated
@@ -155,9 +155,9 @@ RSpec.describe "V1::Coverage" do
       @user = create(:user)
       grant(@user, access_to: repo)
       commit = create(:commit, repository: repo)
-      ci = create(:coverage_info, commit:, status: :ready)
+      ci = create(:coverage_info, commit:, status: :processed)
       file = create(:coverage_file, coverage: ci, percent_covered: 50)
-      commit.coverage_processed!
+      commit.coverage.processed!
       commit.clone_completed!
 
       storage = double(:storage)

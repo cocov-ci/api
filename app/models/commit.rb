@@ -11,19 +11,15 @@
 #  author_email     :string           not null
 #  message          :text             not null
 #  user_id          :bigint
-#  checks_status    :integer          not null
-#  coverage_status  :integer          not null
 #  issues_count     :integer
 #  coverage_percent :integer
 #  clone_status     :integer          not null
-#  check_job_id     :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  minimum_coverage :integer
 #
 # Indexes
 #
-#  index_commits_on_check_job_id           (check_job_id)
 #  index_commits_on_repository_id          (repository_id)
 #  index_commits_on_sha                    (sha)
 #  index_commits_on_sha_and_repository_id  (sha,repository_id) UNIQUE
@@ -35,16 +31,6 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Commit < ApplicationRecord
-  STATUSES = {
-    waiting: 0,
-    queued: 1,
-    processing: 2,
-    processed: 3,
-    errored: 4,
-    not_configured: 5
-  }.freeze
-  enum checks_status: STATUSES, _prefix: :checks
-  enum coverage_status: STATUSES, _prefix: :coverage
   enum clone_status: { queued: 0, in_progress: 1, completed: 2, errored: 3 }, _prefix: :clone
 
   before_validation :ensure_statuses
@@ -58,8 +44,10 @@ class Commit < ApplicationRecord
   belongs_to :user, optional: true
 
   has_one :coverage, class_name: :CoverageInfo, dependent: :destroy
+  has_one :check_set, dependent: :destroy
   has_many :issues, dependent: :destroy
-  has_many :checks, dependent: :destroy
+
+  has_many :checks, through: :check_set
 
   def create_github_status(status, context:, description: nil, url: nil)
     opts = { description:, target_url: url, context: }.compact
@@ -88,11 +76,32 @@ class Commit < ApplicationRecord
     update! user_id: email.user_id
   end
 
+  def reset_check_set!
+    check_set&.reset! || create_check_set!
+  end
+
+  def reset_coverage!(status: nil)
+    coverage&.reset!(status:) || create_coverage!(status:)
+  end
+
+  def checks_status
+    check_set&.status || "waiting"
+  end
+
+  def coverage_status
+    coverage&.status || "waiting"
+  end
+
+  def reset_counters
+    Commit.reset_counters(id, :issues)
+    reload
+  end
+
+  def rerun_checks! = check_set&.rerun! || false
+
   private
 
   def ensure_statuses
-    self.coverage_status = :waiting if coverage_status.blank?
-    self.checks_status = :waiting if checks_status.blank?
     self.clone_status = :queued if clone_status.blank?
   end
 end

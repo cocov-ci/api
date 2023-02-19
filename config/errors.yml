@@ -23,6 +23,9 @@ errors:
     missing_error_output:
       status: bad_request
       message: The parameter "error_output" is required when status is errored
+    cannot_re_run_while_running:
+      status: conflict
+      message: Checks are running. The job must be canceled before being re-run
   private_keys:
     missing_name:
       status: bad_request

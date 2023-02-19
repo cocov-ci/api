@@ -24,7 +24,7 @@ class ProcessCoverageJob < ApplicationJob
       cov.lines_total = lines_total
       cov.lines_covered = lines_covered
       cov.percent_covered = lines_total.zero? ? 0 : ((lines_covered.to_f / lines_total) * 100)
-      cov.status = :ready
+      cov.status = :processed
       cov.save!
     end
   end
@@ -35,18 +35,14 @@ class ProcessCoverageJob < ApplicationJob
     data = JSON.parse(data)
 
     cover = ActiveRecord::Base.transaction do
-      commit.coverage_processing!
-      (commit.coverage || commit.build_coverage).tap do |c|
-        c.status = :updating
-        c.save!
-        c.files.destroy_all
-      end
+      commit.reset_coverage! status: :processing
+      commit.coverage
     end
 
     cov = ActiveRecord::Base.transaction do
       prepare_coverage_files(data, cover).tap do |coverage|
         commit.coverage_percent = coverage.percent_covered
-        commit.coverage_processed!
+        commit.coverage.processed!
         CoverageHistory.register_history! commit, coverage.percent_covered
         r.branches.where(head_id: commit.id).each do |b|
           b.coverage = coverage.percent_covered
@@ -83,7 +79,7 @@ class ProcessCoverageJob < ApplicationJob
       end
     end
   rescue StandardError => e
-    commit.coverage_errored!
+    commit.coverage.errored!
     raise e
   end
 end

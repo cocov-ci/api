@@ -33,7 +33,11 @@ class ChecksRunService < ApplicationService
              else
                commit
              end
+
     @commit = commit
+
+    commit.reset_check_set!
+
     manifest_contents = begin
       GitService.file_for_commit(commit, path: ".cocov.yaml").last
     rescue GitService::FileNotFoundError
@@ -41,7 +45,7 @@ class ChecksRunService < ApplicationService
     end
 
     if manifest_contents.nil?
-      commit.checks_not_configured!
+      commit.check_set.not_configured!
       return
     end
 
@@ -56,7 +60,7 @@ class ChecksRunService < ApplicationService
     end
 
     if manifest.checks.empty?
-      commit.checks_not_configured!
+      commit.check_set.not_configured!
       commit.create_github_status(:success, context: "cocov", description: "Looking good!")
       return
     end
@@ -75,23 +79,22 @@ class ChecksRunService < ApplicationService
 
     return if checks.nil?
 
-    commit.checks.destroy_all
-
-    job_id = SecureRandom.uuid
-
     ActiveRecord::Base.transaction do
       manifest.checks.each do |check|
-        commit.checks.create!(
+        commit.check_set.checks.create!(
           plugin_name: check.plugin.split(":").first,
           status: :waiting
         )
       end
 
-      commit.update! check_job_id: job_id, checks_status: :queued
+      commit.check_set.job_id ||= SecureRandom.uuid
+      commit.check_set.status = :queued
+      commit.check_set.save!
     end
 
     Cocov::Redis.instance.rpush("cocov:checks", {
-      job_id:,
+      check_set_id: commit.check_set.id,
+      job_id: commit.check_set.job_id,
       org: Cocov::GITHUB_ORGANIZATION_NAME,
       repo: commit.repository.name,
       repo_id: commit.repository_id,

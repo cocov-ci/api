@@ -82,10 +82,6 @@ module V1
 
     private
 
-    def no_history
-      head :no_content
-    end
-
     def stats_params
       from = params[:from]
       to = params[:to]

@@ -66,7 +66,7 @@ RSpec.describe "V1::Issues" do
       expect(response_commit[:coverage_status]).to eq commit.coverage_status
       expect(response_commit[:sha]).to eq commit.sha
       expect(response_commit[:coverage_percent]).to eq commit.coverage_percent
-      expect(response_commit[:issues_count]).to eq commit.issues_count
+      expect(response_commit[:issues_count]).to eq 1
       expect(response_commit[:condensed_status]).to eq commit.condensed_status.to_s
       expect(response_commit[:minimum_coverage]).to eq commit.minimum_coverage
       expect(response_commit[:message]).to eq commit.message
@@ -211,65 +211,54 @@ RSpec.describe "V1::Issues" do
     end
 
     ok_request = {
-      status: "processed",
       sha: "",
-      issues: {
-        a: [
-          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" }
-        ]
-      }
+      source: :a,
+      issues: [
+        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" }
+      ]
     }.freeze
 
     cases = {
       "sha" => ok_request.dup.merge({
         sha: 0
       }),
-      "issues" => ok_request.dup.merge({ issues: 0 }),
-      "issues.a.0.uid" => ok_request.dup.merge({
-        issues: {
-          a: [
-            { uid: 0, file: "", line_start: 0, line_end: 0, message: "", kind: "" }
-          ]
-        }
+      "source" => ok_request.dup.merge({
+        source: 0
       }),
-      "issues.a.0.file" => ok_request.dup.merge({
-        issues: {
-          a: [
-            { uid: "", file: 0, line_start: 0, line_end: 0, message: "", kind: "" }
-          ]
-        }
+      "issues" => ok_request.dup.merge({ issues: {} }),
+      "issues.0.uid" => ok_request.dup.merge({
+        issues: [
+          { uid: 0, file: "", line_start: 0, line_end: 0, message: "", kind: "" }
+        ]
       }),
-      "issues.a.0.line_start" => ok_request.dup.merge({
-        issues: {
-          a: [
-            { uid: "", file: "", line_start: "", line_end: 0, message: "", kind: "" }
-          ]
-        }
+      "issues.0.file" => ok_request.dup.merge({
+        issues: [
+          { uid: "", file: 0, line_start: 0, line_end: 0, message: "", kind: "" }
+        ]
       }),
-      "issues.a.0.line_end" => ok_request.dup.merge({
-        issues: {
-          a: [
-            { uid: "", file: "", line_start: 0, line_end: "", message: "", kind: "" }
-          ]
-        }
+      "issues.0.line_start" => ok_request.dup.merge({
+        issues: [
+          { uid: "", file: "", line_start: "", line_end: 0, message: "", kind: "" }
+        ]
       }),
-      "issues.a.0.message" => ok_request.dup.merge({
-        issues: {
-          a: [
-            { uid: "", file: "", line_start: 0, line_end: 0, message: 0, kind: "" }
-          ]
-        }
+      "issues.0.line_end" => ok_request.dup.merge({
+        issues: [
+          { uid: "", file: "", line_start: 0, line_end: "", message: "", kind: "" }
+        ]
       }),
-      "issues.a.0.kind" => ok_request.dup.merge({
-        issues: {
-          a: [
-            { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: 0 }
-          ]
-        }
+      "issues.0.message" => ok_request.dup.merge({
+        issues: [
+          { uid: "", file: "", line_start: 0, line_end: 0, message: 0, kind: "" }
+        ]
+      }),
+      "issues.0.kind" => ok_request.dup.merge({
+        issues: [
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: 0 }
+        ]
       })
     }.freeze
 
@@ -288,30 +277,18 @@ RSpec.describe "V1::Issues" do
     it "stores new issues" do
       repo = create(:repository)
       commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
-
-      gh_app = double(:github_app)
-      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
-      expect(gh_app).to receive(:create_status).with(
-        "#{@github_organization_name}/#{repo.name}",
-        "65f4e0c879eb83460260637880fb82f188065d11",
-        "failure",
-        description: "1 issue detected",
-        context: "cocov",
-        target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
-      )
+      commit.reset_check_set!
 
       put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),
         as: :json,
         params: {
-          status: "processed",
           sha: "65f4e0c879eb83460260637880fb82f188065d11",
-          issues: {
-            a: [
-              { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
-                kind: "bug" }
-            ]
-          }
+          source: :a,
+          issues: [
+            { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
+              kind: "bug" }
+          ]
         }
       expect(response).to have_http_status :no_content
       expect(repo.commits.count).to eq 1
@@ -328,97 +305,21 @@ RSpec.describe "V1::Issues" do
       expect(probl.check_source).to eq "a"
     end
 
-    it "maintains ignored issues" do
-      repo = create(:repository)
-      commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
-
-      gh_app = double(:github_app)
-      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
-      expect(gh_app).to receive(:create_status).with(
-        "#{@github_organization_name}/#{repo.name}",
-        "65f4e0c879eb83460260637880fb82f188065d11",
-        "failure",
-        description: "1 issue detected",
-        context: "cocov",
-        target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
-      ).ordered
-      expect(gh_app).to receive(:create_status).with(
-        "#{@github_organization_name}/#{repo.name}",
-        "65f4e0c879eb83460260637880fb82f188065d11",
-        "failure",
-        description: "2 issues detected",
-        context: "cocov",
-        target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
-      ).ordered
-
-      put "/v1/repositories/#{repo.id}/issues",
-        headers: authenticated(as: :service),
-        as: :json,
-        params: {
-          status: "processed",
-          sha: "65f4e0c879eb83460260637880fb82f188065d11",
-          issues: {
-            a: [
-              { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
-                kind: "bug" }
-            ]
-          }
-        }
-
-      expect(response).to have_http_status :no_content
-      expect(repo.commits.count).to eq 1
-      expect(repo.commits.first.issues.count).to eq 1
-      probl = repo.commits.first.issues.first
-      probl.status = :ignored
-      probl.status_reason = "bla"
-      probl.save!
-      put "/v1/repositories/#{repo.id}/issues",
-        headers: authenticated(as: :service),
-        as: :json,
-        params: {
-          status: "processed",
-          sha: "65f4e0c879eb83460260637880fb82f188065d11",
-          issues: {
-            a: [
-              { uid: "rubocop-b", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
-                kind: "bug" }
-            ]
-          }
-        }
-      expect(response).to have_http_status :no_content
-      expect(repo.commits.count).to eq 1
-      expect(repo.commits.first.issues.count).to eq 2
-    end
-
     it "recycles issues" do
       repo = create(:repository)
       commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
-
-      gh_app = double(:github_app)
-      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
-      2.times do
-        expect(gh_app).to receive(:create_status).with(
-          "#{@github_organization_name}/#{repo.name}",
-          "65f4e0c879eb83460260637880fb82f188065d11",
-          "failure",
-          description: "1 issue detected",
-          context: "cocov",
-          target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
-        ).ordered
-      end
+      commit.reset_check_set!
 
       request = {
         headers: authenticated(as: :service),
         as: :json,
         params: {
-          status: "processed",
           sha: "65f4e0c879eb83460260637880fb82f188065d11",
-          issues: {
-            a: [
-              { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
-                kind: "bug" }
-            ]
-          }
+          source: :a,
+          issues: [
+            { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
+              kind: "bug" }
+          ]
         }
       }
 
@@ -437,26 +338,18 @@ RSpec.describe "V1::Issues" do
 
     it "handles an empty issue list" do
       repo = create(:repository)
-      create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
-
-      gh_app = double(:github_app)
-      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
-      expect(gh_app).to receive(:create_status).with(
-        "#{@github_organization_name}/#{repo.name}",
-        "65f4e0c879eb83460260637880fb82f188065d11",
-        "success",
-        description: "No issues detected",
-        context: "cocov"
-      )
+      commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
+      commit.reset_check_set!
 
       put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),
         as: :json,
         params: {
-          status: "processed",
           sha: "65f4e0c879eb83460260637880fb82f188065d11",
-          issues: {}
+          source: :a,
+          issues: []
         }
+
       expect(response).to have_http_status :no_content
       expect(repo.commits.count).to eq 1
       expect(repo.commits.first.issues.count).to eq 0
@@ -464,110 +357,96 @@ RSpec.describe "V1::Issues" do
 
     it "accepts nil arrays of issues" do
       payload = {
-        "issues" => {
-          "cocov/brakeman" => [
-            {
-              "kind" => "security",
-              "file" => "app/services/git_service/base_storage.rb",
-              "line_start" => 23,
-              "line_end" => 23,
-              "message" => "Weak hashing algorithm used: SHA1",
-              "uid" => "12a75d7df840a95bd9da0d107848829a0ac67d2ebf0d2f65a4ed9d0ca7d813e6"
-            },
-            {
-              "kind" => "security",
-              "file" => "app/controllers/v1/github_events_controller.rb",
-              "line_start" => 41,
-              "line_end" => 41,
-              "message" => "Possible SQL injection",
-              "uid" => "205e1c2f2546dc345358bb4d2575846621e643e66542fa4fbe5013fb840d72ff"
-            },
-            {
-              "kind" => "security",
-              "file" => "app/controllers/v1/coverage_controller.rb",
-              "line_start" => 38,
-              "line_end" => 38,
-              "message" => "Possible SQL injection",
-              "uid" => "254a5b19feba0aba48e51ce7aa10e699822d9f33d3e0997b29d5cac41ef47054"
-            },
-            {
-              "kind" => "security",
-              "file" => "app/models/application_record.rb",
-              "line_start" => 12,
-              "line_end" => 12,
-              "message" => "Possible SQL injection",
-              "uid" => "361af13dc4740b03b4e07802cc6dde22e383add96d02d6b34dcada0051fcaa1d"
-            },
-            {
-              "kind" => "security",
-              "file" => "app/controllers/v1/github_events_controller.rb",
-              "line_start" => 87,
-              "line_end" => 87,
-              "message" => "Possible SQL injection",
-              "uid" => "3a9713c28f900693d929054037b17cf1464e23c5472b853eb43537c4734cf77b"
-            },
-            {
-              "kind" => "security",
-              "file" => "app/services/git_service.rb",
-              "line_start" => 35,
-              "line_end" => 35,
-              "message" => "Weak hashing algorithm used: SHA1",
-              "uid" => "3e931ec5cd0ebffd5739fe9e9ae6706250784daab812a27c585b15817b5bc5a3"
-            },
-            {
-              "kind" => "security",
-              "file" => "app/controllers/v1/coverage_controller.rb",
-              "line_start" => 42,
-              "line_end" => 42,
-              "message" => "Specify exact keys allowed for mass assignment",
-              "uid" => "483af335c6d4afbdc9bc7b2493e8fd7f97a51988d6bbe1616f5509d9bc4af76a"
-            },
-            {
-              "kind" => "security",
-              "file" => "app/controllers/v1/github_events_controller.rb",
-              "line_start" => 21,
-              "line_end" => 21,
-              "message" => "User controlled method execution",
-              "uid" => "5d138b57cdd2465149a4e7deb968dfa5b9d03624ea7c50b3e22d04788e7c7899"
-            },
-            {
-              "kind" => "security",
-              "file" => "config/environments/production.rb",
-              "line_start" => 1,
-              "line_end" => 1,
-              "message" => "The application does not force use of HTTPS: `config.force_ssl` is not enabled",
-              "uid" => "6a26086cd2400fbbfb831b2f8d7291e320bcc2b36984d2abc359e41b3b63212b"
-            },
-            {
-              "kind" => "security",
-              "file" => "app/lib/cocov/redis.rb",
-              "line_start" => 77,
-              "line_end" => 77,
-              "message" => "Possible SQL injection",
-              "uid" => "dc667765f93bd6c3d3e0927d86ebd960196cf4c099e64ed466db4dbf17053005"
-            }
-          ],
-          "cocov/rubocop" => nil
-        },
+        "source" => "cocov/brakeman",
+        "issues" => [
+          {
+            "kind" => "security",
+            "file" => "app/services/git_service/base_storage.rb",
+            "line_start" => 23,
+            "line_end" => 23,
+            "message" => "Weak hashing algorithm used: SHA1",
+            "uid" => "12a75d7df840a95bd9da0d107848829a0ac67d2ebf0d2f65a4ed9d0ca7d813e6"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/github_events_controller.rb",
+            "line_start" => 41,
+            "line_end" => 41,
+            "message" => "Possible SQL injection",
+            "uid" => "205e1c2f2546dc345358bb4d2575846621e643e66542fa4fbe5013fb840d72ff"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/coverage_controller.rb",
+            "line_start" => 38,
+            "line_end" => 38,
+            "message" => "Possible SQL injection",
+            "uid" => "254a5b19feba0aba48e51ce7aa10e699822d9f33d3e0997b29d5cac41ef47054"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/models/application_record.rb",
+            "line_start" => 12,
+            "line_end" => 12,
+            "message" => "Possible SQL injection",
+            "uid" => "361af13dc4740b03b4e07802cc6dde22e383add96d02d6b34dcada0051fcaa1d"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/github_events_controller.rb",
+            "line_start" => 87,
+            "line_end" => 87,
+            "message" => "Possible SQL injection",
+            "uid" => "3a9713c28f900693d929054037b17cf1464e23c5472b853eb43537c4734cf77b"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/services/git_service.rb",
+            "line_start" => 35,
+            "line_end" => 35,
+            "message" => "Weak hashing algorithm used: SHA1",
+            "uid" => "3e931ec5cd0ebffd5739fe9e9ae6706250784daab812a27c585b15817b5bc5a3"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/coverage_controller.rb",
+            "line_start" => 42,
+            "line_end" => 42,
+            "message" => "Specify exact keys allowed for mass assignment",
+            "uid" => "483af335c6d4afbdc9bc7b2493e8fd7f97a51988d6bbe1616f5509d9bc4af76a"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/github_events_controller.rb",
+            "line_start" => 21,
+            "line_end" => 21,
+            "message" => "User controlled method execution",
+            "uid" => "5d138b57cdd2465149a4e7deb968dfa5b9d03624ea7c50b3e22d04788e7c7899"
+          },
+          {
+            "kind" => "security",
+            "file" => "config/environments/production.rb",
+            "line_start" => 1,
+            "line_end" => 1,
+            "message" => "The application does not force use of HTTPS: `config.force_ssl` is not enabled",
+            "uid" => "6a26086cd2400fbbfb831b2f8d7291e320bcc2b36984d2abc359e41b3b63212b"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/lib/cocov/redis.rb",
+            "line_start" => 77,
+            "line_end" => 77,
+            "message" => "Possible SQL injection",
+            "uid" => "dc667765f93bd6c3d3e0927d86ebd960196cf4c099e64ed466db4dbf17053005"
+          }
+        ],
         "sha" => "a36aaecf08cdf39970efd816ebc05d515f8fc391",
-        "status" => "processed",
-        "repo_name" => "api",
-        "issue" => { "status" => "processed" }
+        "repo_name" => "api"
       }
 
       repo = create(:repository)
       commit = create(:commit, sha: "a36aaecf08cdf39970efd816ebc05d515f8fc391", repository: repo)
-
-      gh_app = double(:github_app)
-      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
-      expect(gh_app).to receive(:create_status).with(
-        "#{@github_organization_name}/#{repo.name}",
-        "a36aaecf08cdf39970efd816ebc05d515f8fc391",
-        "failure",
-        description: "10 issues detected",
-        context: "cocov",
-        target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
-      )
+      commit.reset_check_set!
 
       put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),

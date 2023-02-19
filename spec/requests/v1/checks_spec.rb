@@ -182,8 +182,8 @@ RSpec.describe "V1::Checks" do
 
     describe "updates check" do
       let(:check) { create(:check, :with_commit) }
-      let(:commit) { check.commit }
-      let(:repo) { check.commit.repository }
+      let(:commit) { check.check_set.commit }
+      let(:repo) { check.check_set.commit.repository }
 
       it "for status running" do
         patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
@@ -252,6 +252,222 @@ RSpec.describe "V1::Checks" do
       expect(response.json.third[:status]).to eq "succeeded"
       expect(response.json.third[:duration]).to eq 3
       expect(response.json.third[:issue_count]).to eq 3
+    end
+  end
+
+  describe "#patch_job" do
+    let(:check_a) { create(:check, :with_commit) }
+    let(:commit) { check_a.check_set.commit }
+    let(:repo) { commit.repository }
+    let(:branch) { create(:branch, repository: repo, head: commit) }
+    let(:check_b) { create(:check, commit: branch.head) }
+
+    before { stub_configuration! }
+
+    it "marks the job as succeeded if all checks succeed" do
+      patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service),
+        params: { status: "succeeded", plugin_name: check_a.plugin_name }
+      expect(response).to have_http_status(:no_content)
+
+      patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service),
+        params: { status: "succeeded", plugin_name: check_b.plugin_name }
+      expect(response).to have_http_status(:no_content)
+
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        commit.sha,
+        "success",
+        description: "No issues detected",
+        context: "cocov"
+      )
+
+      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/wrap_up",
+        headers: authenticated(as: :service)
+      expect(response).to have_http_status(:no_content)
+
+      commit.reload
+      expect(commit.issues_count).to eq 0
+      expect(commit.check_set).to be_processed
+    end
+
+    it "marks the job as errored if any check fails" do
+      patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service),
+        params: { status: "succeeded", plugin_name: check_a.plugin_name }
+      expect(response).to have_http_status(:no_content)
+
+      patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service),
+        params: { status: "errored", error_output: "boom", plugin_name: check_b.plugin_name }
+      expect(response).to have_http_status(:no_content)
+
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        commit.sha,
+        "error",
+        description: "An internal error occurred",
+        context: "cocov"
+      )
+
+      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/wrap_up",
+        headers: authenticated(as: :service)
+      expect(response).to have_http_status(:no_content)
+
+      commit.reload
+      expect(commit.issues_count).to eq 0
+      expect(commit.check_set).to be_errored
+    end
+
+    it "marks the job as succeeded and emits issue counts to GitHub" do
+      patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service),
+        params: { status: "succeeded", plugin_name: check_a.plugin_name }
+      expect(response).to have_http_status(:no_content)
+
+      put "/v1/repositories/#{repo.id}/issues",
+        headers: authenticated(as: :service),
+        as: :json,
+        params: {
+          sha: commit.sha,
+          source: check_b.plugin_name,
+          issues: [
+            { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
+              kind: "bug" }
+          ]
+        }
+      expect(response).to have_http_status(:no_content)
+
+      patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service),
+        params: { status: "succeeded", plugin_name: check_b.plugin_name }
+      expect(response).to have_http_status(:no_content)
+
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        commit.sha,
+        "failure",
+        description: "1 issue detected",
+        context: "cocov",
+        target_url: "#{@ui_base_url}/repos/#{repo.name}/commits/#{commit.sha}/issues"
+      )
+
+      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/wrap_up",
+        headers: authenticated(as: :service)
+      expect(response).to have_http_status(:no_content)
+
+      commit.reload
+      expect(commit.issues_count).to eq 1
+      expect(commit.check_set).to be_processed
+    end
+  end
+
+  describe "#re_run" do
+    let(:check) { create(:check, :running, :with_commit) }
+    let(:commit) { check.check_set.commit }
+    let(:repo) { commit.repository }
+
+    before do
+      stub_configuration!
+      bypass_redlock!
+      mock_redis!
+      stub_crypto_key!
+    end
+
+    it "refuses to re-run a running job" do
+      check.check_set.processing!
+
+      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/re_run",
+        headers: authenticated(as: :service)
+      expect(response).to be_a_json_error(:checks, :cannot_re_run_while_running)
+    end
+
+    it "re-runs a finished job" do
+      check.check_set.canceled!
+
+      expect(GitService).to receive(:file_for_commit)
+        .with(commit, path: ".cocov.yaml")
+        .and_return(["yaml", fixture_file("manifests/v0.1alpha/complete.yaml")])
+
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        commit.sha,
+        "pending",
+        context: "cocov"
+      )
+
+      expect(@redis.llen("cocov:checks")).to be_zero
+      allow(SecureRandom).to receive(:uuid).and_return("this-is-an-uuid")
+      allow(SecureRandom).to receive(:hex).with(anything).and_return("23035196471c5ab5b3b5b03ee9bf494215defa61457311d6")
+
+      create(:secret, :with_owner, name: "FOO")
+
+      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/re_run",
+        headers: authenticated(as: :service)
+
+      expect(@redis.llen("cocov:checks")).to eq 1
+      expect(response).to have_http_status(:no_content)
+    end
+  end
+
+  describe "#cancel" do
+    let(:check) { create(:check, :running, :with_commit) }
+    let(:commit) { check.check_set.commit }
+    let(:repo) { commit.repository }
+
+    before do
+      stub_configuration!
+      bypass_redlock!
+      mock_redis!
+    end
+
+    it "requests a job cancelation" do
+      check.check_set.job_id = "a-job-id"
+      check.check_set.save!
+
+      delete "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service)
+      expect(response).to have_http_status(:no_content)
+      expect(JSON.parse(@redis.lpop("cocov:checks_control"))).to eq({
+        "check_set_id" => check.check_set.id,
+        "job_id" => "a-job-id",
+        "operation" => "cancel"
+      })
+
+      delete "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service)
+      expect(response).to have_http_status(:no_content)
+      expect(@redis.llen("cocov:checks_control")).to eq 0
+
+      patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service),
+        params: { status: "canceled", plugin_name: check.plugin_name }
+
+      expect(response).to have_http_status(:no_content)
+
+      gh_app = double(:github_app)
+      allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
+      expect(gh_app).to receive(:create_status).with(
+        "#{@github_organization_name}/#{repo.name}",
+        commit.sha,
+        "error",
+        description: "Checks were canceled",
+        context: "cocov"
+      )
+
+      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/wrap_up",
+        headers: authenticated(as: :service)
+
+      expect(response).to have_http_status(:no_content)
     end
   end
 end

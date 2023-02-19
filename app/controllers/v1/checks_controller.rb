@@ -3,7 +3,7 @@
 module V1
   class ChecksController < V1Controller
     before_action :ensure_authentication
-    before_action :ensure_service_token, only: :patch
+    before_action :ensure_service_token, only: %i[patch wrap_job_up cancel re_run]
 
     def index
       repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
@@ -38,20 +38,19 @@ module V1
       error_output = params[:error_output]
       error! :checks, :missing_error_output if new_status == "errored" && error_output.blank?
 
-      updates = {
-        status: new_status
-      }
-
       check = Repository.find(params[:repo_id])
         .commits.find_by!(sha: params[:commit_sha])
         .checks
         .find_by!(plugin_name: params[:plugin_name])
 
+      updates = {
+        status: new_status
+      }
+
       case new_status
       when "running"
-        check.commit.checks_processing!
         updates[:started_at] = Time.zone.now
-      when "succeeded"
+      when "succeeded", "canceled"
         updates[:error_output] = nil
         updates[:started_at] = Time.zone.now if check.started_at.nil?
         updates[:finished_at] = Time.zone.now if check.finished_at.nil?
@@ -65,6 +64,15 @@ module V1
       head :no_content
     end
 
+    def wrap_job_up
+      Repository.find(params[:repo_id])
+        .commits.find_by!(sha: params[:commit_sha])
+        .check_set
+        .wrap_up!
+
+      head :no_content
+    end
+
     def summary
       commit = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
         .commits.find_by!(sha: params[:commit_sha])
@@ -73,6 +81,36 @@ module V1
 
       render "v1/checks/summary",
         locals: { checks:, issues_count: }
+    end
+
+    def re_run
+      Repository.find(params[:repo_id])
+        .commits.includes(:check_set).find_by!(sha: params[:commit_sha])
+        .rerun_checks!
+
+      head :no_content
+    rescue CheckSet::StillRunningError
+      error! :checks, :cannot_re_run_while_running
+    end
+
+    def cancel
+      set = Repository.find(params[:repo_id])
+        .commits.find_by!(sha: params[:commit_sha])
+        .check_set
+
+      set.locking(timeout: 5.seconds) do
+        set.reload
+        next if set.canceling? || set.finished?
+
+        set.canceling!
+        Cocov::Redis.instance.rpush("cocov:checks_control", {
+          check_set_id: set.id,
+          job_id: set.job_id,
+          operation: :cancel
+        }.to_json)
+      end
+
+      head :no_content
     end
   end
 end

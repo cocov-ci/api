@@ -11,19 +11,15 @@
 #  author_email     :string           not null
 #  message          :text             not null
 #  user_id          :bigint
-#  checks_status    :integer          not null
-#  coverage_status  :integer          not null
 #  issues_count     :integer
 #  coverage_percent :integer
 #  clone_status     :integer          not null
-#  check_job_id     :string
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  minimum_coverage :integer
 #
 # Indexes
 #
-#  index_commits_on_check_job_id           (check_job_id)
 #  index_commits_on_repository_id          (repository_id)
 #  index_commits_on_sha                    (sha)
 #  index_commits_on_sha_and_repository_id  (sha,repository_id) UNIQUE
@@ -79,15 +75,27 @@ RSpec.describe Commit do
       commit.create_github_status(:success, context: "cocov", description: "foo")
     end
 
-    it "determines its condensed status" do
-      c = described_class.new(checks_status: :waiting, coverage_status: :waiting)
-      expect(c.condensed_status).to eq :yellow
+    describe "determines its condensed status" do
+      it "determines yellow status" do
+        c = described_class.new
+        c.build_coverage(status: :waiting)
+        c.build_check_set(status: :waiting)
+        expect(c.condensed_status).to eq :yellow
+      end
 
-      c = described_class.new(checks_status: :waiting, coverage_status: :errored)
-      expect(c.condensed_status).to eq :red
+      it "determines red status" do
+        c = described_class.new
+        c.build_coverage(status: :errored)
+        c.build_check_set(status: :waiting)
+        expect(c.condensed_status).to eq :red
+      end
 
-      c = described_class.new(checks_status: :processed, coverage_status: :processed)
-      expect(c.condensed_status).to eq :green
+      it "determines green status" do
+        c = described_class.new
+        c.build_coverage(status: :processed)
+        c.build_check_set(status: :processed)
+        expect(c.condensed_status).to eq :green
+      end
     end
   end
 end

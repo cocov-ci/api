@@ -22,7 +22,13 @@
 #  fk_rails_...  (commit_id => commits.id)
 #
 class CoverageInfo < ApplicationRecord
-  enum status: { updating: 0, ready: 1 }
+  enum status: {
+    waiting: 0,
+    queued: 1,
+    processing: 2,
+    processed: 3,
+    errored: 4
+  }.freeze
 
   before_validation :ensure_status
 
@@ -32,9 +38,22 @@ class CoverageInfo < ApplicationRecord
   belongs_to :commit
   has_many :files, class_name: :CoverageFile, dependent: :destroy
 
+  def reset!(status: nil)
+    transaction do
+      files.destroy_all
+      if status.nil?
+        waiting!
+      else
+        self.status = status
+        save!
+      end
+    end
+    true
+  end
+
   private
 
   def ensure_status
-    self.status = :updating if status.blank?
+    self.status = :waiting if status.blank?
   end
 end

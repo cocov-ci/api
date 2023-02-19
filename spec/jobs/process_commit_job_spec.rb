@@ -78,9 +78,6 @@ RSpec.describe ProcessCommitJob do
     stub_crypto_key!
 
     expect(GitService).to receive(:clone_commit).with(commit)
-    fake_manifest = double(:manifest)
-    allow(fake_manifest).to receive(:checks).and_return([])
-
     expect(GitService).to receive(:file_for_commit)
       .with(commit, path: ".cocov.yaml")
       .and_return(["yaml", fixture_file("manifests/v0.1alpha/complete.yaml")])
@@ -102,11 +99,13 @@ RSpec.describe ProcessCommitJob do
     expect(commit.checks.count).to eq 2
     expect(commit.checks.where(plugin_name: "cocov-ci/rubocop")).to be_exist
     expect(commit.checks.where(plugin_name: "cocov-ci/brakeman")).to be_exist
+    expect(commit.check_set).to be_queued
 
     expect(@redis.llen("cocov:checks")).to eq 1
 
     op = JSON.parse(@redis.lrange("cocov:checks", 0, 0).first)
     expect(op).to eq({
+      "check_set_id" => commit.check_set.id,
       "job_id" => "this-is-an-uuid",
       "org" => @github_organization_name,
       "repo" => commit.repository.name,
