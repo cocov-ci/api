@@ -36,6 +36,6 @@ RSpec.describe CheckSet do
     check = create(:check, :running, :with_commit)
     set = check.check_set
 
-    expect { set.wrap_up! }.to raise_error(CheckSet::InconsistentCheckStatusError)
+    expect { set.wrap_up! }.to raise_error(CheckSet::IncompatibleChildStatusError)
   end
 end

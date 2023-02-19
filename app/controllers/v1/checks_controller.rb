@@ -84,16 +84,13 @@ module V1
     end
 
     def re_run
-      set = Repository.find(params[:repo_id])
+      Repository.find(params[:repo_id])
         .commits.includes(:check_set).find_by!(sha: params[:commit_sha])
-        .check_set
-
-      set.locking(timeout: 5.seconds) do
-        error! :checks, :cannot_re_run_while_running unless set.reload.finished?
-        ChecksRunService.call(set.commit)
-      end
+        .rerun_checks!
 
       head :no_content
+    rescue CheckSet::StillRunningError
+      error! :checks, :cannot_re_run_while_running
     end
 
     def cancel

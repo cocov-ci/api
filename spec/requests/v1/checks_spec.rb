@@ -310,7 +310,7 @@ RSpec.describe "V1::Checks" do
       expect(gh_app).to receive(:create_status).with(
         "#{@github_organization_name}/#{repo.name}",
         commit.sha,
-        "failure",
+        "error",
         description: "An internal error occurred",
         context: "cocov"
       )

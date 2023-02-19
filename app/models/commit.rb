@@ -97,6 +97,8 @@ class Commit < ApplicationRecord
     reload
   end
 
+  def rerun_checks! = check_set&.rerun! || false
+
   private
 
   def ensure_statuses

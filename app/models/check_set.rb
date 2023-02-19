@@ -24,7 +24,18 @@
 #  fk_rails_...  (commit_id => commits.id)
 #
 class CheckSet < ApplicationRecord
-  class InconsistentCheckStatusError < StandardError; end
+  class IncompatibleChildStatusError < StandardError
+    def initialize
+      super("not all checks have a valid finished status")
+    end
+  end
+
+
+  class StillRunningError < StandardError
+    def initialize
+      super("Cannot re-run checks while they are still running")
+    end
+  end
 
   enum status: {
     waiting: 0,
@@ -61,9 +72,19 @@ class CheckSet < ApplicationRecord
     true
   end
 
+  def rerun!
+    locking(timeout: 5.seconds) do
+      raise StillRunningError unless reload.finished?
+
+      ChecksRunService.call(commit)
+    end
+
+    true
+  end
+
   def wrap_up!
     # Make sure all checks have a valid status before continuing
-    raise InconsistentCheckStatusError, "not all checks have a valid finished status" unless checks.all?(&:finished?)
+    raise IncompatibleChildStatusError  unless checks.all?(&:finished?)
 
     transaction do
       commit.reset_counters
