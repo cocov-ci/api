@@ -31,5 +31,12 @@ module Cocov
 
       VERSIONS[version].new(data)
     end
+
+    def cleanup_plugin_name(name)
+      components = name.split("/")
+      image_name = components.pop.split(":").first
+      components = components.grep(/\A[a-z0-9]+\z/)
+      [components.last, image_name].compact.join("/")
+    end
   end
 end

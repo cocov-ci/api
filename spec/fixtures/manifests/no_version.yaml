@@ -4,5 +4,5 @@ coverage:
   min_percent: 90
 
 checks:
-  - plugin: cocov-ci/rubocop:v0.1
-  - plugin: cocov-ci/brakeman:v0.1
+  - plugin: cocov/rubocop:v0.1
+  - plugin: cocov/brakeman:v0.1

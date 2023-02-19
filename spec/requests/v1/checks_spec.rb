@@ -29,8 +29,11 @@ RSpec.describe "V1::Checks" do
         create(:check, :succeeded, commit:),
         create(:check, :errored, commit:)
       ]
+      commit.check_set.processing!
       @user = create(:user)
       grant(@user, access_to: repo)
+
+      checks.each { create(:issue, commit:, check_source: _1.plugin_name) }
 
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks", headers: authenticated
       expect(response).to have_http_status(:ok)
@@ -45,6 +48,8 @@ RSpec.describe "V1::Checks" do
         end
 
         expect(response.json[:checks]).to include(expectation)
+        expect(response.json[:status]).to eq "processing"
+        expect(response.json[:issues]).to eq(checks.map(&:plugin_name).index_with { 1 })
       end
     end
   end

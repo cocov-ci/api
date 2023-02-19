@@ -82,7 +82,7 @@ class ChecksRunService < ApplicationService
     ActiveRecord::Base.transaction do
       manifest.checks.each do |check|
         commit.check_set.checks.create!(
-          plugin_name: check.plugin.split(":").first,
+          plugin_name: Cocov::Manifest.cleanup_plugin_name(check.plugin),
           status: :waiting
         )
       end

@@ -15,8 +15,8 @@ RSpec.describe Cocov::Manifest::V01Alpha do
     expect(manifest.coverage.min_percent).to eq 90
 
     checks = [
-      "cocov-ci/rubocop:v0.1",
-      "cocov-ci/brakeman:v0.1"
+      "cocov/rubocop:v0.1",
+      "cocov/brakeman:v0.1"
     ]
 
     checks.each_with_index do |chk, idx|

@@ -97,8 +97,8 @@ RSpec.describe ProcessCommitJob do
     job.perform(commit.id)
 
     expect(commit.checks.count).to eq 2
-    expect(commit.checks.where(plugin_name: "cocov-ci/rubocop")).to be_exist
-    expect(commit.checks.where(plugin_name: "cocov-ci/brakeman")).to be_exist
+    expect(commit.checks.where(plugin_name: "cocov/rubocop")).to be_exist
+    expect(commit.checks.where(plugin_name: "cocov/brakeman")).to be_exist
     expect(commit.check_set).to be_queued
 
     expect(@redis.llen("cocov:checks")).to eq 1
@@ -113,12 +113,12 @@ RSpec.describe ProcessCommitJob do
       "sha" => commit.sha,
       "checks" => [
         {
-          "plugin" => "cocov-ci/rubocop:v0.1",
+          "plugin" => "cocov/rubocop:v0.1",
           "envs" => { "TEST" => "true" },
           "mounts" => nil
         },
         {
-          "plugin" => "cocov-ci/brakeman:v0.1",
+          "plugin" => "cocov/brakeman:v0.1",
           "envs" => nil,
           "mounts" => [
             {

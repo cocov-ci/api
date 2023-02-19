@@ -284,7 +284,7 @@ RSpec.describe "V1::Issues" do
         as: :json,
         params: {
           sha: "65f4e0c879eb83460260637880fb82f188065d11",
-          source: :a,
+          source: "cocov/rubocop:v0.1",
           issues: [
             { uid: "rubocop-a", file: "app.rb", line_start: 1, line_end: 2, message: "something is wrong",
               kind: "bug" }
@@ -302,7 +302,7 @@ RSpec.describe "V1::Issues" do
       expect(probl.line_start).to eq 1
       expect(probl.line_end).to eq 2
       expect(probl.message).to eq "something is wrong"
-      expect(probl.check_source).to eq "a"
+      expect(probl.check_source).to eq "cocov/rubocop"
     end
 
     it "recycles issues" do
