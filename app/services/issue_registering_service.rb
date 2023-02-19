@@ -31,13 +31,21 @@ class IssueRegisteringService < ApplicationService
     register_issues!
   end
 
+  def cleanup_source_name(name)
+    components = name.split("/")
+    image_name = components.pop.split(":").first
+    components = components.grep(/\A[a-z0-9]+\z/)
+    [components.last, image_name].compact.join("/")
+  end
+
   def register_issues!
+    check_source = cleanup_source_name(@data[:source])
     to_create = @data[:issues]&.map do |issue|
       issue
         .slice(:kind, :file, :line_start, :line_end, :message, :uid)
         .merge({
           status: Issue.statuses[:new],
-          check_source: @data[:source],
+          check_source:,
           commit_id: @commit.id
         })
     end

@@ -30,7 +30,6 @@ class CheckSet < ApplicationRecord
     end
   end
 
-
   class StillRunningError < StandardError
     def initialize
       super("Cannot re-run checks while they are still running")
@@ -84,7 +83,7 @@ class CheckSet < ApplicationRecord
 
   def wrap_up!
     # Make sure all checks have a valid status before continuing
-    raise IncompatibleChildStatusError  unless checks.all?(&:finished?)
+    raise IncompatibleChildStatusError unless checks.all?(&:finished?)
 
     transaction do
       commit.reset_counters
