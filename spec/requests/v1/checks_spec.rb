@@ -439,19 +439,23 @@ RSpec.describe "V1::Checks" do
       check.check_set.job_id = "a-job-id"
       check.check_set.save!
 
-      delete "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
-        headers: authenticated(as: :service)
-      expect(response).to have_http_status(:no_content)
-      expect(JSON.parse(@redis.lpop("cocov:checks_control"))).to eq({
+      @redis.define_singleton_method(:publish) do |*_args, **_kwargs, &_block|
+        raise NotImplementedError
+      end
+
+      expect(@redis).to receive(:publish).with("cocov:checks_control", {
         "check_set_id" => check.check_set.id,
         "job_id" => "a-job-id",
         "operation" => "cancel"
-      })
+      }.to_json).once.and_return(nil)
 
       delete "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
         headers: authenticated(as: :service)
       expect(response).to have_http_status(:no_content)
-      expect(@redis.llen("cocov:checks_control")).to eq 0
+
+      delete "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
+        headers: authenticated(as: :service)
+      expect(response).to have_http_status(:no_content)
 
       patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
         headers: authenticated(as: :service),

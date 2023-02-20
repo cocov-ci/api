@@ -81,6 +81,22 @@ class CheckSet < ApplicationRecord
     true
   end
 
+  def cancel!
+    locking(timeout: 5.seconds) do
+      reload
+      next if canceling? || finished?
+
+      canceling!
+      Cocov::Redis.instance.publish("cocov:checks_control", {
+        check_set_id: id,
+        job_id:,
+        operation: :cancel
+      }.to_json)
+    end
+
+    true
+  end
+
   def wrap_up!
     # Make sure all checks have a valid status before continuing
     raise IncompatibleChildStatusError unless checks.all?(&:finished?)

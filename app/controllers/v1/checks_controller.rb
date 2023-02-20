@@ -94,21 +94,14 @@ module V1
     end
 
     def cancel
-      set = Repository.find(params[:repo_id])
+      Repository.find(params[:repo_id])
         .commits.find_by!(sha: params[:commit_sha])
         .check_set
+        .cancel!
 
-      set.locking(timeout: 5.seconds) do
-        set.reload
-        next if set.canceling? || set.finished?
+      head :no_content
+    end
 
-        set.canceling!
-        Cocov::Redis.instance.rpush("cocov:checks_control", {
-          check_set_id: set.id,
-          job_id: set.job_id,
-          operation: :cancel
-        }.to_json)
-      end
 
       head :no_content
     end
