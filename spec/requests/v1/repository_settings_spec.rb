@@ -85,6 +85,8 @@ RSpec.describe "V1::RepositorySettings" do
           .filter(&:last)
           .map(&:first)
         expect(received_opts).to eq opts.map(&:to_s)
+        expect(response.json[:repository][:id]).to eq repo.id
+        expect(response.json[:secrets_count]).to eq 0
       end
     end
   end

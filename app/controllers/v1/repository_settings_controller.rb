@@ -11,7 +11,9 @@ module V1
       level = @repository.permission_level_for @user
       maintainer = %i[admin maintainer].include? level
       admin = level == :admin
-      render json: {
+      render "v1/repository_settings/index", locals: {
+        repo: @repository,
+        secrets_count: @repository.secrets.count,
         permissions: {
           can_regen_token: maintainer || admin,
           can_sync_github: maintainer || admin,
