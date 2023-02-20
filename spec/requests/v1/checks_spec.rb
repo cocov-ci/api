@@ -479,4 +479,31 @@ RSpec.describe "V1::Checks" do
       expect(response).to have_http_status(:no_content)
     end
   end
+
+  describe "#notify_processing" do
+    let(:check) { create(:check, :with_commit) }
+    let(:commit) { check.check_set.commit }
+    let(:repo) { commit.repository }
+    let(:set) { check.check_set }
+
+    it "marks a set as processing" do
+      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/check_set/notify_processing",
+        headers: authenticated(as: :service)
+      expect(response).to have_http_status(:no_content)
+
+      expect(set.reload).to be_processing
+    end
+
+    %i[errored processed canceled].each do |status|
+      it "does not mark an #{status} set as processing" do
+        set.send("#{status}!")
+
+        post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/check_set/notify_processing",
+          headers: authenticated(as: :service)
+        expect(response).to have_http_status(:no_content)
+
+        expect(set.reload).to send("be_#{status}")
+      end
+    end
+  end
 end

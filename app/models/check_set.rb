@@ -97,6 +97,17 @@ class CheckSet < ApplicationRecord
     true
   end
 
+  def mark_processing!
+    locking(timeout: 5.seconds) do
+      reload
+      next if canceling? || finished?
+
+      processing!
+    end
+
+    true
+  end
+
   def wrap_up!
     # Make sure all checks have a valid status before continuing
     raise IncompatibleChildStatusError unless checks.all?(&:finished?)

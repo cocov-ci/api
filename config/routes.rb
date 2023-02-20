@@ -57,6 +57,7 @@ Rails.application.routes.draw do
     delete "/repositories/:repo_id/commits/:commit_sha/checks", to: "checks#cancel"
     post "/repositories/:repo_id/commits/:commit_sha/checks/wrap_up", to: "checks#wrap_job_up"
     post "/repositories/:repo_id/commits/:commit_sha/checks/re_run", to: "checks#re_run"
+    post "/repositories/:repo_id/commits/:commit_sha/check_set/notify_processing", to: "checks#notify_processing"
 
     # Issues
     put "/repositories/:repo_id/issues", to: "issues#put"
