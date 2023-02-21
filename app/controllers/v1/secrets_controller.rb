@@ -42,6 +42,7 @@ module V1
         sec.repository = repo
         sec.scope = :repository
       else
+        ensure_administrative_privileges
         error! :secrets, :name_taken if Secret.exists?(repository: nil, name:)
         sec.scope = :organization
       end
@@ -54,6 +55,8 @@ module V1
     end
 
     def patch
+      ensure_administrative_privileges if params[:repo_name].blank?
+
       data = params[:data]
       error! :secrets, :missing_data if data.blank?
 
@@ -66,6 +69,8 @@ module V1
     end
 
     def delete
+      ensure_administrative_privileges if params[:repo_name].blank?
+
       secret.destroy
       head :no_content
     end

@@ -77,6 +77,7 @@ Rails.application.routes.draw do
     # Secrets
     get "/repositories/:repo_name/secrets", to: "secrets#index"
     post "/repositories/:repo_name/secrets", to: "secrets#create"
+    post "/repositories/:repo_name/secrets/check_name", to: "secrets#check_name"
     patch "/repositories/:repo_name/secrets/:id", to: "secrets#patch"
     delete "/repositories/:repo_name/secrets/:id", to: "secrets#delete"
 

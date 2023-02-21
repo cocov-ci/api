@@ -11,7 +11,7 @@ RSpec.describe "V1::Secrets" do
         sec = create(:secret, :with_owner)
         repo = create(:repository)
         create(:secret, :with_owner, repository: repo, scope: :repository)
-
+        @user = create(:user, admin: true)
         get "/v1/secrets", headers: authenticated
         expect(response).to have_http_status(:ok)
         json = response.json
@@ -57,6 +57,8 @@ RSpec.describe "V1::Secrets" do
 
   describe "#create" do
     describe "organization-scoped" do
+      before { @user = create(:user, admin: true) }
+
       it "validates names" do
         post "/v1/secrets",
           params: { data: "foo" },
@@ -152,6 +154,8 @@ RSpec.describe "V1::Secrets" do
   describe "#patch" do
     describe "organization-scoped" do
       let(:item) { create(:secret, :with_owner) }
+
+      before { @user = create(:user, admin: true) }
 
       it "validates data" do
         patch "/v1/secrets/#{item.id}",
@@ -257,6 +261,8 @@ RSpec.describe "V1::Secrets" do
 
   describe "#delete" do
     describe "organization-scoped" do
+      before { @user = create(:user, admin: true) }
+
       it "returns 404 in case the item does not exist" do
         delete "/v1/secrets/bla", headers: authenticated
         expect(response).to have_http_status(:not_found)
