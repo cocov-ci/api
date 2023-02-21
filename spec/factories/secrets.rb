@@ -30,11 +30,16 @@
 FactoryBot.define do
   factory :secret do
     scope { :organization }
-    name { Faker::TvShows::TwinPeaks.location.parameterize }
+    name { Faker::TvShows::TwinPeaks.location.parameterize.tr("-", "_") }
     data { Faker::TvShows::TwinPeaks.quote }
+    repository { nil }
 
     trait :with_owner do
       owner { create(:user) }
+    end
+
+    trait :with_repository do
+      repository { create(:repository) }
     end
   end
 end

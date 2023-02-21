@@ -28,15 +28,21 @@
 #  fk_rails_...  (repository_id => repositories.id)
 #
 class Secret < ApplicationRecord
+  NAME_FORMAT_PATTERN = /\A[a-z_][a-z0-9_]*\z/i
+
   enum scope: { organization: 0, repository: 1 }, _suffix: :scope
 
   belongs_to :repository, optional: true
   belongs_to :owner, class_name: :User
 
+  validates :name, presence: true,
+    uniqueness: { scope: %i[scope repository] },
+    format: { with: NAME_FORMAT_PATTERN }
   validates :scope, presence: true
   validates :repository, presence: true, if: -> { repository_scope? }
-  validates :name, presence: true, uniqueness: { scope: %i[scope repository] }
   validates :secure_data, presence: true
+
+  scope :organization_scoped, -> { where(scope: :organization) }
 
   def data=(value)
     if value.nil?
@@ -45,6 +51,28 @@ class Secret < ApplicationRecord
     end
 
     self.secure_data = Cocov::Crypto.encrypt(value)
+  end
+
+  def self.check_name_repo(name, repo)
+    if exists?(name:, repository: repo)
+      :conflict
+    elsif organization_scoped.exists?(name:)
+      :override
+    else
+      :ok
+    end
+  end
+
+  def self.check_name_org(name)
+    return :conflict if organization_scoped.exists?(name:)
+
+    :ok
+  end
+
+  def self.check_name(name, repo: nil)
+    return check_name_org(name) if repo.nil?
+
+    check_name_repo(name, repo)
   end
 
   def data

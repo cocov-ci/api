@@ -23,11 +23,12 @@ module V1
     end
 
     def create
-      name = params[:name]
+      name = params[:name]&.strip
       data = params[:data]
 
       error! :secrets, :missing_name if name.blank?
       error! :secrets, :missing_data if data.blank?
+      error! :secrets, :invalid_name unless Secret::NAME_FORMAT_PATTERN.match?(name)
 
       sec = Secret.new(name:, data:, owner: @user)
 
@@ -67,6 +68,16 @@ module V1
     def delete
       secret.destroy
       head :no_content
+    end
+
+    def check_name
+      name = params[:name]&.strip
+      error! :secrets, :missing_name if name.blank?
+      error! :secrets, :invalid_name unless Secret::NAME_FORMAT_PATTERN.match?(name)
+
+      repo = (Repository.with_context(auth_context).find_by!(name: params[:repo_name]) if params[:repo_name].present?)
+
+      render json: { status: Secret.check_name(name, repo:) }
     end
 
     private

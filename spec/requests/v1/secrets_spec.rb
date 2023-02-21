@@ -308,7 +308,7 @@ RSpec.describe "V1::Secrets" do
     end
   end
 
-  describe "show" do
+  describe "#show" do
     let(:secret) { create(:secret, :with_owner) }
     let(:auth) { secret.generate_authorization }
 
@@ -346,6 +346,72 @@ RSpec.describe "V1::Secrets" do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to eq(secret.data)
+    end
+  end
+
+  describe "#check_name" do
+    it "requires a name" do
+      post "/v1/secrets/check_name",
+        params: { repo_name: "foobar" },
+        headers: authenticated
+      expect(response).to be_a_json_error(:secrets, :missing_name)
+    end
+
+    it "requires a valid name" do
+      post "/v1/secrets/check_name",
+        params: { name: "invalid name" },
+        headers: authenticated
+      expect(response).to be_a_json_error(:secrets, :invalid_name)
+    end
+
+    context "when checking for a repository" do
+      let(:repo_secret) { create(:secret, :with_owner, :with_repository, name: "foo") }
+      let(:repo) { repo_secret.repository }
+
+      before do
+        create(:secret, :with_owner, name: "bar")
+        @user = create(:user)
+        grant(@user, access_to: repo)
+      end
+
+      it "indicates a conflict when repository already has a secret with same name" do
+        post "/v1/secrets/check_name",
+          params: { name: "foo", repo_name: repo.name },
+          headers: authenticated
+        expect(response.json[:status]).to eq "conflict"
+      end
+
+      it "indicates a override when organization already has a secret with same name" do
+        post "/v1/secrets/check_name",
+          params: { name: "bar", repo_name: repo.name },
+          headers: authenticated
+        expect(response.json[:status]).to eq "override"
+      end
+
+      it "indicates a success when neither repository nor org has a secret with same name" do
+        post "/v1/secrets/check_name",
+          params: { name: "baz", repo_name: repo.name },
+          headers: authenticated
+        expect(response.json[:status]).to eq "ok"
+      end
+    end
+
+    context "when checking for the org" do
+      before { create(:secret, :with_owner, name: "foo") }
+
+      it "indicates a conflict when org already has a secret with same name" do
+        post "/v1/secrets/check_name",
+          params: { name: "foo" },
+          headers: authenticated
+        expect(response.json[:status]).to eq "conflict"
+      end
+
+      it "indicates a success when org does not have a secret with same name" do
+        post "/v1/secrets/check_name",
+          params: { name: "baz" },
+          headers: authenticated
+        expect(response.json[:status]).to eq "ok"
+      end
     end
   end
 end
