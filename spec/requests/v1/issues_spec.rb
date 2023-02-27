@@ -77,14 +77,12 @@ RSpec.describe "V1::Issues" do
       prob = json.dig(:issues, 0)
       expect(prob[:id]).to eq issue.id
       expect(prob[:kind]).to eq issue.kind
-      expect(prob[:status]).to eq issue.status
       expect(prob[:file]).to eq issue.file
       expect(prob[:uid]).to eq issue.uid
       expect(prob[:line_start]).to eq issue.line_start
       expect(prob[:line_end]).to eq issue.line_end
       expect(prob[:message]).to eq issue.message
       expect(prob[:check_source]).to eq issue.check_source
-      expect(prob[:status_reason]).to eq issue.status_reason
       expect(prob[:affected_file][:status]).to eq "ok"
 
       expect(prob[:affected_file][:content]).to eq [
@@ -117,7 +115,7 @@ RSpec.describe "V1::Issues" do
     end
   end
 
-  describe "#patch" do
+  describe "#patch", skip: "Deprecating #patch" do
     it "returns 404 when repository does not exist" do
       patch "/v1/repositories/dummy/commits/foo/issues/1",
         headers: authenticated,
@@ -261,7 +259,6 @@ RSpec.describe "V1::Issues" do
       probl = repo.commits.first.issues.first
 
       expect(probl).to be_bug
-      expect(probl).to be_status_new
       expect(probl.uid).to eq "rubocop-a"
       expect(probl.file).to eq "app.rb"
       expect(probl.line_start).to eq 1

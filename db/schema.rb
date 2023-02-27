@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_02_27_204736) do
+ActiveRecord::Schema[7.0].define(version: 2023_02_27_211848) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -142,8 +142,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_204736) do
   create_table "issues", force: :cascade do |t|
     t.bigint "commit_id", null: false
     t.integer "kind", null: false
-    t.integer "status", null: false
-    t.text "status_reason"
     t.string "file", null: false
     t.citext "uid", null: false
     t.integer "line_start", null: false
@@ -152,7 +150,14 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_204736) do
     t.string "check_source", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "ignored_at", precision: nil
+    t.integer "ignore_reason"
+    t.bigint "ignored_by_user_id"
+    t.bigint "ignored_by_rule_id"
+    t.string "ignored_by_user_reason"
     t.index ["commit_id"], name: "index_issues_on_commit_id"
+    t.index ["ignored_by_rule_id"], name: "index_issues_on_ignored_by_rule_id"
+    t.index ["ignored_by_user_id"], name: "index_issues_on_ignored_by_user_id"
     t.index ["uid", "commit_id"], name: "index_issues_on_uid_and_commit_id", unique: true
     t.index ["uid"], name: "index_issues_on_uid"
   end
@@ -272,6 +277,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_204736) do
   add_foreign_key "issue_ignore_rules", "repositories"
   add_foreign_key "issue_ignore_rules", "users"
   add_foreign_key "issues", "commits"
+  add_foreign_key "issues", "issue_ignore_rules", column: "ignored_by_rule_id"
+  add_foreign_key "issues", "users", column: "ignored_by_user_id"
   add_foreign_key "private_keys", "repositories"
   add_foreign_key "repository_members", "repositories"
   add_foreign_key "secrets", "repositories"

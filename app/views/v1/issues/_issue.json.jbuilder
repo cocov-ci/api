@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-json.call(issue, :id, :kind, :status, :file, :uid, :line_start, :line_end, :message, :check_source, :status_reason)
+json.call(issue, :id, :kind, :file, :uid, :line_start, :line_end, :message, :check_source)
 json.affected_file do
   line_start = [1, issue.line_start - 2].max
   line_end = issue.line_end + 2

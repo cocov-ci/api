@@ -65,7 +65,7 @@ Rails.application.routes.draw do
     get "/repositories/:repo_name/commits/:commit_sha/issues", to: "issues#index"
     get "/repositories/:repo_name/commits/:commit_sha/issues/sources", to: "issues#sources"
     get "/repositories/:repo_name/commits/:commit_sha/issues/categories", to: "issues#categories"
-    patch "/repositories/:repo_name/commits/:commit_sha/issues/:id", to: "issues#patch"
+    # patch "/repositories/:repo_name/commits/:commit_sha/issues/:id", to: "issues#patch"
 
     # Coverage
     post "/reports", to: "coverage#create"

@@ -14,26 +14,6 @@ module V1
       }
     end
 
-    def patch
-      error! :issues, :missing_status if params[:status].blank?
-      error! :issues, :invalid_status unless Issue.statuses.include? params[:status]
-
-      commit = Repository
-        .with_context(auth_context)
-        .find_by!(name: params[:repo_name])
-        .commits
-        .find_by(sha: params[:commit_sha])
-
-      not_found! unless commit
-
-      issue = commit.issues.find(params[:id])
-      issue.status = params[:status]
-      issue.status_reason = params[:reason]
-      issue.assign! @user
-
-      render "v1/issues/_issue", locals: { issue: }
-    end
-
     def put
       error! :issues, :json_required unless request.format.json?
 

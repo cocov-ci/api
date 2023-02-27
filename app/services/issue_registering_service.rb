@@ -37,7 +37,6 @@ class IssueRegisteringService < ApplicationService
       issue
         .slice(:kind, :file, :line_start, :line_end, :message, :uid)
         .merge({
-          status: Issue.statuses[:new],
           check_source:,
           commit_id: @commit.id
         })
