@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_02_27_202316) do
+ActiveRecord::Schema[7.0].define(version: 2023_02_27_204736) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -120,6 +120,25 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_202316) do
     t.index ["repository_id"], name: "index_issue_histories_on_repository_id"
   end
 
+  create_table "issue_ignore_rules", force: :cascade do |t|
+    t.bigint "repository_id", null: false
+    t.bigint "user_id", null: false
+    t.string "reason"
+    t.string "check_source", null: false
+    t.string "file", null: false
+    t.integer "kind", null: false
+    t.integer "line_start", null: false
+    t.integer "line_end", null: false
+    t.string "message", null: false
+    t.string "uid", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["repository_id"], name: "index_issue_ignore_rules_on_repository_id"
+    t.index ["uid", "repository_id"], name: "index_issue_ignore_rules_on_uid_and_repository_id", unique: true
+    t.index ["uid"], name: "index_issue_ignore_rules_on_uid"
+    t.index ["user_id"], name: "index_issue_ignore_rules_on_user_id"
+  end
+
   create_table "issues", force: :cascade do |t|
     t.bigint "commit_id", null: false
     t.integer "kind", null: false
@@ -160,6 +179,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_202316) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "github_id", null: false
+    t.integer "issue_ignore_rules_count", default: 0, null: false
     t.index ["github_id"], name: "index_repositories_on_github_id", unique: true
     t.index ["name"], name: "index_repositories_on_name", unique: true
     t.index ["token"], name: "index_repositories_on_token", unique: true
@@ -249,6 +269,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_202316) do
   add_foreign_key "coverage_infos", "commits"
   add_foreign_key "issue_histories", "branches"
   add_foreign_key "issue_histories", "repositories"
+  add_foreign_key "issue_ignore_rules", "repositories"
+  add_foreign_key "issue_ignore_rules", "users"
   add_foreign_key "issues", "commits"
   add_foreign_key "private_keys", "repositories"
   add_foreign_key "repository_members", "repositories"

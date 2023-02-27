@@ -29,30 +29,15 @@
 #  fk_rails_...  (commit_id => commits.id)
 #
 class Issue < ApplicationRecord
-  enum kind: {
-    style: 0,
-    performance: 1,
-    security: 2,
-    bug: 3,
-    complexity: 4,
-    duplication: 5,
-    convention: 6,
-    quality: 7
-  }
+  include IssueFields
+
   enum status: { new: 0, resolved: 1, ignored: 2 }, _prefix: :status
+  validates :status, presence: true
+
+  validates :uid, presence: true, uniqueness: { scope: :commit_id }
+  belongs_to :commit, counter_cache: true
 
   before_validation :ensure_status
-
-  validates :check_source, presence: true
-  validates :status, presence: true
-  validates :file, presence: true
-  validates :kind, presence: true
-  validates :line_end, presence: true
-  validates :line_start, presence: true
-  validates :message, presence: true
-  validates :uid, presence: true, uniqueness: { scope: :commit_id }
-
-  belongs_to :commit, counter_cache: true
 
   private
 
