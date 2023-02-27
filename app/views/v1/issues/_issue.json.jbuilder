@@ -22,9 +22,3 @@ json.affected_file do
     json.status :errored
   end
 end
-
-if (assig = issue.assignee)
-  json.assignee do
-    json.partial! "v1/users/user", user: assig
-  end
-end

@@ -6,7 +6,6 @@
 #
 #  id            :bigint           not null, primary key
 #  commit_id     :bigint           not null
-#  assignee_id   :bigint
 #  kind          :integer          not null
 #  status        :integer          not null
 #  status_reason :text
@@ -21,14 +20,12 @@
 #
 # Indexes
 #
-#  index_issues_on_assignee_id        (assignee_id)
 #  index_issues_on_commit_id          (commit_id)
 #  index_issues_on_uid                (uid)
 #  index_issues_on_uid_and_commit_id  (uid,commit_id) UNIQUE
 #
 # Foreign Keys
 #
-#  fk_rails_...  (assignee_id => users.id)
 #  fk_rails_...  (commit_id => commits.id)
 #
 FactoryBot.define do

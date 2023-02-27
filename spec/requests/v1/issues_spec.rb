@@ -85,7 +85,6 @@ RSpec.describe "V1::Issues" do
       expect(prob[:message]).to eq issue.message
       expect(prob[:check_source]).to eq issue.check_source
       expect(prob[:status_reason]).to eq issue.status_reason
-      expect(prob[:assignee]).to be_nil
       expect(prob[:affected_file][:status]).to eq "ok"
 
       expect(prob[:affected_file][:content]).to eq [
@@ -98,24 +97,6 @@ RSpec.describe "V1::Issues" do
         { "type" => "line", "line" => 5, "source" => "<pre>    <span class=\"n\">bar</span>\n</pre>" },
         { "type" => "line", "line" => 6, "source" => "<pre>  <span class=\"k\">end</span>\n</pre>" }
       ]
-    end
-
-    it "returns information about the assignee when present" do
-      commit = create(:commit, :with_repository)
-      repo = commit.repository
-      issue = create(:issue, commit:)
-      @user = create(:user)
-      grant(@user, access_to: repo)
-      issue.assign! @user
-
-      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: authenticated
-      expect(response).to have_http_status(:ok)
-
-      json = response.json
-
-      expect(json[:issues].count).to eq 1
-      assig = json.dig(:issues, 0, :assignee)
-      expect(assig[:login]).to eq issue.assignee.login
     end
 
     it "filters issues" do
@@ -179,22 +160,6 @@ RSpec.describe "V1::Issues" do
       patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}", headers: authenticated
       expect(response).to have_http_status(:bad_request)
       expect(response).to be_a_json_error(:issues, :missing_status)
-    end
-
-    it "updates a status" do
-      commit = create(:commit, :with_repository)
-      repo = commit.repository
-      issue = create(:issue, commit:)
-      @user = create(:user)
-      grant(@user, access_to: repo)
-
-      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}",
-        headers: authenticated,
-        params: { status: "resolved" }
-      expect(response).to have_http_status(:ok)
-      json = response.json
-      expect(json[:status]).to eq "resolved"
-      expect(json[:assignee][:login]).to eq @user.login
     end
   end
 

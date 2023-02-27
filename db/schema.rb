@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_02_18_214943) do
+ActiveRecord::Schema[7.0].define(version: 2023_02_27_202316) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -122,7 +122,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_18_214943) do
 
   create_table "issues", force: :cascade do |t|
     t.bigint "commit_id", null: false
-    t.bigint "assignee_id"
     t.integer "kind", null: false
     t.integer "status", null: false
     t.text "status_reason"
@@ -134,7 +133,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_18_214943) do
     t.string "check_source", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["assignee_id"], name: "index_issues_on_assignee_id"
     t.index ["commit_id"], name: "index_issues_on_commit_id"
     t.index ["uid", "commit_id"], name: "index_issues_on_uid_and_commit_id", unique: true
     t.index ["uid"], name: "index_issues_on_uid"
@@ -252,7 +250,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_18_214943) do
   add_foreign_key "issue_histories", "branches"
   add_foreign_key "issue_histories", "repositories"
   add_foreign_key "issues", "commits"
-  add_foreign_key "issues", "users", column: "assignee_id"
   add_foreign_key "private_keys", "repositories"
   add_foreign_key "repository_members", "repositories"
   add_foreign_key "secrets", "repositories"
