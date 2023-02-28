@@ -33,5 +33,20 @@
 require "rails_helper"
 
 RSpec.describe IssueIgnoreRule do
-  pending "add some examples to (or delete) #{__FILE__}"
+  subject do
+    build(:issue_ignore_rule,
+      repository: create(:repository),
+      user: create(:user))
+  end
+
+  it_behaves_like "a validated model", %i[
+    check_source
+    file
+    kind
+    line_end
+    line_start
+    message
+    repository
+    user
+  ]
 end

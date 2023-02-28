@@ -33,12 +33,12 @@
 FactoryBot.define do
   factory :issue_ignore_rule do
     repository { nil }
-    check_source { "MyString" }
-    file { "MyString" }
-    kind { 1 }
+    check_source { "rubocop" }
+    kind { :style }
+    file { "foo/bar.rb" }
     line_start { 1 }
     line_end { 1 }
-    message { "MyString" }
-    uid { "MyString" }
+    message { "something is wrong" }
+    uid { SecureRandom.hex(32) }
   end
 end
