@@ -38,9 +38,9 @@
 class Issue < ApplicationRecord
   include IssueFields
 
-  after_update :conditionally_update_repo_counter_cache
-  after_destroy :update_repo_counter_cache
-  after_save :update_repo_counter_cache
+  after_update :conditionally_update_commit_counter_cache
+  after_destroy :update_commit_counter_cache
+  after_save :update_commit_counter_cache
 
   enum ignore_source: {
     user: 1,
@@ -48,7 +48,7 @@ class Issue < ApplicationRecord
   }, _prefix: :ignored_by
 
   # counter_cache is not here since we need conditions on it.
-  # See #update_repo_counter_cache
+  # See #update_commit_counter_cache
   belongs_to :commit
   belongs_to :ignore_user, class_name: :User, optional: true
   belongs_to :ignore_rule, class_name: :IssueIgnoreRule, optional: true
@@ -76,11 +76,11 @@ class Issue < ApplicationRecord
     end
   end
 
-  def conditionally_update_repo_counter_cache
-    update_repo_counter_cache if saved_change_to_ignored_at?
+  def conditionally_update_commit_counter_cache
+    update_commit_counter_cache if saved_change_to_ignored_at?
   end
 
-  def update_repo_counter_cache
+  def update_commit_counter_cache
     commit.issues_count = Issue.count_for_commit(commit_id)
     commit.save
   end
@@ -108,6 +108,12 @@ class Issue < ApplicationRecord
     self.ignore_rule_id = nil
     self.ignore_user_reason = nil
     save!
+  end
+
+  def self.update_commit_counter_cache(commit_id)
+    commit = Commit.find(commit_id)
+    commit.issues_count = where("ignored_at IS NULL AND commit_id = ?", id).count
+    commit.save!
   end
 
   def self.count_for_commit(id) = where("ignored_at IS NULL AND commit_id = ?", id).count

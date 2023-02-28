@@ -138,17 +138,7 @@ class CheckSet < ApplicationRecord
     end
 
     processed!
-    if commit.issues_count.zero?
-      commit.create_github_status(:success, context: "cocov", description: "No issues detected")
-      return
-    end
-
-    qty = commit.issues_count
-
-    commit.create_github_status(:failure,
-      context: "cocov",
-      description: "#{qty} #{"issue".pluralize(qty)} detected",
-      url: "#{Cocov::UI_BASE_URL}/repos/#{commit.repository.name}/commits/#{commit.sha}/issues")
+    commit.update_github_issue_count_status!
   end
 
   def ensure_status

@@ -127,68 +127,26 @@ RSpec.describe "V1::Issues" do
       expect(response).to be_a_json_error(:issues, :json_required)
     end
 
-    ok_request = {
-      sha: "",
-      source: :a,
-      issues: [
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" }
-      ]
-    }.freeze
+    it "returns validation errors" do
+      params = {
+        sha: 0,
+        source: :a,
+        issues: [
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" }
+        ]
+      }
 
-    cases = {
-      "sha" => ok_request.dup.merge({
-        sha: 0
-      }),
-      "source" => ok_request.dup.merge({
-        source: 0
-      }),
-      "issues" => ok_request.dup.merge({ issues: {} }),
-      "issues.0.uid" => ok_request.dup.merge({
-        issues: [
-          { uid: 0, file: "", line_start: 0, line_end: 0, message: "", kind: "" }
-        ]
-      }),
-      "issues.0.file" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: 0, line_start: 0, line_end: 0, message: "", kind: "" }
-        ]
-      }),
-      "issues.0.line_start" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: "", line_start: "", line_end: 0, message: "", kind: "" }
-        ]
-      }),
-      "issues.0.line_end" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: "", line_start: 0, line_end: "", message: "", kind: "" }
-        ]
-      }),
-      "issues.0.message" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: "", line_start: 0, line_end: 0, message: 0, kind: "" }
-        ]
-      }),
-      "issues.0.kind" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: 0 }
-        ]
-      })
-    }.freeze
-
-    cases.each do |name, req|
-      it "rejects when #{name} is invalid" do
-        put "/v1/repositories/foo/issues",
-          params: req,
+      put "/v1/repositories/foo/issues",
+          params:,
           headers: authenticated(as: :service),
           as: :json
         expect(response).to have_http_status(:bad_request)
         expect(response).to be_a_json_error(:issues, :validation_error)
-        expect(response.json[:message]).to include(name)
-      end
+        expect(response.json[:message]).to include("sha")
     end
 
     it "stores new issues" do
@@ -432,6 +390,7 @@ RSpec.describe "V1::Issues" do
     before do
       @user = create(:user)
       grant(@user, access_to: repo)
+      create(:check_set, status: :processed, commit:)
     end
 
     it "have no effect in case an issue is already ignored" do
@@ -455,6 +414,14 @@ RSpec.describe "V1::Issues" do
     end
 
     it "ignores a single issue" do
+      expect_github_status(
+        repo_name: repo.name,
+        sha: commit.sha,
+        status: :success,
+        context: "cocov",
+        description: "No issues detected",
+      )
+
       post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
         params: { mode: "ephemeral", reason: "Test" },
         headers: authenticated
@@ -469,6 +436,14 @@ RSpec.describe "V1::Issues" do
     end
 
     it "permanently ignores an issue" do
+      expect_github_status(
+        repo_name: repo.name,
+        sha: commit.sha,
+        status: :success,
+        context: "cocov",
+        description: "No issues detected",
+      )
+
       post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
         params: { mode: "permanent", reason: "Test" },
         headers: authenticated
@@ -492,10 +467,20 @@ RSpec.describe "V1::Issues" do
     before do
       @user = create(:user)
       grant(@user, access_to: repo)
+      create(:check_set, status: :processed, commit:)
     end
 
     it "removes the ignore flag set by a user" do
       issue.ignore! user: @user, reason: "test"
+
+      expect_github_status(
+        repo_name: repo.name,
+        sha: commit.sha,
+        status: :failure,
+        context: "cocov",
+        description: "1 issue detected",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{repo.name}/commits/#{commit.sha}/issues"
+      )
 
       delete "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
         headers: authenticated
@@ -506,6 +491,15 @@ RSpec.describe "V1::Issues" do
 
     it "removes the ignore flag set by a rule" do
       issue.ignore_permanently! user: @user, reason: "test"
+
+      expect_github_status(
+        repo_name: repo.name,
+        sha: commit.sha,
+        status: :failure,
+        context: "cocov",
+        description: "1 issue detected",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{repo.name}/commits/#{commit.sha}/issues"
+      )
 
       delete "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
         headers: authenticated

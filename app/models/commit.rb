@@ -99,6 +99,20 @@ class Commit < ApplicationRecord
 
   def rerun_checks! = check_set&.rerun! || false
 
+  def update_github_issue_count_status!
+    return unless check_set&.processed?
+
+    if issues_count.zero?
+      create_github_status(:success, context: "cocov", description: "No issues detected")
+      return
+    end
+
+    create_github_status(:failure,
+      context: "cocov",
+      description: "#{issues_count} #{"issue".pluralize(issues_count)} detected",
+      url: "#{Cocov::UI_BASE_URL}/repos/#{repository.name}/commits/#{sha}/issues")
+  end
+
   private
 
   def ensure_statuses

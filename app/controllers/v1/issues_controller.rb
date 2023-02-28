@@ -47,6 +47,9 @@ module V1
         else
           issue.ignore_permanently!(**ignore_params)
         end
+
+        @commit.reload
+        @commit.update_github_issue_count_status!
       end
 
       render "v1/issues/_issue", locals: { issue: }
@@ -55,6 +58,11 @@ module V1
     def cancel_ignore
       issue = @commit.issues.find(params[:id])
       issue.clean_ignore!
+
+      if issue.saved_change_to_ignored_at?
+        @commit.update_github_issue_count_status!
+      end
+
       render "v1/issues/_issue", locals: { issue: }
     end
 

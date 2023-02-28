@@ -33,6 +33,7 @@
 FactoryBot.define do
   factory :issue_ignore_rule do
     repository { nil }
+    user { nil }
     check_source { "rubocop" }
     kind { :style }
     file { "foo/bar.rb" }
