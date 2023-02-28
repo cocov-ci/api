@@ -141,12 +141,12 @@ RSpec.describe "V1::Issues" do
       }
 
       put "/v1/repositories/foo/issues",
-          params:,
-          headers: authenticated(as: :service),
-          as: :json
-        expect(response).to have_http_status(:bad_request)
-        expect(response).to be_a_json_error(:issues, :validation_error)
-        expect(response.json[:message]).to include("sha")
+        params:,
+        headers: authenticated(as: :service),
+        as: :json
+      expect(response).to have_http_status(:bad_request)
+      expect(response).to be_a_json_error(:issues, :validation_error)
+      expect(response.json[:message]).to include("sha")
     end
 
     it "stores new issues" do
@@ -386,11 +386,15 @@ RSpec.describe "V1::Issues" do
     let(:commit) { create(:commit, :with_repository) }
     let(:repo) { commit.repository }
     let(:issue) { create(:issue, commit:) }
+    let(:branch) { create(:branch, repository: repo) }
 
     before do
       @user = create(:user)
       grant(@user, access_to: repo)
       create(:check_set, status: :processed, commit:)
+      branch.head = issue.commit # Initialize issue, set head
+      branch.save!
+      commit.reset_counters!
     end
 
     it "have no effect in case an issue is already ignored" do
@@ -419,8 +423,10 @@ RSpec.describe "V1::Issues" do
         sha: commit.sha,
         status: :success,
         context: "cocov",
-        description: "No issues detected",
+        description: "No issues detected"
       )
+
+      expect(commit.reload.issues_count).to eq 1
 
       post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
         params: { mode: "ephemeral", reason: "Test" },
@@ -433,6 +439,8 @@ RSpec.describe "V1::Issues" do
       expect(ignore.dig(:ignored_by, :avatar)).to eq @user.avatar_url
       expect(ignore[:reason]).to eq "Test"
       expect(IssueIgnoreRule.count).to eq 0
+      expect(commit.reload.issues_count).to eq 0
+      expect(IssueHistory.last.quantity).to eq 0
     end
 
     it "permanently ignores an issue" do
@@ -441,8 +449,10 @@ RSpec.describe "V1::Issues" do
         sha: commit.sha,
         status: :success,
         context: "cocov",
-        description: "No issues detected",
+        description: "No issues detected"
       )
+
+      expect(commit.reload.issues_count).to eq 1
 
       post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
         params: { mode: "permanent", reason: "Test" },
@@ -456,6 +466,8 @@ RSpec.describe "V1::Issues" do
       expect(ignore.dig(:ignored_by, :avatar)).to eq @user.avatar_url
       expect(ignore[:reason]).to eq "Test"
       expect(IssueIgnoreRule.count).to eq 1
+      expect(commit.reload.issues_count).to eq 0
+      expect(IssueHistory.last.quantity).to eq 0
     end
   end
 
@@ -463,11 +475,15 @@ RSpec.describe "V1::Issues" do
     let(:commit) { create(:commit, :with_repository) }
     let(:repo) { commit.repository }
     let(:issue) { create(:issue, commit:) }
+    let(:branch) { create(:branch, repository: repo) }
 
     before do
       @user = create(:user)
       grant(@user, access_to: repo)
       create(:check_set, status: :processed, commit:)
+      branch.head = issue.commit # Initialize issue, set head
+      branch.save!
+      commit.reset_counters!
     end
 
     it "removes the ignore flag set by a user" do
@@ -487,6 +503,8 @@ RSpec.describe "V1::Issues" do
 
       expect(response).to have_http_status :ok
       expect(response.json[:ignore]).to be_nil
+      expect(commit.reload.issues_count).to eq 1
+      expect(IssueHistory.last.quantity).to eq 1
     end
 
     it "removes the ignore flag set by a rule" do
@@ -506,6 +524,8 @@ RSpec.describe "V1::Issues" do
 
       expect(response).to have_http_status :ok
       expect(response.json[:ignore]).to be_nil
+      expect(commit.reload.issues_count).to eq 1
+      expect(IssueHistory.last.quantity).to eq 1
     end
   end
 end

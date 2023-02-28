@@ -46,19 +46,22 @@ module HistoryProvider
 
       data = ActiveRecord::Base.connection.execute(
         ApplicationRecord.sanitize_sql([<<-SQL.squish, params])
-          SELECT
-            DATE_TRUNC('day', created_at) AS date,
-            MAX(#{@history_field})
-          FROM #{table_name}
-          WHERE
-            repository_id = :repo_id
-            AND branch_id = :branch_id
-            AND DATE_TRUNC('day', created_at) >= DATE_TRUNC('day', :start::timestamp)
-            AND DATE_TRUNC('day', created_at) <= DATE_TRUNC('day', :end::timestamp)
-          GROUP BY date
-          ORDER BY date
+          WITH sorted_history AS (
+            SELECT DATE_TRUNC('day', created_at) AS date,
+                   #{@history_field},
+                   ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('day', created_at) ORDER BY id DESC) AS partition_sort_id
+            FROM #{table_name}
+            WHERE repository_id = :repo_id
+              AND branch_id = :branch_id
+              AND DATE_TRUNC('day', created_at) >= DATE_TRUNC('day', :start::timestamp)
+              AND DATE_TRUNC('day', created_at) <= DATE_TRUNC('day', :end::timestamp)
+          )
+
+          SELECT date, #{@history_field} as qty
+          FROM sorted_history
+          WHERE partition_sort_id = 1;
         SQL
-      ).to_a.map { { date: _1["date"].to_date, value: _1["max"] } }
+      ).to_a.map { { date: _1["date"].to_date, value: _1["qty"] } }
 
       normalize_time_array(date_range, data, last_known)
     end

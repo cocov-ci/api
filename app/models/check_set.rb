@@ -113,7 +113,7 @@ class CheckSet < ApplicationRecord
     raise IncompatibleChildStatusError unless checks.all?(&:finished?)
 
     transaction do
-      commit.reset_counters
+      commit.reset_counters!
       self.finished_at = Time.zone.now
 
       next if canceling?

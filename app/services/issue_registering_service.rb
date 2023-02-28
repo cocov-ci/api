@@ -34,7 +34,7 @@ class IssueRegisteringService < ApplicationService
   def register_issues!
     ignored_issues = IssueIgnoreRule.where(
       repository_id: @repo.id,
-      uid: @data[:issues].map { _1[:uid] }.uniq,
+      uid: @data[:issues].pluck(:uid).uniq
     ).pluck(:uid, :id).to_h
 
     check_source = Cocov::Manifest.cleanup_plugin_name(@data[:source])
@@ -47,8 +47,9 @@ class IssueRegisteringService < ApplicationService
         })
         .tap do |data|
           next unless ignored_issues.key? data[:uid]
+
           data.merge!({
-            ignored_at: Time.now,
+            ignored_at: Time.zone.now,
             ignore_source: Issue.ignore_sources[:rule],
             ignore_rule_id: ignored_issues[data[:uid]]
           })
@@ -58,6 +59,6 @@ class IssueRegisteringService < ApplicationService
     return if to_create.blank?
 
     Issue.insert_all(to_create)
-    @commit.reset_counters
+    @commit.reset_counters!
   end
 end

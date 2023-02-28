@@ -88,4 +88,22 @@ RSpec.shared_examples "a history model" do |history_field|
       expect(data.all? { _1[:value].nil? }).to be true
     end
   end
+
+  it "returns the last registered data" do
+    repo = create(:repository)
+    branch = create(:branch, repository: repo)
+    commit = create(:commit, repository: repo)
+    branch.head = commit
+    branch.save!
+
+    Timecop.freeze do
+      described_class.register_history!(commit, 10)
+      described_class.register_history!(commit, 30)
+      described_class.register_history!(commit, 20)
+      data = described_class.history_for(repo, branch.id, 31.days.ago, Time.zone.now)
+      expect(data.all? { _1[:date].is_a? Date }).to be true
+      expect(data.pop[:value]).to eq 20
+      expect(data.all? { _1[:value].nil? }).to be true
+    end
+  end
 end

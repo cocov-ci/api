@@ -92,7 +92,7 @@ class Commit < ApplicationRecord
     coverage&.status || "waiting"
   end
 
-  def reset_counters
+  def reset_counters!
     self.issues_count = Issue.count_for_commit(id)
     save!
   end
@@ -101,6 +101,8 @@ class Commit < ApplicationRecord
 
   def update_github_issue_count_status!
     return unless check_set&.processed?
+
+    IssueHistory.register_history! self, issues_count
 
     if issues_count.zero?
       create_github_status(:success, context: "cocov", description: "No issues detected")
