@@ -22,10 +22,10 @@ module Cocov
 
       def get_json(key, delete: false)
         data = if delete
-                 instance.getdel(key)
-               else
-                 instance.get(key)
-               end
+          instance.getdel(key)
+        else
+          instance.get(key)
+        end
         return nil if data.nil?
 
         data = JSON.parse(data, symbolize_names: true)
@@ -42,10 +42,10 @@ module Cocov
         if data.nil?
           data = yield
           writeable_data = if encoder
-                             encoder.encode(data)
-                           else
-                             data
-                           end
+            encoder.encode(data)
+          else
+            data
+          end
           cache.set(key, writeable_data, ex:)
         elsif encoder
           begin

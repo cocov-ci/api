@@ -11,7 +11,7 @@ class MonthlyGrapherService < ApplicationService
               CoverageHistory
             else
               raise ArgumentError, "invalid value `#{kind}' for parameter 'kind'"
-            end
+    end
 
     branch = case branch
              when nil
@@ -24,7 +24,7 @@ class MonthlyGrapherService < ApplicationService
                Branch.find_by!(name: branch, repository: repo).id
              else
                raise ArgumentError, "invalid value `#{branch}' for parameter 'branch'"
-             end
+    end
 
     stop = Time.zone.now.utc.end_of_day
     start = stop - 1.month

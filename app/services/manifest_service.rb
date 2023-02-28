@@ -11,7 +11,7 @@ class ManifestService < ApplicationService
                commit
              else
                throw ArgumentError, "commit must be a sha, ID, or Commit instance"
-             end
+    end
 
     GitService.clone_commit(commit)
 

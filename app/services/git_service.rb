@@ -11,7 +11,7 @@ class GitService < ApplicationService
                      LocalStorage.new
                    when :s3
                      S3Storage.new
-                   end
+      end
     end
 
     delegate :commit_path, to: :storage

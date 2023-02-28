@@ -34,7 +34,6 @@ class IssueIgnoreRule < ApplicationRecord
   include IssueFields
 
   validates :uid, presence: true, uniqueness: { scope: :repository_id }
-  validates :user, presence: true
 
   belongs_to :repository, counter_cache: true
   belongs_to :user

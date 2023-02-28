@@ -427,7 +427,7 @@ RSpec.describe "V1::Issues" do
   describe "#ignore" do
     let(:commit) { create(:commit, :with_repository) }
     let(:repo) { commit.repository }
-    let(:issue) { create(:issue, commit: commit) }
+    let(:issue) { create(:issue, commit:) }
 
     before do
       @user = create(:user)
@@ -487,7 +487,7 @@ RSpec.describe "V1::Issues" do
   describe "#cancel_ignore" do
     let(:commit) { create(:commit, :with_repository) }
     let(:repo) { commit.repository }
-    let(:issue) { create(:issue, commit: commit) }
+    let(:issue) { create(:issue, commit:) }
 
     before do
       @user = create(:user)

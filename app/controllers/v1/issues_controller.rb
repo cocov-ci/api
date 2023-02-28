@@ -95,10 +95,10 @@ module V1
       error! :issues, :invalid_kind if filter.key?(:kind) && !Issue.kinds.key?(filter[:kind])
 
       @issues = if filter.empty?
-                  @commit.issues
-                else
-                  @commit.issues.where(**filter)
-                end
+        @commit.issues
+      else
+        @commit.issues.where(**filter)
+      end
     end
   end
 end

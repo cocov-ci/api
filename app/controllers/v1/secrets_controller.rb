@@ -93,13 +93,13 @@ module V1
 
     def secrets
       secrets ||= if params[:repo_name]
-                    Repository
-                      .with_context(auth_context)
-                      .find_by!(name: params[:repo_name])
-                      .secrets
-                  else
-                    Secret.where(repository: nil)
-                  end
+        Repository
+          .with_context(auth_context)
+          .find_by!(name: params[:repo_name])
+          .secrets
+      else
+        Secret.where(repository: nil)
+      end
       @secrets = secrets.includes(:owner)
     end
   end

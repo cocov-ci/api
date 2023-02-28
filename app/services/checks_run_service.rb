@@ -32,7 +32,7 @@ class ChecksRunService < ApplicationService
                Commit.find commit
              else
                commit
-             end
+    end
 
     @commit = commit
 

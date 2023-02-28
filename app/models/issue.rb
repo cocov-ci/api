@@ -50,8 +50,8 @@ class Issue < ApplicationRecord
   # counter_cache is not here since we need conditions on it.
   # See #update_repo_counter_cache
   belongs_to :commit
-  belongs_to :ignore_user, class_name: :User, required: false
-  belongs_to :ignore_rule, class_name: :IssueIgnoreRule, required: false
+  belongs_to :ignore_user, class_name: :User, optional: true
+  belongs_to :ignore_rule, class_name: :IssueIgnoreRule, optional: true
 
   validates :uid, presence: true, uniqueness: { scope: :commit_id }
   validates :ignore_user, presence: true, if: -> { ignored_by_user? }
