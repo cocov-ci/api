@@ -4,14 +4,15 @@
 #
 # Table name: repositories
 #
-#  id             :bigint           not null, primary key
-#  name           :citext           not null
-#  description    :text
-#  default_branch :citext           not null
-#  token          :text             not null
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  github_id      :integer          not null
+#  id                       :bigint           not null, primary key
+#  name                     :citext           not null
+#  description              :text
+#  default_branch           :citext           not null
+#  token                    :text             not null
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  github_id                :integer          not null
+#  issue_ignore_rules_count :integer          default(0), not null
 #
 # Indexes
 #

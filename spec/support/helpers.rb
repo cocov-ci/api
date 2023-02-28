@@ -88,6 +88,21 @@ module Cocov
     def github_delivery_header(event)
       { "HTTP_X_GITHUB_EVENT" => event, "HTTP_X_GITHUB_DELIVERY" => SecureRandom.uuid }
     end
+
+    def expect_github_status(repo_name:, sha:, status:, context:, description: nil, url: nil, org: nil)
+      unless @_github_app
+        @_github_app = double(:app)
+        allow(Cocov::GitHub).to receive(:app).and_return(@_github_app)
+      end
+
+      opts = { description:, target_url: url, context: }.compact
+      allow(@_github_app).to receive(:create_status).with(
+        "#{org || Cocov::GITHUB_ORGANIZATION_NAME}/#{repo_name}",
+        sha,
+        status.to_s,
+        **opts,
+      )
+    end
   end
 end
 

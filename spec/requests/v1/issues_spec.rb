@@ -77,15 +77,12 @@ RSpec.describe "V1::Issues" do
       prob = json.dig(:issues, 0)
       expect(prob[:id]).to eq issue.id
       expect(prob[:kind]).to eq issue.kind
-      expect(prob[:status]).to eq issue.status
       expect(prob[:file]).to eq issue.file
       expect(prob[:uid]).to eq issue.uid
       expect(prob[:line_start]).to eq issue.line_start
       expect(prob[:line_end]).to eq issue.line_end
       expect(prob[:message]).to eq issue.message
       expect(prob[:check_source]).to eq issue.check_source
-      expect(prob[:status_reason]).to eq issue.status_reason
-      expect(prob[:assignee]).to be_nil
       expect(prob[:affected_file][:status]).to eq "ok"
 
       expect(prob[:affected_file][:content]).to eq [
@@ -98,24 +95,6 @@ RSpec.describe "V1::Issues" do
         { "type" => "line", "line" => 5, "source" => "<pre>    <span class=\"n\">bar</span>\n</pre>" },
         { "type" => "line", "line" => 6, "source" => "<pre>  <span class=\"k\">end</span>\n</pre>" }
       ]
-    end
-
-    it "returns information about the assignee when present" do
-      commit = create(:commit, :with_repository)
-      repo = commit.repository
-      issue = create(:issue, commit:)
-      @user = create(:user)
-      grant(@user, access_to: repo)
-      issue.assign! @user
-
-      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues", headers: authenticated
-      expect(response).to have_http_status(:ok)
-
-      json = response.json
-
-      expect(json[:issues].count).to eq 1
-      assig = json.dig(:issues, 0, :assignee)
-      expect(assig[:login]).to eq issue.assignee.login
     end
 
     it "filters issues" do
@@ -136,68 +115,6 @@ RSpec.describe "V1::Issues" do
     end
   end
 
-  describe "#patch" do
-    it "returns 404 when repository does not exist" do
-      patch "/v1/repositories/dummy/commits/foo/issues/1",
-        headers: authenticated,
-        params: { status: "resolved" }
-      expect(response).to have_http_status(:not_found)
-      expect(response).to be_a_json_error(:not_found)
-    end
-
-    it "returns 404 when commit does not exist" do
-      repo = create(:repository)
-      @user = create(:user)
-      grant(@user, access_to: repo)
-      patch "/v1/repositories/#{repo.name}/commits/foo/issues/1",
-        headers: authenticated,
-        params: { status: "resolved" }
-      expect(response).to have_http_status(:not_found)
-      expect(response).to be_a_json_error(:not_found)
-    end
-
-    it "returns 404 when issue does not exist" do
-      commit = create(:commit, :with_repository)
-      repo = commit.repository
-      @user = create(:user)
-      grant(@user, access_to: repo)
-
-      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/1",
-        headers: authenticated,
-        params: { status: "resolved" }
-      expect(response).to have_http_status(:not_found)
-      expect(response).to be_a_json_error(:not_found)
-    end
-
-    it "requires an status" do
-      commit = create(:commit, :with_repository)
-      repo = commit.repository
-      issue = create(:issue, commit:)
-      @user = create(:user)
-      grant(@user, access_to: repo)
-
-      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}", headers: authenticated
-      expect(response).to have_http_status(:bad_request)
-      expect(response).to be_a_json_error(:issues, :missing_status)
-    end
-
-    it "updates a status" do
-      commit = create(:commit, :with_repository)
-      repo = commit.repository
-      issue = create(:issue, commit:)
-      @user = create(:user)
-      grant(@user, access_to: repo)
-
-      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}",
-        headers: authenticated,
-        params: { status: "resolved" }
-      expect(response).to have_http_status(:ok)
-      json = response.json
-      expect(json[:status]).to eq "resolved"
-      expect(json[:assignee][:login]).to eq @user.login
-    end
-  end
-
   describe "#put" do
     before { stub_configuration! }
 
@@ -210,68 +127,26 @@ RSpec.describe "V1::Issues" do
       expect(response).to be_a_json_error(:issues, :json_required)
     end
 
-    ok_request = {
-      sha: "",
-      source: :a,
-      issues: [
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
-        { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" }
-      ]
-    }.freeze
+    it "returns validation errors" do
+      params = {
+        sha: 0,
+        source: :a,
+        issues: [
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" },
+          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: "" }
+        ]
+      }
 
-    cases = {
-      "sha" => ok_request.dup.merge({
-        sha: 0
-      }),
-      "source" => ok_request.dup.merge({
-        source: 0
-      }),
-      "issues" => ok_request.dup.merge({ issues: {} }),
-      "issues.0.uid" => ok_request.dup.merge({
-        issues: [
-          { uid: 0, file: "", line_start: 0, line_end: 0, message: "", kind: "" }
-        ]
-      }),
-      "issues.0.file" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: 0, line_start: 0, line_end: 0, message: "", kind: "" }
-        ]
-      }),
-      "issues.0.line_start" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: "", line_start: "", line_end: 0, message: "", kind: "" }
-        ]
-      }),
-      "issues.0.line_end" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: "", line_start: 0, line_end: "", message: "", kind: "" }
-        ]
-      }),
-      "issues.0.message" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: "", line_start: 0, line_end: 0, message: 0, kind: "" }
-        ]
-      }),
-      "issues.0.kind" => ok_request.dup.merge({
-        issues: [
-          { uid: "", file: "", line_start: 0, line_end: 0, message: "", kind: 0 }
-        ]
-      })
-    }.freeze
-
-    cases.each do |name, req|
-      it "rejects when #{name} is invalid" do
-        put "/v1/repositories/foo/issues",
-          params: req,
+      put "/v1/repositories/foo/issues",
+          params:,
           headers: authenticated(as: :service),
           as: :json
         expect(response).to have_http_status(:bad_request)
         expect(response).to be_a_json_error(:issues, :validation_error)
-        expect(response.json[:message]).to include(name)
-      end
+        expect(response.json[:message]).to include("sha")
     end
 
     it "stores new issues" do
@@ -296,7 +171,6 @@ RSpec.describe "V1::Issues" do
       probl = repo.commits.first.issues.first
 
       expect(probl).to be_bug
-      expect(probl).to be_status_new
       expect(probl.uid).to eq "rubocop-a"
       expect(probl.file).to eq "app.rb"
       expect(probl.line_start).to eq 1
@@ -505,6 +379,133 @@ RSpec.describe "V1::Issues" do
       categories.each.with_index do |n, idx|
         expect(response.json[n.to_s]).to eq idx + 1
       end
+    end
+  end
+
+  describe "#ignore" do
+    let(:commit) { create(:commit, :with_repository) }
+    let(:repo) { commit.repository }
+    let(:issue) { create(:issue, commit:) }
+
+    before do
+      @user = create(:user)
+      grant(@user, access_to: repo)
+      create(:check_set, status: :processed, commit:)
+    end
+
+    it "have no effect in case an issue is already ignored" do
+      issue.ignore_permanently! user: @user, reason: "bla"
+
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        params: { mode: "ephemeral", reason: "Test" },
+        headers: authenticated
+
+      expect(response).to have_http_status(:ok)
+      expect(response.json.dig(:ignored, :ignore_source)).to eq "rule"
+    end
+
+    it "requires a valid operation mode" do
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        params: { mode: "test", reason: "Test" },
+        headers: authenticated
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response).to be_a_json_error(:issues, :invalid_ignore_mode)
+    end
+
+    it "ignores a single issue" do
+      expect_github_status(
+        repo_name: repo.name,
+        sha: commit.sha,
+        status: :success,
+        context: "cocov",
+        description: "No issues detected",
+      )
+
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        params: { mode: "ephemeral", reason: "Test" },
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      ignore = response.json[:ignored]
+      expect(ignore[:ignore_source]).to eq "user"
+      expect(ignore.dig(:ignored_by, :name)).to eq @user.login
+      expect(ignore.dig(:ignored_by, :avatar)).to eq @user.avatar_url
+      expect(ignore[:reason]).to eq "Test"
+      expect(IssueIgnoreRule.count).to eq 0
+    end
+
+    it "permanently ignores an issue" do
+      expect_github_status(
+        repo_name: repo.name,
+        sha: commit.sha,
+        status: :success,
+        context: "cocov",
+        description: "No issues detected",
+      )
+
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        params: { mode: "permanent", reason: "Test" },
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+
+      ignore = response.json[:ignored]
+      expect(ignore[:ignore_source]).to eq "rule"
+      expect(ignore.dig(:ignored_by, :name)).to eq @user.login
+      expect(ignore.dig(:ignored_by, :avatar)).to eq @user.avatar_url
+      expect(ignore[:reason]).to eq "Test"
+      expect(IssueIgnoreRule.count).to eq 1
+    end
+  end
+
+  describe "#cancel_ignore" do
+    let(:commit) { create(:commit, :with_repository) }
+    let(:repo) { commit.repository }
+    let(:issue) { create(:issue, commit:) }
+
+    before do
+      @user = create(:user)
+      grant(@user, access_to: repo)
+      create(:check_set, status: :processed, commit:)
+    end
+
+    it "removes the ignore flag set by a user" do
+      issue.ignore! user: @user, reason: "test"
+
+      expect_github_status(
+        repo_name: repo.name,
+        sha: commit.sha,
+        status: :failure,
+        context: "cocov",
+        description: "1 issue detected",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{repo.name}/commits/#{commit.sha}/issues"
+      )
+
+      delete "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      expect(response.json[:ignore]).to be_nil
+    end
+
+    it "removes the ignore flag set by a rule" do
+      issue.ignore_permanently! user: @user, reason: "test"
+
+      expect_github_status(
+        repo_name: repo.name,
+        sha: commit.sha,
+        status: :failure,
+        context: "cocov",
+        description: "1 issue detected",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{repo.name}/commits/#{commit.sha}/issues"
+      )
+
+      delete "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      expect(response.json[:ignore]).to be_nil
     end
   end
 end

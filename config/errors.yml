@@ -56,21 +56,15 @@ errors:
       status: bad_request
       message: Provided name is invalid. Secrets must contain only alphanumeric characters (A-Z, a-z, 0-9) and underscores (_). Spaces are not allowed. Names must begin with a letter (A-Z, a-z) or an underscore (_)
   issues:
-    invalid_seal_status:
-      status: bad_request
-      message: The parameter "status" must be either "success" or "error"
-    missing_status:
-      status: bad_request
-      message: The parameter "status" is required
-    invalid_status:
-      status: bad_request
-      message: "The parameter \"status\" must be equal to one of the following values: resolved, ignored"
     json_required:
       status: bad_request
       message: This endpoint requires a JSON payload
     validation_error:
       status: bad_request
       message: Schema validation failed expected %{expected} for path %{path}, received %{received} instead
+    invalid_ignore_mode:
+      status: bad_request
+      message: Invalid or missing value for parameter "mode". Expecter either "ephemeral" or "permanent".
   repositories:
     already_exists:
       status: conflict

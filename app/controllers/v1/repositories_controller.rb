@@ -10,10 +10,10 @@ module V1
         .includes(:branches)
 
       repos = if (search = params[:search_term])
-                repos.by_fuzzy_name(search)
-              else
-                repos.order(name: :ASC)
-              end
+        repos.by_fuzzy_name(search)
+      else
+        repos.order(name: :ASC)
+      end
 
       render "v1/repositories/index",
         locals: { repos: paginating(repos) }

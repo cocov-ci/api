@@ -72,10 +72,10 @@ module Cocov
           next if @value[k].is_a? OptValidator # Optional is optional.
 
           exists = if k.is_a?(String) || k.is_a?(Symbol)
-                     what.key?(k.to_s) || what.key?(k.to_sym)
-                   else
-                     what.key?(k)
-                   end
+            what.key?(k.to_s) || what.key?(k.to_sym)
+          else
+            what.key?(k)
+          end
 
           next if exists
 

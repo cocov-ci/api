@@ -51,12 +51,12 @@ module V1
 
     def keys
       @keys ||= if params[:repo_name]
-                  Repository
-                    .find_by!(name: params[:repo_name])
-                    .private_keys
-                else
-                  PrivateKey.where(repository: nil)
-                end
+        Repository
+          .find_by!(name: params[:repo_name])
+          .private_keys
+      else
+        PrivateKey.where(repository: nil)
+      end
     end
   end
 end

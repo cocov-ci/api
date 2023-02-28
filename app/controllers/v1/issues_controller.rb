@@ -4,6 +4,7 @@ module V1
   class IssuesController < V1Controller
     before_action :ensure_authentication
     before_action :ensure_service_token, only: :put
+    before_action :load_parents, only: %i[ignore cancel_ignore]
     before_action :load_filtered_issues, only: %i[sources categories index]
 
     def index
@@ -12,26 +13,6 @@ module V1
         repo: @repo,
         commit: @commit
       }
-    end
-
-    def patch
-      error! :issues, :missing_status if params[:status].blank?
-      error! :issues, :invalid_status unless Issue.statuses.include? params[:status]
-
-      commit = Repository
-        .with_context(auth_context)
-        .find_by!(name: params[:repo_name])
-        .commits
-        .find_by(sha: params[:commit_sha])
-
-      not_found! unless commit
-
-      issue = commit.issues.find(params[:id])
-      issue.status = params[:status]
-      issue.status_reason = params[:reason]
-      issue.assign! @user
-
-      render "v1/issues/_issue", locals: { issue: }
     end
 
     def put
@@ -52,6 +33,39 @@ module V1
       head :no_content
     end
 
+    def ignore
+      mode = params[:mode]
+      error! :issues, :invalid_ignore_mode unless %w[ephemeral permanent].include? mode
+
+      issue = @commit.issues.includes(:ignore_user, :ignore_rule).find(params[:id])
+
+      unless issue.ignored?
+        ignore_params = { user: @user, reason: params[:reason] }
+
+        if mode == "ephemeral"
+          issue.ignore!(**ignore_params)
+        else
+          issue.ignore_permanently!(**ignore_params)
+        end
+
+        @commit.reload
+        @commit.update_github_issue_count_status!
+      end
+
+      render "v1/issues/_issue", locals: { issue: }
+    end
+
+    def cancel_ignore
+      issue = @commit.issues.find(params[:id])
+      issue.clean_ignore!
+
+      if issue.saved_change_to_ignored_at?
+        @commit.update_github_issue_count_status!
+      end
+
+      render "v1/issues/_issue", locals: { issue: }
+    end
+
     def sources
       from_issues = Issue.where(commit_id: @commit.id).group(:check_source).count
       result = @commit.checks.pluck(:plugin_name).index_with do |name|
@@ -70,21 +84,29 @@ module V1
 
     private
 
+    def load_parents
+      return if @parents_loaded
+
+      @parents_loaded = true
+
+      @repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
+      @commit = @repo.commits.includes(:user).find_by!(sha: params[:commit_sha])
+    end
+
     def load_filtered_issues
+      load_parents
+
       filter = {}
       filter[:check_source] = params[:source] if params[:source].present?
       filter[:kind] = params[:category] if params[:category].present?
 
       error! :issues, :invalid_kind if filter.key?(:kind) && !Issue.kinds.key?(filter[:kind])
 
-      @repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
-      @commit = @repo.commits.includes(:user).find_by!(sha: params[:commit_sha])
-
       @issues = if filter.empty?
-                  @commit.issues
-                else
-                  @commit.issues.where(**filter)
-                end
+        @commit.issues
+      else
+        @commit.issues.where(**filter)
+      end
     end
   end
 end
