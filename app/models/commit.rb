@@ -93,8 +93,8 @@ class Commit < ApplicationRecord
   end
 
   def reset_counters
-    Commit.reset_counters(id, :issues)
-    reload
+    self.issues_count = Issue.count_for_commit(id)
+    save!
   end
 
   def rerun_checks! = check_set&.rerun! || false

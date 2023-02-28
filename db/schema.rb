@@ -151,13 +151,13 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_211848) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "ignored_at", precision: nil
-    t.integer "ignore_reason"
-    t.bigint "ignored_by_user_id"
-    t.bigint "ignored_by_rule_id"
-    t.string "ignored_by_user_reason"
+    t.integer "ignore_source"
+    t.bigint "ignore_user_id"
+    t.bigint "ignore_rule_id"
+    t.string "ignore_user_reason"
     t.index ["commit_id"], name: "index_issues_on_commit_id"
-    t.index ["ignored_by_rule_id"], name: "index_issues_on_ignored_by_rule_id"
-    t.index ["ignored_by_user_id"], name: "index_issues_on_ignored_by_user_id"
+    t.index ["ignore_rule_id"], name: "index_issues_on_ignore_rule_id"
+    t.index ["ignore_user_id"], name: "index_issues_on_ignore_user_id"
     t.index ["uid", "commit_id"], name: "index_issues_on_uid_and_commit_id", unique: true
     t.index ["uid"], name: "index_issues_on_uid"
   end
@@ -277,8 +277,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_211848) do
   add_foreign_key "issue_ignore_rules", "repositories"
   add_foreign_key "issue_ignore_rules", "users"
   add_foreign_key "issues", "commits"
-  add_foreign_key "issues", "issue_ignore_rules", column: "ignored_by_rule_id"
-  add_foreign_key "issues", "users", column: "ignored_by_user_id"
+  add_foreign_key "issues", "issue_ignore_rules", column: "ignore_rule_id"
+  add_foreign_key "issues", "users", column: "ignore_user_id"
   add_foreign_key "private_keys", "repositories"
   add_foreign_key "repository_members", "repositories"
   add_foreign_key "secrets", "repositories"

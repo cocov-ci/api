@@ -4,15 +4,15 @@ class AddIgnoreFieldsToIssues < ActiveRecord::Migration[7.0]
   def change
     change_table :issues, bulk: true do |t|
       t.timestamp :ignored_at, null: true
-      t.integer :issues, :ignore_reason, null: true
+      t.integer :ignore_source, null: true
 
-      t.reference :ignored_by_user, null: true, foreign_key: { to_table: :users }
-      t.reference :ignored_by_rule, null: true, foreign_key: { to_table: :issue_ignore_rules }
-      t.string :ignored_by_user_reason, :string, null: true
+      t.references :ignore_user, null: true, foreign_key: { to_table: :users }
+      t.references :ignore_rule, null: true, foreign_key: { to_table: :issue_ignore_rules }
+      t.string :ignore_user_reason, null: true
     end
 
     change_table :issues, bulk: true do |t|
-      t.remove :status, type: :integer, null: false
+      t.remove :status, type: :integer, null: false, default: 0
       t.remove :status_reason, type: :text
     end
   end

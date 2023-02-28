@@ -3,6 +3,16 @@
 module IssueFields
   extend ActiveSupport::Concern
 
+  COMMON = %i[
+    check_source
+    file
+    kind
+    line_start
+    line_end
+    message
+    uid
+  ].freeze
+
   included do
     enum kind: {
       style: 0,

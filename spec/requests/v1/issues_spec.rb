@@ -115,52 +115,6 @@ RSpec.describe "V1::Issues" do
     end
   end
 
-  describe "#patch", skip: "Deprecating #patch" do
-    it "returns 404 when repository does not exist" do
-      patch "/v1/repositories/dummy/commits/foo/issues/1",
-        headers: authenticated,
-        params: { status: "resolved" }
-      expect(response).to have_http_status(:not_found)
-      expect(response).to be_a_json_error(:not_found)
-    end
-
-    it "returns 404 when commit does not exist" do
-      repo = create(:repository)
-      @user = create(:user)
-      grant(@user, access_to: repo)
-      patch "/v1/repositories/#{repo.name}/commits/foo/issues/1",
-        headers: authenticated,
-        params: { status: "resolved" }
-      expect(response).to have_http_status(:not_found)
-      expect(response).to be_a_json_error(:not_found)
-    end
-
-    it "returns 404 when issue does not exist" do
-      commit = create(:commit, :with_repository)
-      repo = commit.repository
-      @user = create(:user)
-      grant(@user, access_to: repo)
-
-      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/1",
-        headers: authenticated,
-        params: { status: "resolved" }
-      expect(response).to have_http_status(:not_found)
-      expect(response).to be_a_json_error(:not_found)
-    end
-
-    it "requires an status" do
-      commit = create(:commit, :with_repository)
-      repo = commit.repository
-      issue = create(:issue, commit:)
-      @user = create(:user)
-      grant(@user, access_to: repo)
-
-      patch "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}", headers: authenticated
-      expect(response).to have_http_status(:bad_request)
-      expect(response).to be_a_json_error(:issues, :missing_status)
-    end
-  end
-
   describe "#put" do
     before { stub_configuration! }
 
@@ -467,6 +421,97 @@ RSpec.describe "V1::Issues" do
       categories.each.with_index do |n, idx|
         expect(response.json[n.to_s]).to eq idx + 1
       end
+    end
+  end
+
+  describe "#ignore" do
+    let(:commit) { create(:commit, :with_repository) }
+    let(:repo) { commit.repository }
+    let(:issue) { create(:issue, commit: commit) }
+
+    before do
+      @user = create(:user)
+      grant(@user, access_to: repo)
+    end
+
+    it "have no effect in case an issue is already ignored" do
+      issue.ignore_permanently! user: @user, reason: "bla"
+
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        params: { mode: "ephemeral", reason: "Test" },
+        headers: authenticated
+
+      expect(response).to have_http_status(:ok)
+      expect(response.json.dig(:ignored, :ignore_source)).to eq "rule"
+    end
+
+    it "requires a valid operation mode" do
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        params: { mode: "test", reason: "Test" },
+        headers: authenticated
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response).to be_a_json_error(:issues, :invalid_ignore_mode)
+    end
+
+    it "ignores a single issue" do
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        params: { mode: "ephemeral", reason: "Test" },
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      ignore = response.json[:ignored]
+      expect(ignore[:ignore_source]).to eq "user"
+      expect(ignore.dig(:ignored_by, :name)).to eq @user.login
+      expect(ignore.dig(:ignored_by, :avatar)).to eq @user.avatar_url
+      expect(ignore[:reason]).to eq "Test"
+      expect(IssueIgnoreRule.count).to eq 0
+    end
+
+    it "permanently ignores an issue" do
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        params: { mode: "permanent", reason: "Test" },
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+
+      ignore = response.json[:ignored]
+      expect(ignore[:ignore_source]).to eq "rule"
+      expect(ignore.dig(:ignored_by, :name)).to eq @user.login
+      expect(ignore.dig(:ignored_by, :avatar)).to eq @user.avatar_url
+      expect(ignore[:reason]).to eq "Test"
+      expect(IssueIgnoreRule.count).to eq 1
+    end
+  end
+
+  describe "#cancel_ignore" do
+    let(:commit) { create(:commit, :with_repository) }
+    let(:repo) { commit.repository }
+    let(:issue) { create(:issue, commit: commit) }
+
+    before do
+      @user = create(:user)
+      grant(@user, access_to: repo)
+    end
+
+    it "removes the ignore flag set by a user" do
+      issue.ignore! user: @user, reason: "test"
+
+      delete "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      expect(response.json[:ignore]).to be_nil
+    end
+
+    it "removes the ignore flag set by a rule" do
+      issue.ignore_permanently! user: @user, reason: "test"
+
+      delete "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/#{issue.id}/ignore",
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      expect(response.json[:ignore]).to be_nil
     end
   end
 end

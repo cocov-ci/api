@@ -37,4 +37,21 @@ class IssueIgnoreRule < ApplicationRecord
   validates :user, presence: true
 
   belongs_to :repository, counter_cache: true
+  belongs_to :user
+
+  def self.create_from!(issue:, user:, reason:)
+    existing = IssueIgnoreRule
+      .where(repository_id: issue.commit.repository_id, uid: issue.uid)
+      .first
+
+    return existing if existing
+
+    new(user:, reason:, repository_id: issue.commit.repository_id).tap do |ignore|
+      IssueFields::COMMON.each do |field|
+        ignore.send("#{field}=", issue.send(field))
+      end
+
+      ignore.save!
+    end
+  end
 end
