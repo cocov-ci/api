@@ -97,13 +97,15 @@ RSpec.describe "V1::Issues" do
       ]
     end
 
-    it "filters issues" do
+    it "filters issues (source/default state)" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
       @user = create(:user)
       grant(@user, access_to: repo)
       create(:issue, check_source: "test_a", commit:)
       create(:issue, check_source: "test_b", commit:)
+      i = create(:issue, check_source: "test_c", commit:)
+      i.ignore! user: @user, reason: nil
 
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues",
         params: { source: "test_a" },
@@ -112,6 +114,25 @@ RSpec.describe "V1::Issues" do
       expect(response).to have_http_status(:ok)
       expect(response.json[:issues].length).to eq 1
       expect(response.json[:issues].first[:check_source]).to eq "test_a"
+    end
+
+    it "filters issues (state)" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
+      create(:issue, check_source: "test_a", commit:)
+      create(:issue, check_source: "test_b", commit:)
+      i = create(:issue, check_source: "test_c", commit:)
+      i.ignore! user: @user, reason: nil
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues",
+        params: { state: "ignored" },
+        headers: authenticated
+
+      expect(response).to have_http_status(:ok)
+      expect(response.json[:issues].length).to eq 1
+      expect(response.json[:issues].first[:check_source]).to eq "test_c"
     end
   end
 
@@ -399,6 +420,26 @@ RSpec.describe "V1::Issues" do
       categories.each.with_index do |n, idx|
         expect(response.json[n.to_s]).to eq idx + 1
       end
+    end
+  end
+
+  describe "#states" do
+    it "returns counts for issues" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
+      create(:issue, commit:)
+      i = create(:issue, commit:)
+      i.ignore! user: @user, reason: nil
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/states",
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      expect(response.json[:active]).to eq 1
+      expect(response.json[:ignored]).to eq 1
     end
   end
 

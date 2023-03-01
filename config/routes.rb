@@ -65,6 +65,7 @@ Rails.application.routes.draw do
     get "/repositories/:repo_name/commits/:commit_sha/issues", to: "issues#index"
     get "/repositories/:repo_name/commits/:commit_sha/issues/sources", to: "issues#sources"
     get "/repositories/:repo_name/commits/:commit_sha/issues/categories", to: "issues#categories"
+    get "/repositories/:repo_name/commits/:commit_sha/issues/states", to: "issues#states"
     post "/repositories/:repo_name/commits/:commit_sha/issues/:id/ignore", to: "issues#ignore"
     delete "/repositories/:repo_name/commits/:commit_sha/issues/:id/ignore", to: "issues#cancel_ignore"
 

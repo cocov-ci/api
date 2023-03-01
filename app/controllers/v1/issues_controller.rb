@@ -4,8 +4,8 @@ module V1
   class IssuesController < V1Controller
     before_action :ensure_authentication
     before_action :ensure_service_token, only: :put
-    before_action :load_parents, only: %i[ignore cancel_ignore]
-    before_action :load_filtered_issues, only: %i[sources categories index]
+    before_action :load_parents, only: %i[ignore cancel_ignore sources categories states]
+    before_action :load_filtered_issues, only: :index
 
     def index
       render "v1/issues/index", locals: {
@@ -64,6 +64,11 @@ module V1
       render "v1/issues/_issue", locals: { issue: }
     end
 
+    def states
+      issue = Issue.count_for_commit(@commit.id)
+      render json: issue
+    end
+
     def sources
       from_issues = Issue.where(commit_id: @commit.id).group(:check_source).count
       result = @commit.checks.pluck(:plugin_name).index_with do |name|
@@ -104,6 +109,17 @@ module V1
         @commit.issues
       else
         @commit.issues.where(**filter)
+      end
+
+      case params[:state].presence
+      when "ignored"
+        @issues = @issues.where.not(ignored_at: nil)
+      when "active", nil
+        @issues = @issues.where(ignored_at: nil)
+      when "all"
+        # Do nothing
+      else
+        error! :issues, :invalid_state
       end
     end
   end
