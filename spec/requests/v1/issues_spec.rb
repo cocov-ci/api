@@ -337,8 +337,8 @@ RSpec.describe "V1::Issues" do
       allow(ManifestService).to receive(:manifest_for_commit)
         .with(-> { _1.id == commit.id })
         .and_return(manifest)
-      allow(manifest).to receive(:path_excluded?) do
-        File.fnmatch("**/redis.rb", _1, File::FNM_EXTGLOB | File::FNM_PATHNAME)
+      allow(manifest).to receive(:path_excluded?) do |path|
+        File.fnmatch("**/redis.rb", path, File::FNM_EXTGLOB | File::FNM_PATHNAME)
       end
 
       put "/v1/repositories/#{repo.id}/issues",

@@ -62,8 +62,8 @@ module Cocov
       end
 
       def path_excluded?(path)
-        @exclude_paths.any? do
-          File.fnmatch?(_1, path, File::FNM_EXTGLOB | File::FNM_PATHNAME)
+        @exclude_paths.any? do |pattern|
+          File.fnmatch?(pattern, path, File::FNM_EXTGLOB | File::FNM_PATHNAME)
         end
       end
     end

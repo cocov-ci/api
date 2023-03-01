@@ -3,14 +3,14 @@
 class ManifestService < ApplicationService
   def self.manifest_for_commit(commit)
     commit = case commit
-             when Numeric
-               Commit.find(id)
-             when String
-               Commit.find_by!(sha: commit)
-             when Commit
-               commit
-             else
-               throw ArgumentError, "commit must be a sha, ID, or Commit instance"
+    when Numeric
+      Commit.find(id)
+    when String
+      Commit.find_by!(sha: commit)
+    when Commit
+      commit
+    else
+      throw ArgumentError, "commit must be a sha, ID, or Commit instance"
     end
 
     GitService.clone_commit(commit)

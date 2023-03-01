@@ -11,6 +11,7 @@ class ProcessCoverageJob < ApplicationJob
     files.each do |file, encoded|
       parser.reset
       next if @manifest&.path_excluded? file
+
       raw_data = Base64.decode64(encoded)
       parser.parse(raw_data)
 

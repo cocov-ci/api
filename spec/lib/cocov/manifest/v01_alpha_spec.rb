@@ -81,9 +81,9 @@ RSpec.describe Cocov::Manifest::V01Alpha do
   describe "excludes" do
     it "rejects when a exclude key is empty" do
       d = data.dup
-      d[:exclude_paths] = ['']
+      d[:exclude_paths] = [""]
       expect { spec.new(d) }.to raise_error(Cocov::Manifest::InvalidManifestError)
-          .with_message('Expected exclude_paths.0 to not be blank')
+        .with_message("Expected exclude_paths.0 to not be blank")
     end
   end
 end

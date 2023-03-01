@@ -7,10 +7,10 @@ class GitService < ApplicationService
   class << self
     def storage
       @storage ||= case Cocov::GIT_SERVICE_STORAGE_MODE
-                   when :local
-                     LocalStorage.new
-                   when :s3
-                     S3Storage.new
+      when :local
+        LocalStorage.new
+      when :s3
+        S3Storage.new
       end
     end
 
