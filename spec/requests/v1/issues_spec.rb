@@ -504,6 +504,11 @@ RSpec.describe "V1::Issues" do
         end
       end
 
+      # Should not be present in the final count
+      i = create(:issue, commit:, check_source: "cocov-ci/foo")
+      i.ignore! user: @user, reason: nil
+
+
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/sources",
         headers: authenticated
 
@@ -528,6 +533,10 @@ RSpec.describe "V1::Issues" do
           create(:issue, commit:, check_source: check.plugin_name, kind: name)
         end
       end
+
+      # Should not be present in the final count
+      i = create(:issue, commit:, check_source: commit.checks.first.plugin_name, kind: "style")
+      i.ignore! user: @user, reason: nil
 
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/categories",
         headers: authenticated
