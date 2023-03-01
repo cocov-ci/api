@@ -156,6 +156,8 @@ RSpec.describe "V1::Branches" do
         create(:issue, kind: :security, commit:)
         create(:issue, kind: :security, commit:)
         create(:issue, kind: :convention, commit:)
+        i = create(:issue, kind: :convention, commit:)
+        i.ignore! user: @user, reason: nil
 
         get "/v1/repositories/#{r.name}/branches/top_issues/#{branch.name}",
           headers: authenticated

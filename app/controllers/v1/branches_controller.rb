@@ -48,6 +48,7 @@ module V1
       if commit
         data = commit
           .issues
+          .where(ignored_at: nil)
           .group(:kind)
           .count
           .entries
