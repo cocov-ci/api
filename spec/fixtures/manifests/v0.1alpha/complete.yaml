@@ -1,9 +1,11 @@
 version: "0.1.alpha"
 
 coverage:
-  path: ./coverage/coverage.json
-  format: simplecov
   min_percent: 90
+
+exclude_paths:
+  - coverage/
+  - spec/**/.ignore
 
 checks:
   - plugin: cocov/rubocop:v0.1

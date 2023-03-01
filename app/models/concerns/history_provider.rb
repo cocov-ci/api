@@ -17,7 +17,7 @@ module HistoryProvider
       date_start = coerce_time_param(date_start)
       date_end = coerce_time_param(date_end)
 
-      last_known = where("repository_id = :id AND created_at < :start", id: repository, start: date_start)
+      last_known = where("repository_id = :id AND created_at <= :start", id: repository, start: date_start)
         .order(created_at: :desc)
         .limit(1)
         .pick(@history_field)

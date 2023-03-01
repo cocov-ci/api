@@ -335,6 +335,10 @@ RSpec.describe "V1::Checks" do
         params: { status: "succeeded", plugin_name: check_a.plugin_name }
       expect(response).to have_http_status(:no_content)
 
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(-> { _1.id == commit.id })
+        .and_return(nil)
+
       put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),
         as: :json,
@@ -397,6 +401,7 @@ RSpec.describe "V1::Checks" do
     it "re-runs a finished job" do
       check.check_set.canceled!
 
+      expect(GitService).to receive(:clone_commit).with(anything)
       expect(GitService).to receive(:file_for_commit)
         .with(commit, path: ".cocov.yaml")
         .and_return(["yaml", fixture_file("manifests/v0.1alpha/complete.yaml")])

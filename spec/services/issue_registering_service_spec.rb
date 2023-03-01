@@ -85,6 +85,10 @@ RSpec.describe IssueRegisteringService do
     before { commit.reset_check_set! }
 
     it "registers a new issue" do
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(-> { _1.id == commit.id })
+        .and_return(nil)
+
       service.call(issue_data, repo)
 
       expect(commit.issues.count).to eq 1
@@ -99,6 +103,10 @@ RSpec.describe IssueRegisteringService do
     end
 
     it "recycles issues" do
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(-> { _1.id == commit.id })
+        .and_return(nil)
+
       expect(commit.issues.count).to be_zero
 
       service.call(issue_data, repo)
@@ -125,6 +133,10 @@ RSpec.describe IssueRegisteringService do
     end
 
     it "creates issues matching an ignore rule with the correct status" do
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(-> { _1.id == commit.id })
+        .and_return(nil)
+
       create(:issue_ignore_rule, uid: "rubocop-a", repository: repo, user: create(:user))
 
       expect(commit.issues.count).to be_zero
@@ -132,6 +144,21 @@ RSpec.describe IssueRegisteringService do
       service.call(issue_data, repo)
       expect(commit.issues.count).to eq 1
       expect(commit.issues.first).to be_ignored
+    end
+
+    it "ignores issues based on manifest" do
+      manifest = double(:manifest)
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(-> { _1.id == commit.id })
+        .and_return(manifest)
+      allow(manifest).to receive(:path_excluded?)
+        .with(anything)
+        .and_return(true)
+
+      expect(commit.issues.count).to be_zero
+
+      service.call(issue_data, repo)
+      expect(commit.issues.count).to eq 0
     end
   end
 end

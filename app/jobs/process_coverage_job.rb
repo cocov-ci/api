@@ -10,6 +10,7 @@ class ProcessCoverageJob < ApplicationJob
 
     files.each do |file, encoded|
       parser.reset
+      next if @manifest&.path_excluded? file
       raw_data = Base64.decode64(encoded)
       parser.parse(raw_data)
 
@@ -32,6 +33,7 @@ class ProcessCoverageJob < ApplicationJob
   def perform(repo_id, sha, data)
     r = Repository.find(repo_id)
     commit = r.commits.find_by!(sha:)
+    @manifest = ManifestService.manifest_for_commit(commit)
     data = JSON.parse(data)
 
     cover = ActiveRecord::Base.transaction do
@@ -53,8 +55,7 @@ class ProcessCoverageJob < ApplicationJob
     end
 
     coverage_url = "#{Cocov::UI_BASE_URL}/repos/#{r.name}/commits/#{sha}/coverage"
-    manifest = ManifestService.manifest_for_commit(commit)
-    if manifest.nil? || manifest.coverage.nil?
+    if @manifest&.coverage.nil?
       commit.create_github_status(:success,
         context: "cocov/coverage",
         description: "#{cov.percent_covered.round(2)}% covered",
@@ -62,8 +63,8 @@ class ProcessCoverageJob < ApplicationJob
       return
     end
 
-    if manifest.coverage.min_percent.present?
-      min = manifest.coverage.min_percent
+    if @manifest&.coverage&.min_percent.present?
+      min = @manifest.coverage.min_percent
       commit.minimum_coverage = min
       commit.save!
 

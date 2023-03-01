@@ -3,7 +3,7 @@
 module Cocov
   module Manifest
     class V01Alpha
-      Coverage = Struct.new(:path, :format, :min_percent, keyword_init: true)
+      Coverage = Struct.new(:min_percent, keyword_init: true)
       Check = Struct.new(:plugin, :envs, :mounts, keyword_init: true)
       CheckMount = Struct.new(:source, :destination, keyword_init: true)
 
@@ -11,10 +11,9 @@ module Cocov
         hash(
           version: string.reject_blank,
           coverage: opt(hash(
-            path: opt(string.reject_blank),
-            format: opt(string.reject_blank),
             min_percent: opt(integer)
           ).reject_extra_keys),
+          exclude_paths: opt(array(string.reject_blank)),
           checks: opt(array(hash(
             plugin: string.reject_blank,
             envs: opt(hash(alt(string, symbol) => string)),
@@ -26,7 +25,7 @@ module Cocov
         ).reject_extra_keys
       end
 
-      attr_reader :coverage, :checks
+      attr_reader :coverage, :checks, :exclude_paths
 
       def initialize(data)
         begin
@@ -53,6 +52,18 @@ module Cocov
             raise InvalidManifestError, "Invalid mount source `#{m.source} for " \
                                         "check #{c.plugin}: Only secrets are mountable."
           end
+        end
+
+        @exclude_paths = data[:exclude_paths]&.map do |path|
+          next path unless path.end_with? "/"
+
+          "#{path}*"
+        end || []
+      end
+
+      def path_excluded?(path)
+        @exclude_paths.any? do
+          File.fnmatch?(_1, path, File::FNM_EXTGLOB | File::FNM_PATHNAME)
         end
       end
     end

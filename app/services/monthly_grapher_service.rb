@@ -27,7 +27,7 @@ class MonthlyGrapherService < ApplicationService
     end
 
     stop = Time.zone.now.utc.end_of_day
-    start = stop - 1.month
+    start = stop - 31.days
 
     model.history_for(repo, branch, start, stop)
       .to_h { [_1[:date], _1[:value]] }
