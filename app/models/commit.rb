@@ -93,7 +93,7 @@ class Commit < ApplicationRecord
   end
 
   def reset_counters!
-    self.issues_count = Issue.count_for_commit(id)
+    self.issues_count = Issue.count_for_commit(id)["active"]
     save!
   end
 

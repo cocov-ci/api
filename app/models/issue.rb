@@ -81,7 +81,7 @@ class Issue < ApplicationRecord
   end
 
   def update_commit_counter_cache
-    commit.issues_count = Issue.count_for_commit(commit_id)
+    commit.issues_count = Issue.count_for_commit(commit_id)["active"]
     commit.save
   end
 
@@ -116,5 +116,15 @@ class Issue < ApplicationRecord
     commit.save!
   end
 
-  def self.count_for_commit(id) = where("ignored_at IS NULL AND commit_id = ?", id).count
+  def self.count_for_commit(id)
+    ActiveRecord::Base.connection.execute(
+      ApplicationRecord.sanitize_sql([<<-SQL.squish, { id: }])
+        SELECT
+          COUNT(id) FILTER (WHERE ignored_at IS NULL) AS active,
+          COUNT(id) FILTER (WHERE ignored_at IS NOT NULL) AS ignored
+        FROM issues
+        WHERE commit_id = :id;
+      SQL
+    ).to_a.first
+  end
 end
