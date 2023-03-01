@@ -508,7 +508,6 @@ RSpec.describe "V1::Issues" do
       i = create(:issue, commit:, check_source: "cocov-ci/foo")
       i.ignore! user: @user, reason: nil
 
-
       get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/issues/sources",
         headers: authenticated
 
