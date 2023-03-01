@@ -1,8 +1,6 @@
 version: 0.1
 
 coverage:
-  path: ./coverage/coverage.json
-  format: simplecov
   min_percent: 90
 
 checks:

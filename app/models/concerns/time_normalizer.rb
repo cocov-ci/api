@@ -36,15 +36,9 @@ module TimeNormalizer
     end
 
     def date_array(start, finish)
-      start = start.beginning_of_day
-      finish = finish.beginning_of_day
-
-      [].tap do |arr|
-        while start <= finish
-          arr << start
-          start += 1.day
-        end
-      end
+      start = start.to_date
+      finish = finish.to_date
+      (start..finish).to_a.last([finish - start, 1].max)
     end
   end
 end

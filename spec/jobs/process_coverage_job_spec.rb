@@ -37,6 +37,7 @@ RSpec.describe ProcessCoverageJob do
     manifest = double(:manifest)
     cov = Cocov::Manifest::V01Alpha::Coverage.new(min_percent: 20)
     allow(manifest).to receive(:coverage).and_return(cov)
+    allow(manifest).to receive(:path_excluded?).with(anything).and_return(false)
     allow(ManifestService).to receive(:manifest_for_commit).with(anything).and_return(manifest)
 
     app = double(:app)
@@ -57,6 +58,7 @@ RSpec.describe ProcessCoverageJob do
   it "creates conditional statuses (failure)" do
     manifest = double(:manifest)
     cov = Cocov::Manifest::V01Alpha::Coverage.new(min_percent: 100)
+    allow(manifest).to receive(:path_excluded?).with(anything).and_return(false)
     allow(manifest).to receive(:coverage).and_return(cov)
     allow(ManifestService).to receive(:manifest_for_commit).with(anything).and_return(manifest)
 
@@ -76,5 +78,27 @@ RSpec.describe ProcessCoverageJob do
 
     expect(commit.reload.minimum_coverage).to eq 100
     expect(commit.reload.coverage_percent).to eq 94
+  end
+
+  it "ignores excluded files" do
+    manifest = double(:manifest)
+    cov = Cocov::Manifest::V01Alpha::Coverage.new(min_percent: 20)
+    allow(manifest).to receive(:coverage).and_return(cov)
+    allow(manifest).to receive(:path_excluded?).and_return(true)
+    allow(ManifestService).to receive(:manifest_for_commit).with(anything).and_return(manifest)
+
+    app = double(:app)
+    allow(Cocov::GitHub).to receive(:app).and_return(app)
+    expect(app).to receive(:create_status)
+      .with(
+        "#{@github_organization_name}/#{commit.repository.name}",
+        commit.sha,
+        "failure",
+        context: "cocov/coverage",
+        description: "0.0% covered (at least 20% is required)",
+        target_url: "#{@ui_base_url}/repos/#{commit.repository.name}/commits/#{commit.sha}/coverage"
+      )
+
+    job.perform(commit.repository_id, commit.sha, payload)
   end
 end

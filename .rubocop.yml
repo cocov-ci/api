@@ -80,6 +80,9 @@ Naming/MethodParameterName:
 Layout/EndAlignment:
   EnforcedStyleAlignWith: start_of_line
 
+Layout/CaseIndentation:
+  EnforcedStyle: end
+
 Metrics/CyclomaticComplexity:
   Enabled: false
 

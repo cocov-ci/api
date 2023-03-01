@@ -27,6 +27,7 @@ class IssueRegisteringService < ApplicationService
     @repo = repo
 
     @commit = @repo.commits.find_by!(sha: @data[:sha])
+    @manifest = ManifestService.manifest_for_commit(@commit)
 
     register_issues!
   end
@@ -39,6 +40,8 @@ class IssueRegisteringService < ApplicationService
 
     check_source = Cocov::Manifest.cleanup_plugin_name(@data[:source])
     to_create = @data[:issues]&.map do |issue|
+      next if @manifest&.path_excluded?(issue[:file])
+
       issue
         .slice(:kind, :file, :line_start, :line_end, :message, :uid)
         .merge({
@@ -55,6 +58,8 @@ class IssueRegisteringService < ApplicationService
           })
         end
     end
+
+    to_create.compact!
 
     return if to_create.blank?
 

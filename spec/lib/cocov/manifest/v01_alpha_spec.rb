@@ -9,9 +9,6 @@ RSpec.describe Cocov::Manifest::V01Alpha do
 
   it "validates and organizes data" do
     manifest = spec.new(data)
-
-    expect(manifest.coverage.path).to eq "./coverage/coverage.json"
-    expect(manifest.coverage.format).to eq "simplecov"
     expect(manifest.coverage.min_percent).to eq 90
 
     checks = [
@@ -22,25 +19,23 @@ RSpec.describe Cocov::Manifest::V01Alpha do
     checks.each_with_index do |chk, idx|
       expect(manifest.checks[idx].plugin).to eq chk
     end
+
+    excludes = [
+      "coverage/*",
+      "spec/**/.ignore"
+    ]
+
+    excludes.each_with_index do |p, idx|
+      expect(manifest.exclude_paths[idx]).to eq p
+    end
   end
 
   describe "coverage" do
-    %i[path format].each do |key|
-      it "rejects when coverage.#{key} is set, but empty" do
-        d = data.dup
-        d[:coverage][key] = ""
-
-        expect { spec.new(d) }.to raise_error(Cocov::Manifest::InvalidManifestError)
-          .with_message("Expected coverage.#{key} to not be blank")
-      end
-    end
-
     messages = {
       min_percent: "Expected coverage.min_percent to match Integer. " \
-                   "Assertion failed due to current object's value: \"a\"",
-      path: "Expected coverage.path to match string. Assertion failed due to current object's value: 0"
+                   "Assertion failed due to current object's value: \"a\""
     }
-    { path: 0, format: 1, min_percent: "a" }.each do |key, value|
+    { min_percent: "a" }.each do |key, value|
       it "rejects when coverage.#{key} has an invalid value" do
         d = data.dup
         d[:coverage][key] = value
@@ -80,6 +75,15 @@ RSpec.describe Cocov::Manifest::V01Alpha do
       expect(result.checks.first.mounts.length).to eq 1
       expect(result.checks.first.mounts.first.source).to eq "secrets:GIT_CONFIG"
       expect(result.checks.first.mounts.first.destination).to eq "~/.gitconfig"
+    end
+  end
+
+  describe "excludes" do
+    it "rejects when a exclude key is empty" do
+      d = data.dup
+      d[:exclude_paths] = ['']
+      expect { spec.new(d) }.to raise_error(Cocov::Manifest::InvalidManifestError)
+          .with_message('Expected exclude_paths.0 to not be blank')
     end
   end
 end

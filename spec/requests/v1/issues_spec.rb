@@ -150,6 +150,10 @@ RSpec.describe "V1::Issues" do
     end
 
     it "stores new issues" do
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(anything)
+        .and_return(nil)
+
       repo = create(:repository)
       commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
       commit.reset_check_set!
@@ -180,6 +184,10 @@ RSpec.describe "V1::Issues" do
     end
 
     it "recycles issues" do
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(anything)
+        .and_return(nil)
+
       repo = create(:repository)
       commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
       commit.reset_check_set!
@@ -211,6 +219,10 @@ RSpec.describe "V1::Issues" do
     end
 
     it "handles an empty issue list" do
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(anything)
+        .and_return(nil)
+
       repo = create(:repository)
       commit = create(:commit, repository: repo, sha: "65f4e0c879eb83460260637880fb82f188065d11")
       commit.reset_check_set!
@@ -318,9 +330,16 @@ RSpec.describe "V1::Issues" do
         "repo_name" => "api"
       }
 
+      manifest = double(:manifest)
       repo = create(:repository)
       commit = create(:commit, sha: "a36aaecf08cdf39970efd816ebc05d515f8fc391", repository: repo)
       commit.reset_check_set!
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(-> { _1.id == commit.id })
+        .and_return(manifest)
+      allow(manifest).to receive(:path_excluded?) do
+        File.fnmatch("**/redis.rb", _1, File::FNM_EXTGLOB | File::FNM_PATHNAME)
+      end
 
       put "/v1/repositories/#{repo.id}/issues",
         headers: authenticated(as: :service),
@@ -328,6 +347,7 @@ RSpec.describe "V1::Issues" do
         params: payload
 
       expect(response).to have_http_status(:no_content)
+      expect(commit.issues.count).to eq 9
     end
   end
 

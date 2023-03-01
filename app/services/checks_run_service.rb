@@ -38,24 +38,16 @@ class ChecksRunService < ApplicationService
 
     commit.reset_check_set!
 
-    manifest_contents = begin
-      GitService.file_for_commit(commit, path: ".cocov.yaml").last
-    rescue GitService::FileNotFoundError
-      nil
-    end
-
-    if manifest_contents.nil?
-      commit.check_set.not_configured!
-      return
-    end
-
-    commit.create_github_status(:pending, context: "cocov")
-
     begin
-      manifest = Cocov::Manifest.parse(manifest_contents)
+      manifest = ManifestService.manifest_for_commit(@commit)
     rescue Cocov::Manifest::InvalidManifestError => e
       # TODO: URL?
       commit.create_github_status(:failure, context: "cocov", description: e.message)
+      return
+    end
+
+    if manifest.nil?
+      commit.check_set.not_configured!
       return
     end
 
@@ -64,6 +56,8 @@ class ChecksRunService < ApplicationService
       commit.create_github_status(:success, context: "cocov", description: "Looking good!")
       return
     end
+
+    commit.create_github_status(:pending, context: "cocov")
 
     checks = begin
       manifest.checks.map do |check|

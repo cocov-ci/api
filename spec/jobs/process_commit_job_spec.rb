@@ -27,7 +27,7 @@ RSpec.describe ProcessCommitJob do
   end
 
   it "stops processing commits without manifests" do
-    expect(GitService).to receive(:clone_commit).with(commit)
+    allow(GitService).to receive(:clone_commit) { expect(_1.id).to eq commit.id }
     expect(GitService).to receive(:file_for_commit)
       .with(commit, path: ".cocov.yaml")
       .and_raise(GitService::FileNotFoundError)
@@ -37,11 +37,10 @@ RSpec.describe ProcessCommitJob do
   end
 
   it "updates statuses for commits with invalid manifests" do
-    expect(GitService).to receive(:clone_commit).with(commit)
+    allow(GitService).to receive(:clone_commit) { expect(_1.id).to eq commit.id }
     expect(GitService).to receive(:file_for_commit)
       .with(commit, path: ".cocov.yaml")
       .and_return(["yaml", "lolsies, this is an invalid manifest!"])
-    expect(commit).to receive(:create_github_status).with(:pending, context: "cocov").ordered
     expect(commit).to receive(:create_github_status)
       .with(:failure, context: "cocov", description: "Invalid manifest: Root should be a mapping")
       .ordered
@@ -50,18 +49,17 @@ RSpec.describe ProcessCommitJob do
   end
 
   it "returns a successful status for manifests without checks" do
-    expect(GitService).to receive(:clone_commit).with(commit)
+    allow(GitService).to receive(:clone_commit) { expect(_1.id).to eq commit.id }
     fake_manifest = double(:manifest)
     allow(fake_manifest).to receive(:checks).and_return([])
 
     expect(GitService).to receive(:file_for_commit)
-      .with(commit, path: ".cocov.yaml")
+      .with(-> { _1.id == commit.id }, path: ".cocov.yaml")
       .and_return(["yaml", :some_contents])
     expect(Cocov::Manifest).to receive(:parse)
       .with(:some_contents)
       .and_return(fake_manifest)
 
-    expect(commit).to receive(:create_github_status).with(:pending, context: "cocov").ordered
     expect(commit).to receive(:create_github_status)
       .with(:success, context: "cocov", description: "Looking good!")
       .ordered
@@ -77,9 +75,9 @@ RSpec.describe ProcessCommitJob do
     mock_redis!
     stub_crypto_key!
 
-    expect(GitService).to receive(:clone_commit).with(commit)
+    allow(GitService).to receive(:clone_commit) { expect(_1.id).to eq commit.id }
     expect(GitService).to receive(:file_for_commit)
-      .with(commit, path: ".cocov.yaml")
+      .with(-> { _1.id == commit.id }, path: ".cocov.yaml")
       .and_return(["yaml", fixture_file("manifests/v0.1alpha/complete.yaml")])
 
     expect(commit).to receive(:create_github_status).with(:pending, context: "cocov").ordered
