@@ -46,7 +46,10 @@ class IssueRegisteringService < ApplicationService
         .slice(:kind, :file, :line_start, :line_end, :message, :uid)
         .merge({
           check_source:,
-          commit_id: @commit.id
+          commit_id: @commit.id,
+          ignored_at: nil,
+          ignore_source: nil,
+          ignore_rule_id: nil
         })
         .tap do |data|
           next unless ignored_issues.key? data[:uid]

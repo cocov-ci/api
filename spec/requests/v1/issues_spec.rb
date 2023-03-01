@@ -370,6 +370,122 @@ RSpec.describe "V1::Issues" do
       expect(response).to have_http_status(:no_content)
       expect(commit.issues.count).to eq 9
     end
+
+    it "consistently registers issue sets with ignored issues among them" do
+      payload = {
+        "source" => "cocov/brakeman",
+        "issues" => [
+          {
+            "kind" => "security",
+            "file" => "app/services/git_service/base_storage.rb",
+            "line_start" => 23,
+            "line_end" => 23,
+            "message" => "Weak hashing algorithm used: SHA1",
+            "uid" => "12a75d7df840a95bd9da0d107848829a0ac67d2ebf0d2f65a4ed9d0ca7d813e6"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/github_events_controller.rb",
+            "line_start" => 41,
+            "line_end" => 41,
+            "message" => "Possible SQL injection",
+            "uid" => "205e1c2f2546dc345358bb4d2575846621e643e66542fa4fbe5013fb840d72ff"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/coverage_controller.rb",
+            "line_start" => 38,
+            "line_end" => 38,
+            "message" => "Possible SQL injection",
+            "uid" => "254a5b19feba0aba48e51ce7aa10e699822d9f33d3e0997b29d5cac41ef47054"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/models/application_record.rb",
+            "line_start" => 12,
+            "line_end" => 12,
+            "message" => "Possible SQL injection",
+            "uid" => "361af13dc4740b03b4e07802cc6dde22e383add96d02d6b34dcada0051fcaa1d"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/github_events_controller.rb",
+            "line_start" => 87,
+            "line_end" => 87,
+            "message" => "Possible SQL injection",
+            "uid" => "3a9713c28f900693d929054037b17cf1464e23c5472b853eb43537c4734cf77b"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/services/git_service.rb",
+            "line_start" => 35,
+            "line_end" => 35,
+            "message" => "Weak hashing algorithm used: SHA1",
+            "uid" => "3e931ec5cd0ebffd5739fe9e9ae6706250784daab812a27c585b15817b5bc5a3"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/coverage_controller.rb",
+            "line_start" => 42,
+            "line_end" => 42,
+            "message" => "Specify exact keys allowed for mass assignment",
+            "uid" => "483af335c6d4afbdc9bc7b2493e8fd7f97a51988d6bbe1616f5509d9bc4af76a"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/controllers/v1/github_events_controller.rb",
+            "line_start" => 21,
+            "line_end" => 21,
+            "message" => "User controlled method execution",
+            "uid" => "5d138b57cdd2465149a4e7deb968dfa5b9d03624ea7c50b3e22d04788e7c7899"
+          },
+          {
+            "kind" => "security",
+            "file" => "config/environments/production.rb",
+            "line_start" => 1,
+            "line_end" => 1,
+            "message" => "The application does not force use of HTTPS: `config.force_ssl` is not enabled",
+            "uid" => "6a26086cd2400fbbfb831b2f8d7291e320bcc2b36984d2abc359e41b3b63212b"
+          },
+          {
+            "kind" => "security",
+            "file" => "app/lib/cocov/redis.rb",
+            "line_start" => 77,
+            "line_end" => 77,
+            "message" => "Possible SQL injection",
+            "uid" => "dc667765f93bd6c3d3e0927d86ebd960196cf4c099e64ed466db4dbf17053005"
+          }
+        ],
+        "sha" => "a36aaecf08cdf39970efd816ebc05d515f8fc391",
+        "repo_name" => "api"
+      }
+
+      manifest = double(:manifest)
+      repo = create(:repository)
+      commit = create(:commit, sha: "a36aaecf08cdf39970efd816ebc05d515f8fc391", repository: repo)
+      commit.reset_check_set!
+
+      i = create(:issue, commit:,
+        "kind" => "security",
+        "file" => "app/services/git_service/base_storage.rb",
+        "line_start" => 23,
+        "line_end" => 23,
+        "message" => "Weak hashing algorithm used: SHA1",
+        "uid" => "12a75d7df840a95bd9da0d107848829a0ac67d2ebf0d2f65a4ed9d0ca7d813e6")
+      i.ignore_permanently! user: create(:user), reason: nil
+
+      allow(ManifestService).to receive(:manifest_for_commit)
+        .with(-> { _1.id == commit.id })
+        .and_return(manifest)
+      allow(manifest).to receive(:path_excluded?).with(anything).and_return(false)
+
+      put "/v1/repositories/#{repo.id}/issues",
+        headers: authenticated(as: :service),
+        as: :json,
+        params: payload
+
+      expect(response).to have_http_status(:no_content)
+    end
   end
 
   describe "#sources" do
