@@ -84,20 +84,21 @@ class ChecksRunService < ApplicationService
       commit.check_set.job_id ||= SecureRandom.uuid
       commit.check_set.status = :queued
       commit.check_set.save!
-    end
+      Cocov::Redis.authorize_cache_client(commit.check_set.job_id, repo_name: commit.repository.name)
 
-    Cocov::Redis.instance.rpush("cocov:checks", {
-      check_set_id: commit.check_set.id,
-      job_id: commit.check_set.job_id,
-      org: Cocov::GITHUB_ORGANIZATION_NAME,
-      repo: commit.repository.name,
-      repo_id: commit.repository_id,
-      sha: commit.sha,
-      checks:,
-      git_storage: {
-        mode: Cocov::GIT_SERVICE_STORAGE_MODE,
-        path: GitService.commit_path(commit)
-      }
-    }.to_json)
+      Cocov::Redis.instance.rpush("cocov:checks", {
+        check_set_id: commit.check_set.id,
+        job_id: commit.check_set.job_id,
+        org: Cocov::GITHUB_ORGANIZATION_NAME,
+        repo: commit.repository.name,
+        repo_id: commit.repository_id,
+        sha: commit.sha,
+        checks:,
+        git_storage: {
+          mode: Cocov::GIT_SERVICE_STORAGE_MODE,
+          path: GitService.commit_path(commit)
+        }
+      }.to_json)
+    end
   end
 end
