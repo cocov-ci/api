@@ -9,7 +9,7 @@ module V1
         .with_context(auth_context)
         .includes(:branches)
 
-      repos = if (search = params[:search_term])
+      repos = if (search = params[:search_term].presence)
         repos.by_fuzzy_name(search)
       else
         repos.order(name: :ASC)
