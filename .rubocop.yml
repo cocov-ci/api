@@ -127,6 +127,7 @@ Rails/Output:
 Metrics/ClassLength:
   Exclude:
     - app/controllers/v1/github_events_controller.rb
+    - app/controllers/v1/repositories_controller.rb
 
 Rails/SkipsModelValidations:
   Exclude:

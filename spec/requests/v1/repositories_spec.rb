@@ -381,4 +381,166 @@ RSpec.describe "V1::Repositories" do
       expect(response.json[:repositories][2][:name]).to eq "apiarist"
     end
   end
+
+  describe "#update_org_repos" do
+    it "enqueues a new UpdateOrganizationReposJob" do
+      call = lambda do
+        post "/v1/repositories/$org_repos/update",
+          headers: authenticated
+        expect(response).to have_http_status(:no_content)
+      end
+
+      expect(call).to have_enqueued_job
+    end
+  end
+
+  describe "#org_repos" do
+    context "when cache is empty" do
+      before do
+        mock_redis!
+        bypass_redlock!
+      end
+
+      it "sets the global state as updating and enqueues a new job" do
+        call = lambda do
+          get "/v1/repositories/$org_repos",
+            headers: authenticated
+
+          expect(response).to have_http_status(:ok)
+          expect(response.json[:status]).to eq "updating"
+        end
+
+        expect(call).to have_enqueued_job
+        expect(@cache.get("cocov:github_org_repos:status")).to eq "updating"
+      end
+    end
+
+    context "when an update is in progress" do
+      before do
+        mock_redis!
+        bypass_redlock!
+      end
+
+      it "returns the correct status without enqueuing a job" do
+        @cache.set("cocov:github_org_repos:status", "updating")
+
+        call = lambda do
+          get "/v1/repositories/$org_repos",
+            headers: authenticated
+
+          expect(response).to have_http_status(:ok)
+          expect(response.json[:status]).to eq "updating"
+        end
+
+        expect(call).not_to have_enqueued_job
+      end
+    end
+
+    context "when data is available" do
+      before do
+        mock_redis!
+        bypass_redlock!
+        stub_const("V1::RepositoriesController::REPOSITORIES_PER_PAGE", 5)
+        @cache.set("cocov:github_org_repos:status", "present")
+        @cache.set("cocov:github_org_repos:items", repos.to_json)
+        @cache.set("cocov:github_org_repos:etag", "lolsies")
+        @cache.set("cocov:github_org_repos:updated_at", Time.now.iso8601)
+      end
+
+      let(:repos) do
+        now = 10.hours.ago
+        (0..10).to_a.map do |i|
+          {
+            id: i,
+            name: "repo_#{i}",
+            created_at: now,
+            pushed_at: now,
+            description: "Something"
+          }.tap { now += 1.hour }
+        end
+      end
+
+      it "returns the correct status without enqueuing a job" do
+        create(:repository, github_id: 1)
+
+        call = lambda do
+          get "/v1/repositories/$org_repos",
+            headers: authenticated
+          expect(response).to have_http_status(:ok)
+          expect(response.json[:status]).to eq "ok"
+          expect(response.json[:items].length).to eq 5
+          expect(response.json[:items].first[:name]).to eq "repo_0"
+          # repo_1 is present
+          expect(response.json[:items].second[:status]).to eq "present"
+
+          expect(response.json[:items].last[:name]).to eq "repo_4"
+          expect(response.json[:items].last[:status]).to eq "absent"
+          expect(response.json[:total_pages]).to eq 2
+          expect(response.json[:current_page]).to eq 1
+          expect(response.json[:next_page]).to eq "http://www.example.com/v1/repositories/$org_repos?page=2"
+          expect(response.json[:prev_page]).to be_nil
+        end
+
+        expect(call).not_to have_enqueued_job
+      end
+
+      it "returns the second page" do
+        call = lambda do
+          get "/v1/repositories/$org_repos",
+            params: { page: "2" },
+            headers: authenticated
+
+          expect(response).to have_http_status(:ok)
+          expect(response.json[:status]).to eq "ok"
+          expect(response.json[:items].length).to eq 5
+          expect(response.json[:items].first[:name]).to eq "repo_5"
+          expect(response.json[:items].last[:name]).to eq "repo_9"
+          expect(response.json[:total_pages]).to eq 2
+          expect(response.json[:current_page]).to eq 2
+          expect(response.json[:prev_page]).to eq "http://www.example.com/v1/repositories/$org_repos?page=1"
+          expect(response.json[:next_page]).to be_nil
+        end
+
+        expect(call).not_to have_enqueued_job
+      end
+
+      it "searches data (no results)" do
+        call = lambda do
+          get "/v1/repositories/$org_repos",
+            params: { search_term: "bla" },
+            headers: authenticated
+
+          expect(response).to have_http_status(:ok)
+          expect(response.json[:status]).to eq "ok"
+          expect(response.json[:items].length).to eq 0
+          expect(response.json[:total_pages]).to eq 0
+          expect(response.json[:current_page]).to eq 1
+          expect(response.json[:prev_page]).to be_nil
+          expect(response.json[:next_page]).to be_nil
+        end
+
+        expect(call).not_to have_enqueued_job
+      end
+
+      it "searches data" do
+        call = lambda do
+          get "/v1/repositories/$org_repos",
+            params: { search_term: "rep 2" },
+            headers: authenticated
+
+          expect(response).to have_http_status(:ok)
+          expect(response.json[:status]).to eq "ok"
+          expect(response.json[:items].length).to eq 5
+          expect(response.json[:items].first[:name]).to eq "repo_2"
+          expect(response.json[:total_pages]).to eq 1
+          expect(response.json[:current_page]).to eq 1
+
+          expect(response.json[:prev_page]).to be_nil
+          expect(response.json[:next_page]).to be_nil
+        end
+
+        expect(call).not_to have_enqueued_job
+      end
+    end
+  end
 end

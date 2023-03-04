@@ -2,6 +2,8 @@
 
 module V1
   class RepositoriesController < V1Controller
+    include V1Helper
+
     before_action :ensure_authentication
 
     def index
@@ -78,6 +80,85 @@ module V1
           .map { { date: _1[:date].to_date.iso8601, value: _1[:value] } }
       end
       render json: value
+    end
+
+    REPOSITORIES_PER_PAGE = 50
+
+    def org_repos_response(items)
+      page = [params[:page].presence.to_i || 1, 1].max - 1
+      offset_start = page * REPOSITORIES_PER_PAGE
+      offset_end = offset_start + REPOSITORIES_PER_PAGE
+      total_pages = (items.length / REPOSITORIES_PER_PAGE).ceil
+      next_page = page + 2 > total_pages ? nil : page + 2
+      prev_page = (page - 1).negative? ? nil : page
+
+      items = items[offset_start...offset_end]
+
+      known_repos = Repository.where(github_id: items.pluck("id")).pluck(:github_id)
+      items.map! do |repo|
+        id = repo.delete("id")
+        repo.delete(:similarity)
+        repo.merge(
+          status: known_repos.include?(id) ? :present : :absent
+        )
+      end
+
+      result = {
+        status: :ok,
+        items:,
+        total_pages:,
+        current_page: page + 1
+      }
+
+      result[:next_page] = update_page_param(next_page) if next_page
+      result[:prev_page] = update_page_param(prev_page) if prev_page
+
+      result
+    end
+
+    def search_org_repos(items, term:)
+      term_trig = Cocov::Trigram.trigrams_of(term)
+
+      items.map! do |item|
+        item_trig = Cocov::Trigram.trigrams_of(item["name"])
+        item.merge(
+          similarity: Cocov::Trigram.trigram_similarity(term_trig, item_trig)
+        )
+      end
+
+      items
+        .filter { _1[:similarity] >= 0.3 }
+        .sort_by { _1[:similarity] }
+        .reverse
+        .first(REPOSITORIES_PER_PAGE)
+    end
+
+    def org_repos
+      repos = Cocov::Redis.organization_repositories
+      if repos.nil?
+        Cocov::Redis.set_organization_repositories_updating
+        UpdateOrganizationReposJob.perform_later
+        render json: { status: :updating }
+        return
+      end
+
+      if repos[:status] == :updating
+        render json: { status: :updating }
+        return
+      end
+
+      items = JSON.parse(repos[:items])
+
+      items = search_org_repos(items, term: params[:search_term]) if params[:search_term].presence
+
+      result = org_repos_response(items)
+      result[:last_updated] = repos[:updated_at]
+      render json: result
+    end
+
+    def update_org_repos
+      UpdateOrganizationReposJob.perform_later
+      head :no_content
     end
 
     private

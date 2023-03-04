@@ -2,6 +2,8 @@
 
 module Cocov
   class Redis
+    extend Redis::Caching
+
     class LockFailedError < StandardError; end
     CACHED_FILE_EXPIRATION = 7.days
 
@@ -31,43 +33,6 @@ module Cocov
         data = JSON.parse(data, symbolize_names: true)
         data = data.with_indifferent_access if data.is_a? Hash
         data
-      end
-
-      def cached_value(key, ex: 1.day, encoder: nil)
-        raise ArgumentError, "encoder must be either nil, or a Class" if !encoder.nil? && !encoder.is_a?(Class)
-
-        return yield if cache.nil?
-
-        data = cache.getex(key, ex:)
-        if data.nil?
-          data = yield
-          writeable_data = if encoder
-            encoder.encode(data)
-          else
-            data
-          end
-          cache.set(key, writeable_data, ex:)
-        elsif encoder
-          begin
-            data = encoder.decode(data)
-          rescue StandardError
-            cache.del(key)
-            return nil
-          end
-        end
-        data
-      end
-
-      def cached_file(key, &)
-        cached_value(key, ex: CACHED_FILE_EXPIRATION, encoder: JsonEncoder, &)
-      end
-
-      def cached_file_language(key, &)
-        cached_value(key, ex: CACHED_FILE_EXPIRATION, encoder: JsonEncoder, &)
-      end
-
-      def cached_formatted_file(key, &)
-        cached_value(key, ex: CACHED_FILE_EXPIRATION, encoder: JsonEncoder, &)
       end
 
       def make_authentication_keys
