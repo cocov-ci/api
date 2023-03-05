@@ -449,7 +449,7 @@ RSpec.describe "V1::Repositories" do
 
       let(:repos) do
         now = 10.hours.ago
-        (0..10).to_a.map do |i|
+        (0...10).to_a.map do |i|
           {
             id: i,
             name: "repo_#{i}",
@@ -532,6 +532,37 @@ RSpec.describe "V1::Repositories" do
           expect(response.json[:status]).to eq "ok"
           expect(response.json[:items].length).to eq 5
           expect(response.json[:items].first[:name]).to eq "repo_2"
+          expect(response.json[:total_pages]).to eq 1
+          expect(response.json[:current_page]).to eq 1
+
+          expect(response.json[:prev_page]).to be_nil
+          expect(response.json[:next_page]).to be_nil
+        end
+
+        expect(call).not_to have_enqueued_job
+      end
+    end
+
+    context "trigam failure regression" do
+     before do
+        mock_redis!
+        bypass_redlock!
+        stub_const("V1::RepositoriesController::REPOSITORIES_PER_PAGE", 50)
+        @cache.set("cocov:github_org_repos:status", "present")
+        @cache.set("cocov:github_org_repos:items", fixture_file("repositories_controller", "trigram_regression.json"))
+        @cache.set("cocov:github_org_repos:etag", "W/\"3ea229c6eec1003e95ff9eee8f7374d3b373b9e5157b5efdf1f6ecf56fa0da6a\"")
+        @cache.set("cocov:github_org_repos:updated_at", Time.now.utc.iso8601)
+      end
+
+      it "performs searches" do
+        call = lambda do
+          get "/v1/repositories/$org_repos",
+            params: { search_term: "web" },
+            headers: authenticated
+
+          expect(response).to have_http_status(:ok)
+          expect(response.json[:status]).to eq "ok"
+          expect(response.json[:items].first[:name]).to eq "web"
           expect(response.json[:total_pages]).to eq 1
           expect(response.json[:current_page]).to eq 1
 

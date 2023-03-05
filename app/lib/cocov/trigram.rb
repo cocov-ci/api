@@ -12,7 +12,7 @@ module Cocov
           "  #{w} ".chars.each_cons(3).map(&:join)
         end
 
-        Set.new(slices.flatten).sort
+        Set.new(slices.flatten.compact).sort
       end
 
       def similarity_of(term_a, term_b)

@@ -118,7 +118,6 @@ module V1
 
     def search_org_repos(items, term:)
       term_trig = Cocov::Trigram.trigrams_of(term)
-
       items.map! do |item|
         item_trig = Cocov::Trigram.trigrams_of(item["name"])
         item.merge(
