@@ -57,6 +57,8 @@ module Cocov
 
           return nil if status != "present"
 
+          items = JSON.parse(items)
+
           # At this point, data is present. Just arrange it
           # and make it ready for processing.
           {
@@ -80,7 +82,7 @@ module Cocov
             pipe.set(org_repo_key(:status), "present")
             pipe.set(org_repo_key(:updated_at), Time.now.iso8601)
             pipe.set(org_repo_key(:etag), etag)
-            pipe.set(org_repo_key(:items), items)
+            pipe.set(org_repo_key(:items), items.to_json)
           end
         end
       end

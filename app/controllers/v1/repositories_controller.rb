@@ -147,7 +147,7 @@ module V1
         return
       end
 
-      items = JSON.parse(repos[:items])
+      items = repos[:items]
 
       items = search_org_repos(items, term: params[:search_term]) if params[:search_term].presence
 
