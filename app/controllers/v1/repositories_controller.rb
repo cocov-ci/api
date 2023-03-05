@@ -88,7 +88,7 @@ module V1
       page = [params[:page].presence.to_i || 1, 1].max - 1
       offset_start = page * REPOSITORIES_PER_PAGE
       offset_end = offset_start + REPOSITORIES_PER_PAGE
-      total_pages = (items.length / REPOSITORIES_PER_PAGE).ceil
+      total_pages = (items.length.to_f / REPOSITORIES_PER_PAGE).ceil
       next_page = page + 2 > total_pages ? nil : page + 2
       prev_page = (page - 1).negative? ? nil : page
 
