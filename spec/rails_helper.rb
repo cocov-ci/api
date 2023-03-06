@@ -60,6 +60,8 @@ rescue ActiveRecord::PendingMigrationError => e
   exit 1
 end
 
+ActiveJob::Base.queue_adapter = :test
+
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
   config.include Cocov::SpecHelpers

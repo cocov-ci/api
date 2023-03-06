@@ -34,6 +34,8 @@ class Repository < ApplicationRecord
   has_many :private_keys, dependent: :destroy
   has_many :members, class_name: :RepositoryMember, dependent: :destroy
 
+  def full_name = "#{Cocov::GITHUB_ORGANIZATION_NAME}/#{name}"
+
   def find_default_branch
     if branches.loaded?
       branches.find { |b| b.name == default_branch }

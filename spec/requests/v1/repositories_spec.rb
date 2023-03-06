@@ -77,6 +77,9 @@ RSpec.describe "V1::Repositories" do
       expect(json[:name]).to eq "foobar"
       expect(json[:id]).to eq repo.id
       expect(json[:token]).to eq repo.token
+
+      expect(UpdateRepoPermissionsJob).to have_been_enqueued.exactly(:once).with(repo.id)
+      expect(InitializeRepositoryJob).to have_been_enqueued.exactly(:once).with(repo.id)
     end
   end
 
@@ -543,14 +546,15 @@ RSpec.describe "V1::Repositories" do
       end
     end
 
-    context "trigam failure regression" do
-     before do
+    describe "trigram failure regression" do
+      before do
         mock_redis!
         bypass_redlock!
         stub_const("V1::RepositoriesController::REPOSITORIES_PER_PAGE", 50)
         @cache.set("cocov:github_org_repos:status", "present")
         @cache.set("cocov:github_org_repos:items", fixture_file("repositories_controller", "trigram_regression.json"))
-        @cache.set("cocov:github_org_repos:etag", "W/\"3ea229c6eec1003e95ff9eee8f7374d3b373b9e5157b5efdf1f6ecf56fa0da6a\"")
+        @cache.set("cocov:github_org_repos:etag",
+          "W/\"3ea229c6eec1003e95ff9eee8f7374d3b373b9e5157b5efdf1f6ecf56fa0da6a\"")
         @cache.set("cocov:github_org_repos:updated_at", Time.now.utc.iso8601)
       end
 

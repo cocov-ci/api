@@ -52,6 +52,7 @@ module V1
       end
 
       UpdateRepoPermissionsJob.perform_later(repo.id)
+      InitializeRepositoryJob.perform_later(repo.id)
 
       render "v1/repositories/create",
         locals: { repo: },
