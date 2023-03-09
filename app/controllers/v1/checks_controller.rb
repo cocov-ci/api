@@ -3,7 +3,7 @@
 module V1
   class ChecksController < V1Controller
     before_action :ensure_authentication
-    before_action :ensure_service_token, only: %i[patch wrap_job_up cancel re_run notify_processing]
+    before_action :ensure_service_token, only: %i[patch wrap_job_up notify_processing]
 
     def index
       repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
