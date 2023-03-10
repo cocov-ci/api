@@ -56,10 +56,10 @@ Rails.application.routes.draw do
     get "/repositories/:repo_name/commits/:commit_sha/checks", to: "checks#index"
     get "/repositories/:repo_name/commits/:commit_sha/checks/summary", to: "checks#summary"
     get "/repositories/:repo_name/commits/:commit_sha/checks/:id", to: "checks#show"
+    post "/repositories/:repo_name/commits/:commit_sha/checks/re_run", to: "checks#re_run"
+    delete "/repositories/:repo_name/commits/:commit_sha/checks", to: "checks#cancel"
     patch "/repositories/:repo_id/commits/:commit_sha/checks", to: "checks#patch"
-    delete "/repositories/:repo_id/commits/:commit_sha/checks", to: "checks#cancel"
     post "/repositories/:repo_id/commits/:commit_sha/checks/wrap_up", to: "checks#wrap_job_up"
-    post "/repositories/:repo_id/commits/:commit_sha/checks/re_run", to: "checks#re_run"
     post "/repositories/:repo_id/commits/:commit_sha/check_set/notify_in_progress", to: "checks#notify_in_progress"
 
     # Issues

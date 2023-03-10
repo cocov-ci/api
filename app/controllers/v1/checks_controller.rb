@@ -84,7 +84,7 @@ module V1
     end
 
     def re_run
-      Repository.find(params[:repo_id])
+      Repository.find_by!(name: params[:repo_name])
         .commits.includes(:check_set).find_by!(sha: params[:commit_sha])
         .rerun_checks!
 
@@ -94,7 +94,7 @@ module V1
     end
 
     def cancel
-      Repository.find(params[:repo_id])
+      Repository.find_by!(name: params[:repo_name])
         .commits.find_by!(sha: params[:commit_sha])
         .check_set
         .cancel!

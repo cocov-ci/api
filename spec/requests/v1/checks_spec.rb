@@ -393,7 +393,7 @@ RSpec.describe "V1::Checks" do
     it "refuses to re-run an in-progress job" do
       check.check_set.in_progress!
 
-      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/re_run",
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks/re_run",
         headers: authenticated(as: :service)
       expect(response).to be_a_json_error(:checks, :cannot_re_run_while_running)
     end
@@ -421,7 +421,7 @@ RSpec.describe "V1::Checks" do
 
       create(:secret, :with_owner, name: "FOO")
 
-      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/re_run",
+      post "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks/re_run",
         headers: authenticated(as: :service)
 
       expect(@redis.llen("cocov:checks")).to eq 1
@@ -454,12 +454,12 @@ RSpec.describe "V1::Checks" do
         "operation" => "cancel"
       }.to_json).once.and_return(nil)
 
-      delete "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
-        headers: authenticated(as: :service)
+      delete "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks",
+        headers: authenticated
       expect(response).to have_http_status(:no_content)
 
-      delete "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
-        headers: authenticated(as: :service)
+      delete "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks",
+        headers: authenticated
       expect(response).to have_http_status(:no_content)
 
       patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
