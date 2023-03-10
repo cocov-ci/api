@@ -35,7 +35,7 @@ RSpec.describe Check do
   ]
 
   it "requires started_at when not waiting" do
-    check.status = :running
+    check.status = :in_progress
     expect(check).not_to be_valid
 
     check.started_at = Time.zone.now
@@ -43,7 +43,7 @@ RSpec.describe Check do
   end
 
   it "requires finished_at when completed" do
-    check.status = :succeeded
+    check.status = :completed
     check.started_at = Time.zone.now
     expect(check).not_to be_valid
 
@@ -52,7 +52,7 @@ RSpec.describe Check do
     check.error_output = "bla"
     expect(check).not_to be_valid
 
-    check.status = :succeeded
+    check.status = :completed
     check.finished_at = Time.zone.now
     expect(check).to be_valid
 

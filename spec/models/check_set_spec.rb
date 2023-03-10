@@ -32,8 +32,8 @@ RSpec.describe CheckSet do
     commit_id
   ]
 
-  it "refuses to wrap up if a check is still running" do
-    check = create(:check, :running, :with_commit)
+  it "refuses to wrap up if a check is still in progress" do
+    check = create(:check, :in_progress, :with_commit)
     set = check.check_set
 
     expect { set.wrap_up! }.to raise_error(CheckSet::IncompatibleChildStatusError)

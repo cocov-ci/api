@@ -31,7 +31,12 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Commit < ApplicationRecord
-  enum clone_status: { queued: 0, in_progress: 1, completed: 2, errored: 3 }, _prefix: :clone
+  enum clone_status: {
+    queued: 0,
+    in_progress: 1,
+    completed: 2,
+    errored: 3
+  }, _prefix: :clone
 
   before_validation :ensure_statuses
 
@@ -61,7 +66,7 @@ class Commit < ApplicationRecord
 
   def condensed_status
     status = [checks_status, coverage_status].map(&:to_sym)
-    if status.all?(:processed)
+    if status.all?(:completed)
       :green
     elsif status.any?(:errored)
       :red
@@ -100,7 +105,7 @@ class Commit < ApplicationRecord
   def rerun_checks! = check_set&.rerun! || false
 
   def update_github_issue_count_status!
-    return unless check_set&.processed?
+    return unless check_set&.completed?
 
     IssueHistory.register_history! self, issues_count
 

@@ -33,13 +33,13 @@ FactoryBot.define do
       commit { nil }
     end
 
-    trait :running do
-      status { :running }
+    trait :in_progress do
+      status { :in_progress }
       started_at { Time.zone.now }
     end
 
-    trait :succeeded do
-      status { :succeeded }
+    trait :completed do
+      status { :completed }
       started_at { 30.seconds.ago }
       finished_at { Time.zone.now }
     end

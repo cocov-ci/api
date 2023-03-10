@@ -19,7 +19,7 @@ errors:
       message: The parameter "status" is required
     invalid_status:
       status: bad_request
-      message: Invalid "status". Valid opetions are running, succeeded, or errored
+      message: Invalid "status". Valid options are in_progress, completed, or errored
     missing_error_output:
       status: bad_request
       message: The parameter "error_output" is required when status is errored

@@ -24,14 +24,20 @@
 #  fk_rails_...  (check_set_id => check_sets.id)
 #
 class Check < ApplicationRecord
-  enum status: { waiting: 0, running: 1, succeeded: 2, errored: 3, canceled: 4 }
+  enum status: {
+    waiting: 0,
+    in_progress: 1,
+    completed: 2,
+    errored: 3,
+    canceled: 4
+  }
 
   belongs_to :check_set
   validates :status, presence: true
   validates :plugin_name, presence: true, uniqueness: { scope: [:check_set] }
   validates :error_output, presence: true, if: -> { errored? }
-  validates :finished_at, presence: true, if: -> { succeeded? || errored? || canceled? }
+  validates :finished_at, presence: true, if: -> { completed? || errored? || canceled? }
   validates :started_at, presence: true, if: -> { !waiting? }
 
-  def finished? = succeeded? || errored? || canceled?
+  def finished? = completed? || errored? || canceled?
 end

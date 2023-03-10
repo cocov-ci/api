@@ -25,8 +25,8 @@ class CoverageInfo < ApplicationRecord
   enum status: {
     waiting: 0,
     queued: 1,
-    processing: 2,
-    processed: 3,
+    in_progress: 2,
+    completed: 3,
     errored: 4
   }.freeze
 

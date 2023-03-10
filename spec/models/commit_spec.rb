@@ -92,8 +92,8 @@ RSpec.describe Commit do
 
       it "determines green status" do
         c = described_class.new
-        c.build_coverage(status: :processed)
-        c.build_check_set(status: :processed)
+        c.build_coverage(status: :completed)
+        c.build_check_set(status: :completed)
         expect(c.condensed_status).to eq :green
       end
     end

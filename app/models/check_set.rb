@@ -39,14 +39,14 @@ class CheckSet < ApplicationRecord
   enum status: {
     waiting: 0,
     queued: 1,
-    processing: 2,
-    processed: 3,
+    in_progress: 2,
+    completed: 3,
     errored: 4,
     not_configured: 5,
     canceled: 6
   }
 
-  def finished? = processed? || errored? || canceled?
+  def finished? = completed? || errored? || canceled?
 
   def canceling!
     self.canceling = true
@@ -102,7 +102,7 @@ class CheckSet < ApplicationRecord
       reload
       next if canceling? || finished?
 
-      processing!
+      in_progress!
     end
 
     true
@@ -137,7 +137,7 @@ class CheckSet < ApplicationRecord
       return
     end
 
-    processed!
+    completed!
     commit.update_github_issue_count_status!
   end
 

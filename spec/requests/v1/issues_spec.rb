@@ -498,7 +498,7 @@ RSpec.describe "V1::Issues" do
 
       sources.each.with_index do |name, idx|
         n = "cocov-ci/#{name}"
-        create(:check, :succeeded, commit:, plugin_name: n)
+        create(:check, :completed, commit:, plugin_name: n)
         (idx + 1).times do
           create(:issue, commit:, check_source: n)
         end
@@ -527,7 +527,7 @@ RSpec.describe "V1::Issues" do
       categories = %w[security performance style]
 
       categories.each.with_index do |name, idx|
-        check = create(:check, :succeeded, commit:)
+        check = create(:check, :completed, commit:)
         (idx + 1).times do
           create(:issue, commit:, check_source: check.plugin_name, kind: name)
         end
@@ -576,7 +576,7 @@ RSpec.describe "V1::Issues" do
     before do
       @user = create(:user)
       grant(@user, access_to: repo)
-      create(:check_set, status: :processed, commit:)
+      create(:check_set, status: :completed, commit:)
       branch.head = issue.commit # Initialize issue, set head
       branch.save!
       commit.reset_counters!
@@ -665,7 +665,7 @@ RSpec.describe "V1::Issues" do
     before do
       @user = create(:user)
       grant(@user, access_to: repo)
-      create(:check_set, status: :processed, commit:)
+      create(:check_set, status: :completed, commit:)
       branch.head = issue.commit # Initialize issue, set head
       branch.save!
       commit.reset_counters!

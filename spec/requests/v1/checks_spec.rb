@@ -25,11 +25,11 @@ RSpec.describe "V1::Checks" do
       repo = commit.repository
       checks = [
         create(:check, commit:),
-        create(:check, :running, commit:),
-        create(:check, :succeeded, commit:),
+        create(:check, :in_progress, commit:),
+        create(:check, :completed, commit:),
         create(:check, :errored, commit:)
       ]
-      commit.check_set.processing!
+      commit.check_set.in_progress!
       @user = create(:user)
       grant(@user, access_to: repo)
 
@@ -40,15 +40,15 @@ RSpec.describe "V1::Checks" do
 
       checks.each do |c|
         expectation = { "id" => c.id, "plugin_name" => c.plugin_name, "status" => c.status.to_s }
-        if c.running?
+        if c.in_progress?
           expectation["started_at"] = c.started_at.iso8601
-        elsif c.succeeded? || c.errored?
+        elsif c.completed? || c.errored?
           expectation["started_at"] = c.started_at.iso8601
           expectation["finished_at"] = c.finished_at.iso8601
         end
 
         expect(response.json[:checks]).to include(expectation)
-        expect(response.json[:status]).to eq "processing"
+        expect(response.json[:status]).to eq "in_progress"
         expect(response.json[:issues]).to eq(checks.map(&:plugin_name).index_with { 1 })
       end
     end
@@ -122,7 +122,7 @@ RSpec.describe "V1::Checks" do
     it "validates plugin_name" do
       patch "/v1/repositories/x/commits/x/checks",
         headers: authenticated(as: :service),
-        params: { status: "running" }
+        params: { status: "in_progress" }
 
       expect(response).to have_http_status(:bad_request)
       expect(response).to be_a_json_error(:checks, :missing_plugin_name)
@@ -158,7 +158,7 @@ RSpec.describe "V1::Checks" do
     it "returns 404 in case repository does not exist" do
       patch "/v1/repositories/x/commits/x/checks",
         headers: authenticated(as: :service),
-        params: { status: "running", plugin_name: "foo" }
+        params: { status: "in_progress", plugin_name: "foo" }
 
       expect(response).to have_http_status(:not_found)
       expect(response).to be_a_json_error(:not_found)
@@ -168,7 +168,7 @@ RSpec.describe "V1::Checks" do
       repo = create(:repository)
       patch "/v1/repositories/#{repo.id}/commits/x/checks",
         headers: authenticated(as: :service),
-        params: { status: "running", plugin_name: "foo" }
+        params: { status: "in_progress", plugin_name: "foo" }
 
       expect(response).to have_http_status(:not_found)
       expect(response).to be_a_json_error(:not_found)
@@ -179,7 +179,7 @@ RSpec.describe "V1::Checks" do
       repo = commit.repository
       patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
         headers: authenticated(as: :service),
-        params: { status: "running", plugin_name: "foo" }
+        params: { status: "in_progress", plugin_name: "foo" }
 
       expect(response).to have_http_status(:not_found)
       expect(response).to be_a_json_error(:not_found)
@@ -190,20 +190,20 @@ RSpec.describe "V1::Checks" do
       let(:commit) { check.check_set.commit }
       let(:repo) { check.check_set.commit.repository }
 
-      it "for status running" do
+      it "for status in_progress" do
         patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
           headers: authenticated(as: :service),
-          params: { status: "running", plugin_name: check.plugin_name }
+          params: { status: "in_progress", plugin_name: check.plugin_name }
 
         expect(response).to have_http_status(:no_content)
         check.reload
         expect(check.started_at).not_to be_nil
       end
 
-      it "for status succeeded" do
+      it "for status completed" do
         patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
           headers: authenticated(as: :service),
-          params: { status: "succeeded", plugin_name: check.plugin_name }
+          params: { status: "completed", plugin_name: check.plugin_name }
 
         expect(response).to have_http_status(:no_content)
         check.reload
@@ -234,8 +234,8 @@ RSpec.describe "V1::Checks" do
 
       Timecop.freeze do
         create(:check, commit:, plugin_name: "cocov/rubocop", started_at: 3.seconds.ago, finished_at: Time.zone.now,
-          status: :succeeded)
-        create(:check, commit:, plugin_name: "cocov/brakeman", started_at: 3.seconds.ago, status: :running)
+          status: :completed)
+        create(:check, commit:, plugin_name: "cocov/brakeman", started_at: 3.seconds.ago, status: :in_progress)
         create(:check, commit:, plugin_name: "cocov/boom", started_at: 3.seconds.ago, finished_at: Time.zone.now,
           status: :errored, error_output: "bam!")
       end
@@ -251,10 +251,10 @@ RSpec.describe "V1::Checks" do
       expect(response.json.first[:duration]).to eq 3
 
       expect(response.json.second[:name]).to eq "cocov/brakeman"
-      expect(response.json.second[:status]).to eq "running"
+      expect(response.json.second[:status]).to eq "in_progress"
 
       expect(response.json.third[:name]).to eq "cocov/rubocop"
-      expect(response.json.third[:status]).to eq "succeeded"
+      expect(response.json.third[:status]).to eq "completed"
       expect(response.json.third[:duration]).to eq 3
       expect(response.json.third[:issue_count]).to eq 3
     end
@@ -269,15 +269,15 @@ RSpec.describe "V1::Checks" do
 
     before { stub_configuration! }
 
-    it "marks the job as succeeded if all checks succeed" do
+    it "marks the job as completed if all checks succeed" do
       patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
         headers: authenticated(as: :service),
-        params: { status: "succeeded", plugin_name: check_a.plugin_name }
+        params: { status: "completed", plugin_name: check_a.plugin_name }
       expect(response).to have_http_status(:no_content)
 
       patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
         headers: authenticated(as: :service),
-        params: { status: "succeeded", plugin_name: check_b.plugin_name }
+        params: { status: "completed", plugin_name: check_b.plugin_name }
       expect(response).to have_http_status(:no_content)
 
       gh_app = double(:github_app)
@@ -296,13 +296,13 @@ RSpec.describe "V1::Checks" do
 
       commit.reload
       expect(commit.issues_count).to eq 0
-      expect(commit.check_set).to be_processed
+      expect(commit.check_set).to be_completed
     end
 
     it "marks the job as errored if any check fails" do
       patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
         headers: authenticated(as: :service),
-        params: { status: "succeeded", plugin_name: check_a.plugin_name }
+        params: { status: "completed", plugin_name: check_a.plugin_name }
       expect(response).to have_http_status(:no_content)
 
       patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
@@ -329,10 +329,10 @@ RSpec.describe "V1::Checks" do
       expect(commit.check_set).to be_errored
     end
 
-    it "marks the job as succeeded and emits issue counts to GitHub" do
+    it "marks the job as completed and emits issue counts to GitHub" do
       patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
         headers: authenticated(as: :service),
-        params: { status: "succeeded", plugin_name: check_a.plugin_name }
+        params: { status: "completed", plugin_name: check_a.plugin_name }
       expect(response).to have_http_status(:no_content)
 
       allow(ManifestService).to receive(:manifest_for_commit)
@@ -354,7 +354,7 @@ RSpec.describe "V1::Checks" do
 
       patch "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks",
         headers: authenticated(as: :service),
-        params: { status: "succeeded", plugin_name: check_b.plugin_name }
+        params: { status: "completed", plugin_name: check_b.plugin_name }
       expect(response).to have_http_status(:no_content)
 
       gh_app = double(:github_app)
@@ -374,12 +374,12 @@ RSpec.describe "V1::Checks" do
 
       commit.reload
       expect(commit.issues_count).to eq 1
-      expect(commit.check_set).to be_processed
+      expect(commit.check_set).to be_completed
     end
   end
 
   describe "#re_run" do
-    let(:check) { create(:check, :running, :with_commit) }
+    let(:check) { create(:check, :in_progress, :with_commit) }
     let(:commit) { check.check_set.commit }
     let(:repo) { commit.repository }
 
@@ -390,8 +390,8 @@ RSpec.describe "V1::Checks" do
       stub_crypto_key!
     end
 
-    it "refuses to re-run a running job" do
-      check.check_set.processing!
+    it "refuses to re-run an in-progress job" do
+      check.check_set.in_progress!
 
       post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/re_run",
         headers: authenticated(as: :service)
@@ -430,7 +430,7 @@ RSpec.describe "V1::Checks" do
   end
 
   describe "#cancel" do
-    let(:check) { create(:check, :running, :with_commit) }
+    let(:check) { create(:check, :in_progress, :with_commit) }
     let(:commit) { check.check_set.commit }
     let(:repo) { commit.repository }
 
@@ -485,25 +485,25 @@ RSpec.describe "V1::Checks" do
     end
   end
 
-  describe "#notify_processing" do
+  describe "#notify_in_progress" do
     let(:check) { create(:check, :with_commit) }
     let(:commit) { check.check_set.commit }
     let(:repo) { commit.repository }
     let(:set) { check.check_set }
 
-    it "marks a set as processing" do
-      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/check_set/notify_processing",
+    it "marks a set as in_progress" do
+      post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/check_set/notify_in_progress",
         headers: authenticated(as: :service)
       expect(response).to have_http_status(:no_content)
 
-      expect(set.reload).to be_processing
+      expect(set.reload).to be_in_progress
     end
 
-    %i[errored processed canceled].each do |status|
-      it "does not mark an #{status} set as processing" do
+    %i[errored completed canceled].each do |status|
+      it "does not mark an #{status} set as in_progress" do
         set.send("#{status}!")
 
-        post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/check_set/notify_processing",
+        post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/check_set/notify_in_progress",
           headers: authenticated(as: :service)
         expect(response).to have_http_status(:no_content)
 

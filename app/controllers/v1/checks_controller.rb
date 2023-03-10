@@ -3,7 +3,7 @@
 module V1
   class ChecksController < V1Controller
     before_action :ensure_authentication
-    before_action :ensure_service_token, only: %i[patch wrap_job_up notify_processing]
+    before_action :ensure_service_token, only: %i[patch wrap_job_up notify_in_progress]
 
     def index
       repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
@@ -48,9 +48,9 @@ module V1
       }
 
       case new_status
-      when "running"
+      when "in_progress"
         updates[:started_at] = Time.zone.now
-      when "succeeded", "canceled"
+      when "completed", "canceled"
         updates[:error_output] = nil
         updates[:started_at] = Time.zone.now if check.started_at.nil?
         updates[:finished_at] = Time.zone.now if check.finished_at.nil?
@@ -102,7 +102,7 @@ module V1
       head :no_content
     end
 
-    def notify_processing
+    def notify_in_progress
       Repository.find(params[:repo_id])
         .commits.find_by!(sha: params[:commit_sha])
         .check_set

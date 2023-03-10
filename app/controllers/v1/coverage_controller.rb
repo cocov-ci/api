@@ -57,7 +57,7 @@ module V1
       return head :no_content unless cov
 
       least_covered = []
-      least_covered = cov.files.order(percent_covered: :asc).limit(10) if cov.processed?
+      least_covered = cov.files.order(percent_covered: :asc).limit(10) if cov.completed?
 
       render "v1/coverage/summary",
         locals: { cov:, least_covered:, repo:, commit: }

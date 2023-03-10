@@ -132,11 +132,11 @@ RSpec.describe "V1::Repositories" do
       end
 
       it "shows commit information when head is present" do
-        cov = create(:coverage_info, :with_commit, :with_file, status: :processed)
+        cov = create(:coverage_info, :with_commit, :with_file, status: :completed)
         repo = cov.commit.repository
         repo.branches.create(name: "master", head: cov.commit)
         cov.commit.reset_check_set!
-        cov.commit.check_set.processed!
+        cov.commit.check_set.completed!
         @user = create(:user)
         grant(@user, access_to: repo)
 
@@ -144,8 +144,8 @@ RSpec.describe "V1::Repositories" do
         expect(response).to have_http_status :ok
         json = response.json
         expect(json).to have_key :head
-        expect(json.dig(:head, :checks_status)).to eq "processed"
-        expect(json.dig(:head, :coverage_status)).to eq "processed"
+        expect(json.dig(:head, :checks_status)).to eq "completed"
+        expect(json.dig(:head, :coverage_status)).to eq "completed"
         expect(json.dig(:head, :files_count)).to eq 1
       end
     end
