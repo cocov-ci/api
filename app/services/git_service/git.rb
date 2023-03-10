@@ -19,14 +19,6 @@ class GitService
         Exec.exec2(cmd, chdir: at)
       end
 
-      Exec.exec("grep -rIL .", chdir: at).split("\n").each do |f|
-        File.unlink Pathname.new(at).join(f).to_s
-      end
-
-      Exec.exec("find . -name *.svg", chdir: at).split("\n").each do |f|
-        File.unlink Pathname.new(at).join(f).to_s
-      end
-
       true
     end
 
@@ -34,15 +26,15 @@ class GitService
       at = Pathname.new(at).parent
       [
         "tar -cvf #{commit.sha}.tar #{commit.sha}",
-        "brotli -j -Z #{commit.sha}.tar"
+        "zstd -T0 #{commit.sha}.tar"
       ].each { Exec.exec2(_1, chdir: at.to_s) }
 
       shasum = Exec
-        .exec("shasum -a256 #{commit.sha}.tar.br", chdir: at.to_s)
+        .exec("shasum -a256 #{commit.sha}.tar.zst", chdir: at.to_s)
         .split
         .first
 
-      File.write(at.join("#{commit.sha}.tar.br.shasum").to_s, "sha256:#{shasum}")
+      File.write(at.join("#{commit.sha}.tar.zst.shasum").to_s, "sha256:#{shasum}")
     end
 
     def clone(commit, into:)
@@ -55,8 +47,8 @@ class GitService
       rescue StandardError => e
         FileUtils.rm_rf into
         FileUtils.rm_rf into.parent.join("#{commit.sha}.tar")
-        FileUtils.rm_rf into.parent.join("#{commit.sha}.tar.br")
-        FileUtils.rm_rf into.parent.join("#{commit.sha}.tar.br.sha256")
+        FileUtils.rm_rf into.parent.join("#{commit.sha}.tar.zst")
+        FileUtils.rm_rf into.parent.join("#{commit.sha}.tar.zst.sha256")
         raise e
       end
     end

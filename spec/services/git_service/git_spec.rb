@@ -33,19 +33,6 @@ RSpec.describe GitService::Git do
           .ordered
       end
 
-      expect(GitService::Exec).to receive(:exec2)
-        .with("grep -rIL .", chdir: "/tmp")
-        .and_return(["/foo/bar", ""])
-        .ordered
-
-      expect(GitService::Exec).to receive(:exec2)
-        .with("find . -name *.svg", chdir: "/tmp")
-        .and_return(["/foo/bar/baz", ""])
-        .ordered
-
-      expect(File).to receive(:unlink).with("/foo/bar")
-      expect(File).to receive(:unlink).with("/foo/bar/baz")
-
       git.initialize_repository(fake_commit, at: "/tmp")
     end
   end
@@ -60,15 +47,15 @@ RSpec.describe GitService::Git do
         .ordered
 
       expect(GitService::Exec).to receive(:exec2)
-        .with("brotli -j -Z sha.tar", chdir: "/tmp")
+        .with("zstd -T0 sha.tar", chdir: "/tmp")
         .ordered
 
       expect(GitService::Exec).to receive(:exec)
-        .with("shasum -a256 sha.tar.br", chdir: "/tmp")
+        .with("shasum -a256 sha.tar.zst", chdir: "/tmp")
         .and_return("foo")
         .ordered
 
-      expect(File).to receive(:write).with("/tmp/sha.tar.br.shasum", "sha256:foo")
+      expect(File).to receive(:write).with("/tmp/sha.tar.zst.shasum", "sha256:foo")
 
       git.create_compressed_image(commit, at: "/tmp/sha")
     end

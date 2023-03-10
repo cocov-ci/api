@@ -15,7 +15,7 @@ class GitService
 
     def commit_exists?(commit)
       key = commit_path(commit)
-      @bucket.object("#{key}.tar.br").exists?
+      @bucket.object("#{key}.tar.zst").exists?
     end
 
     def download_commit(commit)
