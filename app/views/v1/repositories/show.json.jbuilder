@@ -9,7 +9,7 @@ if (branch = repo.find_default_branch)
   if (head = branch.head)
     json.head do
       json.call(head, :checks_status, :coverage_status)
-      json.files_count head.coverage.files.count if head.coverage&.processed?
+      json.files_count head.coverage.files.count if head.coverage&.completed?
     end
   end
 end
