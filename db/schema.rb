@@ -32,6 +32,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_24_184915) do
   create_table "cache_artifacts", force: :cascade do |t|
     t.bigint "repository_id", null: false
     t.citext "name", null: false
+    t.string "name_hash", null: false
     t.bigint "size", null: false
     t.datetime "last_used_at", precision: nil
     t.citext "engine", null: false
@@ -39,7 +40,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_24_184915) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_cache_artifacts_on_name"
+    t.index ["name_hash"], name: "index_cache_artifacts_on_name_hash"
     t.index ["repository_id", "name", "engine"], name: "index_cache_artifacts_on_repository_id_and_name_and_engine", unique: true
+    t.index ["repository_id", "name_hash", "engine"], name: "index_cache_artifacts_on_repository_id_and_name_hash_and_engine", unique: true
     t.index ["repository_id"], name: "index_cache_artifacts_on_repository_id"
   end
 

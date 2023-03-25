@@ -36,7 +36,7 @@ class Repository < ApplicationRecord
   has_many :secrets, dependent: :destroy
   has_many :private_keys, dependent: :destroy
   has_many :members, class_name: :RepositoryMember, dependent: :destroy
-  has_many :cache_artifacts
+  has_many :cache_artifacts, dependent: :destroy
 
   def full_name = "#{Cocov::GITHUB_ORGANIZATION_NAME}/#{name}"
 
@@ -45,9 +45,7 @@ class Repository < ApplicationRecord
       self.cache_size = cache_artifacts.sum(:size)
       save!
 
-      if MAX_CACHE_SIZE.positive? && cache_size >= MAX_CACHE_SIZE
-        RequestCacheEvictionJob.perform_later(id)
-      end
+      RequestCacheEvictionJob.perform_later(id) if MAX_CACHE_SIZE.positive? && cache_size > MAX_CACHE_SIZE
     end
   end
 
