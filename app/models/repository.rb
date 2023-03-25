@@ -13,6 +13,7 @@
 #  updated_at               :datetime         not null
 #  github_id                :integer          not null
 #  issue_ignore_rules_count :integer          default(0), not null
+#  cache_size               :bigint           default(0), not null
 #
 # Indexes
 #
@@ -21,6 +22,8 @@
 #  index_repositories_on_token      (token) UNIQUE
 #
 class Repository < ApplicationRecord
+  MAX_CACHE_SIZE = Cocov::REPOSITORY_CACHE_MAX_SIZE
+
   before_validation :ensure_token
 
   validates :name, presence: true, uniqueness: true
@@ -33,8 +36,20 @@ class Repository < ApplicationRecord
   has_many :secrets, dependent: :destroy
   has_many :private_keys, dependent: :destroy
   has_many :members, class_name: :RepositoryMember, dependent: :destroy
+  has_many :cache_artifacts
 
   def full_name = "#{Cocov::GITHUB_ORGANIZATION_NAME}/#{name}"
+
+  def compute_cache_size!
+    transaction do
+      self.cache_size = cache_artifacts.sum(:size)
+      save!
+
+      if MAX_CACHE_SIZE.positive? && cache_size >= MAX_CACHE_SIZE
+        RequestCacheEvictionJob.perform_later(id)
+      end
+    end
+  end
 
   def find_default_branch
     if branches.loaded?
