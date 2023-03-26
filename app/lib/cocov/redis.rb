@@ -80,8 +80,10 @@ module Cocov
         instance.getex("cocov:sidekiq_session:#{id}", ex: 10.minutes)
       end
 
-      def authorize_cache_client(id, repo_name:)
-        instance.set("cocov:cached:client:#{id}", repo_name, ex: 3.hours)
+      def authorize_cache_client(id, repo_name:, repo_id:)
+        instance.set("cocov:cached:client:#{id}",
+          {name: repo_name, id: repo_id}.to_json,
+          ex: 3.hours)
       end
 
       def void_cache_client(id)
