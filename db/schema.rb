@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_24_184915) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_26_125810) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -44,6 +44,22 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_24_184915) do
     t.index ["repository_id", "name", "engine"], name: "index_cache_artifacts_on_repository_id_and_name_and_engine", unique: true
     t.index ["repository_id", "name_hash", "engine"], name: "index_cache_artifacts_on_repository_id_and_name_hash_and_engine", unique: true
     t.index ["repository_id"], name: "index_cache_artifacts_on_repository_id"
+  end
+
+  create_table "cache_tools", force: :cascade do |t|
+    t.citext "name", null: false
+    t.string "name_hash", null: false
+    t.integer "size", null: false
+    t.datetime "last_used_at", precision: nil
+    t.citext "engine", null: false
+    t.string "mime", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["engine"], name: "index_cache_tools_on_engine"
+    t.index ["last_used_at"], name: "index_cache_tools_on_last_used_at"
+    t.index ["name", "engine"], name: "index_cache_tools_on_name_and_engine", unique: true
+    t.index ["name_hash", "engine"], name: "index_cache_tools_on_name_hash_and_engine", unique: true
+    t.index ["name_hash"], name: "index_cache_tools_on_name_hash"
   end
 
   create_table "check_sets", force: :cascade do |t|

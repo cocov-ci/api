@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module V1
-  class CacheController < V1Controller
+  class RepositoryCacheController < V1Controller
     before_action :ensure_authentication
     before_action :ensure_service_token
     before_action :require_engine
@@ -22,14 +22,14 @@ module V1
         artifacts.order(:last_used_at)
       end
 
-      render "v1/cache/index", locals: {
+      render "v1/repository_cache/index", locals: {
         repo: @repo,
         items: paginating(artifacts)
       }
     end
 
     def show
-      render "v1/cache/show", locals: { item: @item }
+      render "v1/repository_cache/show", locals: { item: @item }
     end
 
     def create
@@ -54,7 +54,7 @@ module V1
         last_used_at: Time.zone.now
       )
 
-      render "v1/cache/create", locals: { item: }
+      render "v1/repository_cache/create", locals: { item: }
     end
 
     def delete

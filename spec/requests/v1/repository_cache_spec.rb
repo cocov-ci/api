@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "V1::Cache" do
+RSpec.describe "V1::RepositoryCache" do
   describe "#index" do
     it "returns 404 when repository does not exist" do
       get "/v1/repositories/dummy/cache",
