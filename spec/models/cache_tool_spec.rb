@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: cache_tools
@@ -20,9 +22,9 @@
 #  index_cache_tools_on_name_hash             (name_hash)
 #  index_cache_tools_on_name_hash_and_engine  (name_hash,engine) UNIQUE
 #
-require 'rails_helper'
+require "rails_helper"
 
-RSpec.describe CacheTool, type: :model do
+RSpec.describe CacheTool do
   subject(:arti) { build(:cache_tool) }
 
   it_behaves_like "a validated model", %i[

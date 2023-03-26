@@ -82,7 +82,7 @@ module Cocov
 
       def authorize_cache_client(id, repo_name:, repo_id:)
         instance.set("cocov:cached:client:#{id}",
-          {name: repo_name, id: repo_id}.to_json,
+          { name: repo_name, id: repo_id }.to_json,
           ex: 3.hours)
       end
 

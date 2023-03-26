@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateCacheTools < ActiveRecord::Migration[7.0]
   def change
     create_table :cache_tools do |t|
@@ -11,7 +13,7 @@ class CreateCacheTools < ActiveRecord::Migration[7.0]
       t.timestamps
     end
 
-    add_index :cache_tools, [:name, :engine], unique: true
-    add_index :cache_tools, [:name_hash, :engine], unique: true
+    add_index :cache_tools, %i[name engine], unique: true
+    add_index :cache_tools, %i[name_hash engine], unique: true
   end
 end
