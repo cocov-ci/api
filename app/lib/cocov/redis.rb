@@ -80,6 +80,25 @@ module Cocov
         instance.getex("cocov:sidekiq_session:#{id}", ex: 10.minutes)
       end
 
+      def authorize_cache_client(id, repo_name:, repo_id:)
+        instance.set("cocov:cached:client:#{id}",
+          {name: repo_name, id: repo_id}.to_json,
+          ex: 3.hours)
+      end
+
+      def void_cache_client(id)
+        instance.del("cocov:cached:client:#{id}")
+      end
+
+      def request_cache_eviction(repository_id, object_ids:)
+        instance.rpush("cocov:cached:housekeeping_tasks", {
+          task: :evict,
+          task_id: SecureRandom.uuid,
+          repository: repository_id,
+          objects: object_ids
+        }.to_json)
+      end
+
       def lock(resource, timeout)
         timeout = timeout.to_i * 1000 if timeout.is_a? ActiveSupport::Duration
         manager = Redlock::Client.new([REDIS_URL])

@@ -90,6 +90,20 @@ Rails.application.routes.draw do
     post "/repositories/:repo_name/private_keys", to: "private_keys#create"
     delete "/repositories/:repo_name/private_keys/:id", to: "private_keys#delete"
 
+    # Artifact Cache
+    get "/repositories/:repo_id/cache", to: "repository_cache#index"
+    post "/repositories/:repo_id/cache", to: "repository_cache#create"
+    get "/repositories/:repo_id/cache/:name_hash/meta", to: "repository_cache#show"
+    delete "/repositories/:repo_id/cache/:name_hash", to: "repository_cache#delete"
+    patch "/repositories/:repo_id/cache/:name_hash/touch", to: "repository_cache#touch"
+
+    # Tool Cache
+    get "/cache/tools", to: "tool_cache#index"
+    post "/cache/tools", to: "tool_cache#create"
+    get "/cache/tools/:name_hash/meta", to: "tool_cache#show"
+    delete "/cache/tools/:name_hash", to: "tool_cache#delete"
+    patch "/cache/tools/:name_hash/touch", to: "tool_cache#touch"
+
     # Admin
     post "/admin/sidekiq_panel_token", to: "admin#sidekiq_panel_token"
     get "/admin/sidekiq_panel", to: "admin#sidekiq_panel"

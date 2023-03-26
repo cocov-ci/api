@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_02_27_211848) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_26_125810) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -27,6 +27,39 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_211848) do
     t.index ["head_id"], name: "index_branches_on_head_id"
     t.index ["repository_id", "name"], name: "index_branches_on_repository_id_and_name", unique: true
     t.index ["repository_id"], name: "index_branches_on_repository_id"
+  end
+
+  create_table "cache_artifacts", force: :cascade do |t|
+    t.bigint "repository_id", null: false
+    t.citext "name", null: false
+    t.string "name_hash", null: false
+    t.bigint "size", null: false
+    t.datetime "last_used_at", precision: nil
+    t.citext "engine", null: false
+    t.string "mime", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_cache_artifacts_on_name"
+    t.index ["name_hash"], name: "index_cache_artifacts_on_name_hash"
+    t.index ["repository_id", "name", "engine"], name: "index_cache_artifacts_on_repository_id_and_name_and_engine", unique: true
+    t.index ["repository_id", "name_hash", "engine"], name: "index_cache_artifacts_on_repository_id_and_name_hash_and_engine", unique: true
+    t.index ["repository_id"], name: "index_cache_artifacts_on_repository_id"
+  end
+
+  create_table "cache_tools", force: :cascade do |t|
+    t.citext "name", null: false
+    t.string "name_hash", null: false
+    t.integer "size", null: false
+    t.datetime "last_used_at", precision: nil
+    t.citext "engine", null: false
+    t.string "mime", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["engine"], name: "index_cache_tools_on_engine"
+    t.index ["last_used_at"], name: "index_cache_tools_on_last_used_at"
+    t.index ["name", "engine"], name: "index_cache_tools_on_name_and_engine", unique: true
+    t.index ["name_hash", "engine"], name: "index_cache_tools_on_name_hash_and_engine", unique: true
+    t.index ["name_hash"], name: "index_cache_tools_on_name_hash"
   end
 
   create_table "check_sets", force: :cascade do |t|
@@ -185,6 +218,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_211848) do
     t.datetime "updated_at", null: false
     t.integer "github_id", null: false
     t.integer "issue_ignore_rules_count", default: 0, null: false
+    t.bigint "cache_size", default: 0, null: false
     t.index ["github_id"], name: "index_repositories_on_github_id", unique: true
     t.index ["name"], name: "index_repositories_on_name", unique: true
     t.index ["token"], name: "index_repositories_on_token", unique: true
@@ -264,6 +298,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_27_211848) do
 
   add_foreign_key "branches", "commits", column: "head_id"
   add_foreign_key "branches", "repositories"
+  add_foreign_key "cache_artifacts", "repositories"
   add_foreign_key "check_sets", "commits"
   add_foreign_key "checks", "check_sets"
   add_foreign_key "commits", "repositories"

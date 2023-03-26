@@ -3,6 +3,25 @@ errors:
     status: not_found
     message: The requested resource could not be found.
 
+  cache:
+    invalid_order:
+      status: bad_request
+      message: invalid value for "order". Valid values are (none), "created_at", and "stale"
+    missing_name:
+      status: bad_request
+      message: The parameter "name" is required
+    missing_name_hash:
+      status: bad_request
+      message: The parameter "name_hash" is required
+    missing_size:
+      status: bad_request
+      message: The parameter "size" is required
+    missing_mime:
+      status: bad_request
+      message: The parameter "mime" is required
+    missing_engine:
+      status: bad_request
+      message: The parameter "engine" is required
   report:
     missing_data:
       status: bad_request
