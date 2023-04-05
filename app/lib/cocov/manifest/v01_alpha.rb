@@ -55,15 +55,25 @@ module Cocov
         known_targets = []
         mounts.each do |m|
           if known_targets.include? m.destination
-            raise InvalidManifestError, "Duplicated mount destination `#{m.destination}` for " \
+            raise InvalidManifestError, "Duplicated mount destination `#{m.destination}' in " \
                                         "#{source}"
           end
           known_targets << m.destination
 
           next if /^secrets:/.match?(m.source)
 
-          raise InvalidManifestError, "Invalid mount source `#{m.source} for #{source}:" \
+          raise InvalidManifestError, "Invalid mount source `#{m.source}' in #{source}:" \
                                       "Only secrets are mountable."
+        end
+      end
+
+      def merge_default_mounts(into)
+        return if @defaults&.checks&.mounts.blank?
+        into.mounts ||= []
+
+        @defaults.checks.mounts.each do |def_mount|
+          next if into.mounts.any? { |m| m.destination == def_mount.destination }
+          into.mounts << def_mount
         end
       end
 
@@ -82,10 +92,6 @@ module Cocov
 
         @checks = @data.fetch(:checks, []).map do |check|
           check[:mounts] = check[:mounts]&.map { CheckMount.new(_1) }
-          if @defaults&.checks&.mounts
-            check[:mounts] ||= []
-            check[:mounts] += @defaults.checks.mounts
-          end
 
           if @defaults&.checks&.envs
             check[:envs] ||= check.fetch(:envs, {})
@@ -95,8 +101,8 @@ module Cocov
         end
 
         @checks.each do |c|
-          next if c.mounts.blank?
-          validate_mounts(c[:mounts], "plugin #{c.plugin}")
+          validate_mounts(c.mounts, "plugin `#{c.plugin}'") unless c.mounts.blank?
+          merge_default_mounts(c)
         end
 
         @exclude_paths = data[:exclude_paths]&.map do |path|
