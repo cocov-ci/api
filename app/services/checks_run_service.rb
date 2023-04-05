@@ -59,7 +59,7 @@ class ChecksRunService < ApplicationService
 
     commit.create_github_status(:pending, context: "cocov",
       description: "Checks are running...",
-      url: "#{Cocov::UI_BASE_URL}/repos/#{@commit.repository.name}/commits/#{@commit.sha}/checks")
+      url: @commit.checks_url)
 
     checks = begin
       manifest.checks.map do |check|

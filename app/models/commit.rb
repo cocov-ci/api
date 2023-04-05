@@ -57,7 +57,7 @@ class Commit < ApplicationRecord
   def create_github_status(status, context:, description: nil, url: nil)
     opts = { description:, target_url: url, context: }.compact
     Cocov::GitHub.app.create_status(
-      "#{Cocov::GITHUB_ORGANIZATION_NAME}/#{repository.name}",
+      repository.full_name,
       sha,
       status.to_s,
       **opts
@@ -113,15 +113,19 @@ class Commit < ApplicationRecord
       create_github_status(:success,
         context: "cocov",
         description: "No issues detected",
-        url: "#{Cocov::UI_BASE_URL}/repos/#{repository.name}/commits/#{sha}/checks")
+        url: checks_url)
       return
     end
 
     create_github_status(:failure,
       context: "cocov",
       description: "#{issues_count} #{"issue".pluralize(issues_count)} detected",
-      url: "#{Cocov::UI_BASE_URL}/repos/#{repository.name}/commits/#{sha}/issues")
+      url: issues_url)
   end
+
+  def issues_url = "#{Cocov::UI_BASE_URL}/repos/#{repository.name}/commits/#{sha}/issues"
+  def checks_url = "#{Cocov::UI_BASE_URL}/repos/#{repository.name}/commits/#{sha}/checks"
+  def coverage_url = "#{Cocov::UI_BASE_URL}/repos/#{repository.name}/commits/#{sha}/coverage"
 
   private
 

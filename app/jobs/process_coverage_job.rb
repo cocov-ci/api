@@ -55,12 +55,11 @@ class ProcessCoverageJob < ApplicationJob
       end
     end
 
-    coverage_url = "#{Cocov::UI_BASE_URL}/repos/#{r.name}/commits/#{sha}/coverage"
     if @manifest&.coverage.nil?
       commit.create_github_status(:success,
         context: "cocov/coverage",
         description: "#{cov.percent_covered.round(2)}% covered",
-        url: coverage_url)
+        url: commit.coverage_url)
       return
     end
 
@@ -73,12 +72,12 @@ class ProcessCoverageJob < ApplicationJob
         commit.create_github_status(:failure,
           context: "cocov/coverage",
           description: "#{cov.percent_covered.round(2)}% covered (at least #{min}% is required)",
-          url: coverage_url)
+          url: commit.coverage_url)
       else
         commit.create_github_status(:success,
           context: "cocov/coverage",
           description: "#{cov.percent_covered.round(2)}% covered",
-          url: coverage_url)
+          url: commit.coverage_url)
       end
     end
   rescue StandardError => e
