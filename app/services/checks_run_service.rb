@@ -41,8 +41,10 @@ class ChecksRunService < ApplicationService
     begin
       manifest = ManifestService.manifest_for_commit(@commit)
     rescue Cocov::Manifest::InvalidManifestError => e
-      # TODO: URL?
-      commit.create_github_status(:failure, context: "cocov", description: e.message)
+      commit.create_github_status(:failure,
+        context: "cocov",
+        description: e.message,
+        url: commit.checks_url)
       return
     end
 
@@ -68,8 +70,10 @@ class ChecksRunService < ApplicationService
         end
       end
     rescue Cocov::Manifest::InvalidManifestError => e
-      # TODO: URL?
-      commit.create_github_status(:failure, context: "cocov", description: e.message)
+      commit.create_github_status(:failure,
+        context: "cocov",
+        description: e.message,
+        url: commit.checks_url)
       nil
     end
 
