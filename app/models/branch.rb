@@ -29,6 +29,8 @@ class Branch < ApplicationRecord
 
   belongs_to :repository
   belongs_to :head, class_name: :Commit, optional: true
+  has_many :coverage_history, dependent: :destroy
+  has_many :issue_history, dependent: :destroy
 
   def condensed_status
     return :gray if head.nil?

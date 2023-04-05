@@ -82,7 +82,9 @@ RSpec.describe "V1::GithubEvents" do
   describe "#process_delete" do
     it "deletes branches" do
       repo = create(:repository, name: "foo", github_id: github_repo_id)
-      create(:branch, name: "test", repository: repo)
+      branch = create(:branch, name: "test", repository: repo)
+      create(:coverage_history, branch: branch, repository: repo)
+      create(:issue_history, branch: branch, repository: repo)
 
       expect(repo.branches.count).to eq 1
 
