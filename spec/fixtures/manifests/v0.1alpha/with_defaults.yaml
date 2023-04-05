@@ -1,0 +1,20 @@
+version: "0.1.alpha"
+
+coverage:
+  min_percent: 90
+
+exclude_paths:
+  - coverage/
+  - spec/**/.ignore
+
+defaults:
+  checks:
+    envs:
+      TEST: 'true'
+    mounts:
+      - source: secrets:FOO
+        destination: ~/test
+
+checks:
+  - plugin: cocov/rubocop:v0.1
+  - plugin: cocov/brakeman:v0.1

@@ -86,4 +86,25 @@ RSpec.describe Cocov::Manifest::V01Alpha do
         .with_message("Expected exclude_paths.0 to not be blank")
     end
   end
+
+  describe "defaults" do
+    let(:data) { YAML.load(fixture_file("manifests/v0.1alpha/with_defaults.yaml")).with_indifferent_access }
+    it "accepts defaults for checks" do
+      s = spec.new(data)
+      s.checks.each do |c|
+        expect(c.envs).to eq({ "TEST" => "true" })
+        expect(c.mounts.length).to eq 1
+        expect(c.mounts.first.source).to eq "secrets:FOO"
+        expect(c.mounts.first.destination).to eq "~/test"
+      end
+    end
+
+    it "rejects conflicting mounts" do
+      data[:checks][0][:mounts] = [
+        { source: "secrets:BLA", destination: "~/test" }
+      ]
+      expect { spec.new(data) }.to raise_error(Cocov::Manifest::InvalidManifestError)
+        .with_message("Duplicated mount destination `~/test` for plugin cocov/rubocop:v0.1")
+    end
+  end
 end
