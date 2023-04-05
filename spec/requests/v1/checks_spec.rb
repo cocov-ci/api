@@ -20,6 +20,17 @@ RSpec.describe "V1::Checks" do
       expect(response).to be_a_json_error(:not_found)
     end
 
+    it "returns a valid response in case checks haven't started" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks", headers: authenticated
+      expect(response).to have_http_status(:ok)
+      expect(response.json[:status]).to eq "waiting"
+    end
+
     it "returns checks" do
       commit = create(:commit, :with_repository)
       repo = commit.repository
