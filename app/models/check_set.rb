@@ -127,13 +127,21 @@ class CheckSet < ApplicationRecord
 
     if canceling?
       canceled!
-      commit.create_github_status(:error, context: "cocov", description: "Checks were canceled")
+      commit.create_github_status(:error,
+        context: "cocov",
+        description: "Checks were canceled",
+        url: commit.checks_url
+      )
       return
     end
 
     if checks.any?(&:errored?)
       errored!
-      commit.create_github_status(:error, context: "cocov", description: "An internal error occurred")
+      commit.create_github_status(:error,
+        context: "cocov",
+        description: "An internal error occurred",
+        url: commit.checks_url
+      )
       return
     end
 
