@@ -110,7 +110,10 @@ class Commit < ApplicationRecord
     IssueHistory.register_history! self, issues_count
 
     if issues_count.zero?
-      create_github_status(:success, context: "cocov", description: "No issues detected")
+      create_github_status(:success,
+        context: "cocov",
+        description: "No issues detected",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{repository.name}/commits/#{sha}/checks")
       return
     end
 

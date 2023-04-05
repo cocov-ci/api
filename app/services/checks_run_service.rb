@@ -27,9 +27,9 @@ class ChecksRunService < ApplicationService
   def call(commit)
     commit = case commit
     when String
-      Commit.find_by! sha: commit
+      Commit.includes(:repository).find_by! sha: commit
     when Integer
-      Commit.find commit
+      Commit.includes(:repository).find commit
     else
       commit
     end
@@ -57,7 +57,9 @@ class ChecksRunService < ApplicationService
       return
     end
 
-    commit.create_github_status(:pending, context: "cocov")
+    commit.create_github_status(:pending, context: "cocov",
+      description: "Checks are running...",
+      url: "#{Cocov::UI_BASE_URL}/repos/#{@commit.repository.name}/commits/#{@commit.sha}/checks")
 
     checks = begin
       manifest.checks.map do |check|

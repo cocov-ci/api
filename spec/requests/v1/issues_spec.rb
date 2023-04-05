@@ -608,7 +608,8 @@ RSpec.describe "V1::Issues" do
         sha: commit.sha,
         status: :success,
         context: "cocov",
-        description: "No issues detected"
+        description: "No issues detected",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{repo.name}/commits/#{commit.sha}/checks"
       )
 
       expect(commit.reload.issues_count).to eq 1
@@ -634,7 +635,8 @@ RSpec.describe "V1::Issues" do
         sha: commit.sha,
         status: :success,
         context: "cocov",
-        description: "No issues detected"
+        description: "No issues detected",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{repo.name}/commits/#{commit.sha}/checks"
       )
 
       expect(commit.reload.issues_count).to eq 1

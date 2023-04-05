@@ -80,7 +80,12 @@ RSpec.describe ProcessCommitJob do
       .with(-> { _1.id == commit.id }, path: ".cocov.yaml")
       .and_return(["yaml", fixture_file("manifests/v0.1alpha/complete.yaml")])
 
-    expect(commit).to receive(:create_github_status).with(:pending, context: "cocov").ordered
+    expect(commit).to receive(:create_github_status)
+      .with(:pending,
+        context: "cocov",
+        description: "Checks are running...",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{commit.repository.name}/commits/#{commit.sha}/checks")
+      .ordered
 
     expect(commit.checks.count).to be_zero
     expect(@redis.llen("cocov:checks")).to be_zero

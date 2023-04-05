@@ -287,7 +287,8 @@ RSpec.describe "V1::Checks" do
         commit.sha,
         "success",
         description: "No issues detected",
-        context: "cocov"
+        context: "cocov",
+        target_url: "#{Cocov::UI_BASE_URL}/repos/#{repo.name}/commits/#{commit.sha}/checks"
       )
 
       post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/wrap_up",
@@ -412,7 +413,9 @@ RSpec.describe "V1::Checks" do
         "#{@github_organization_name}/#{repo.name}",
         commit.sha,
         "pending",
-        context: "cocov"
+        context: "cocov",
+        description: "Checks are running...",
+        target_url: "#{Cocov::UI_BASE_URL}/repos/#{repo.name}/commits/#{commit.sha}/checks"
       )
 
       expect(@redis.llen("cocov:checks")).to be_zero
