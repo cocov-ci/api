@@ -89,6 +89,7 @@ RSpec.describe Cocov::Manifest::V01Alpha do
 
   describe "defaults" do
     let(:data) { YAML.load(fixture_file("manifests/v0.1alpha/with_defaults.yaml")).with_indifferent_access }
+
     it "accepts defaults for checks" do
       s = spec.new(data)
       s.checks.each do |c|
@@ -101,7 +102,7 @@ RSpec.describe Cocov::Manifest::V01Alpha do
 
     it "merges defaults with plugin definitions" do
       data[:checks][0][:mounts] = [
-        { source: "secrets:TEST", destination: "/foobar"}
+        { source: "secrets:TEST", destination: "/foobar" }
       ]
 
       s = spec.new(data)
@@ -116,7 +117,7 @@ RSpec.describe Cocov::Manifest::V01Alpha do
     it "rejects conflicting default mounts" do
       data[:defaults][:checks][:mounts] = [
         { source: "secrets:BLA", destination: "~/test" },
-        { source: "secrets:BLE", destination: "~/test" },
+        { source: "secrets:BLE", destination: "~/test" }
       ]
       expect { spec.new(data) }.to raise_error(Cocov::Manifest::InvalidManifestError)
         .with_message("Duplicated mount destination `~/test' in defaults definition")
@@ -125,7 +126,7 @@ RSpec.describe Cocov::Manifest::V01Alpha do
     it "rejects conflicting plugin mounts" do
       data[:checks][0][:mounts] = [
         { source: "secrets:BLA", destination: "~/test" },
-        { source: "secrets:BLE", destination: "~/test" },
+        { source: "secrets:BLE", destination: "~/test" }
       ]
       expect { spec.new(data) }.to raise_error(Cocov::Manifest::InvalidManifestError)
         .with_message("Duplicated mount destination `~/test' in plugin `cocov/rubocop:v0.1'")
@@ -133,7 +134,7 @@ RSpec.describe Cocov::Manifest::V01Alpha do
 
     it "allows plugins to override defaults" do
       data[:checks][0][:mounts] = [
-        { source: "secrets:BLA", destination: "~/test" },
+        { source: "secrets:BLA", destination: "~/test" }
       ]
 
       s = spec.new(data)

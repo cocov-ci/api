@@ -31,6 +31,8 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Commit < ApplicationRecord
+  include CommitGitHubIntegration
+
   enum clone_status: {
     queued: 0,
     in_progress: 1,
@@ -110,10 +112,7 @@ class Commit < ApplicationRecord
     IssueHistory.register_history! self, issues_count
 
     if issues_count.zero?
-      create_github_status(:success,
-        context: "cocov",
-        description: "No issues detected",
-        url: checks_url)
+      notify_check_status(:no_issues)
       return
     end
 

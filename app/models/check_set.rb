@@ -13,6 +13,8 @@
 #  started_at  :datetime
 #  job_id      :string
 #  canceling   :boolean          default(FALSE), not null
+#  error_kind  :integer          default(NULL), not null
+#  error_extra :string
 #
 # Indexes
 #
@@ -36,6 +38,26 @@ class CheckSet < ApplicationRecord
     end
   end
 
+  enum error_kind: {
+    no_error: 1,
+    commit_fetch_failed: 2,
+    manifest_root_must_be_mapping: 3,
+    manifest_missing_version: 4,
+    manifest_version_type_mismatch: 5,
+    manifest_version_unsupported: 6,
+    manifest_unknown_secret: 7,
+    manifest_duplicated_mount_destination: 8,
+    manifest_invalid_mount_source: 9,
+    manifest_invalid_or_missing_data: 10
+  }, _prefix: :error
+
+  USER_VISIBLE_ERROR_KINDS = %i[
+    manifest_unknown_secret
+    manifest_duplicated_mount_destination
+    manifest_invalid_mount_source
+    manifest_invalid_or_missing_data
+  ].freeze
+
   enum status: {
     waiting: 0,
     queued: 1,
@@ -43,10 +65,11 @@ class CheckSet < ApplicationRecord
     completed: 3,
     errored: 4,
     not_configured: 5,
-    canceled: 6
+    canceled: 6,
+    failure: 7
   }
 
-  def finished? = completed? || errored? || canceled?
+  def finished? = completed? || errored? || canceled? || failure?
 
   def canceling!
     self.canceling = true
@@ -57,13 +80,14 @@ class CheckSet < ApplicationRecord
   belongs_to :commit
   has_many :checks, dependent: :destroy
 
-  before_validation :ensure_status
+  before_validation :ensure_status, :cleanup_user_visible_errors
 
   def reset!
     transaction do
       self.canceling = false
       self.status = :waiting
       self.started_at = Time.zone.now
+      self.error_kind = :no_error
       save!
       checks.destroy_all
       commit.issues.destroy_all
@@ -127,21 +151,13 @@ class CheckSet < ApplicationRecord
 
     if canceling?
       canceled!
-      commit.create_github_status(:error,
-        context: "cocov",
-        description: "Checks were canceled",
-        url: commit.checks_url
-      )
+      commit.notify_check_status(:canceled)
       return
     end
 
     if checks.any?(&:errored?)
       errored!
-      commit.create_github_status(:error,
-        context: "cocov",
-        description: "An internal error occurred",
-        url: commit.checks_url
-      )
+      commit.notify_check_status(:internal_error)
       return
     end
 
@@ -151,5 +167,12 @@ class CheckSet < ApplicationRecord
 
   def ensure_status
     self.status = :waiting if status.blank?
+    self.error_kind = :no_error if error_kind.blank?
+  end
+
+  def cleanup_user_visible_errors
+    return if error_no_error?
+
+    self.error_extra = nil unless USER_VISIBLE_ERROR_KINDS.include? error_kind.to_sym
   end
 end

@@ -63,6 +63,46 @@ RSpec.describe "V1::Checks" do
         expect(response.json[:issues]).to eq(checks.map(&:plugin_name).index_with { 1 })
       end
     end
+
+    it "returns failures with user-visible information" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      allow(commit).to receive(:create_github_status)
+        .with(anything, anything)
+        .and_return(nil)
+      commit.notify_check_fatal_failure!(Cocov::Manifest::InvalidManifestError.new(
+        :manifest_unknown_secret,
+        "Unknown secret `FOO'"
+      ))
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks", headers: authenticated
+      expect(response).to have_http_status(:ok)
+      expect(response.json[:status]).to eq "failure"
+      expect(response.json[:failure_reason]).to eq "manifest_unknown_secret"
+      expect(response.json[:failure_details]).to eq "Unknown secret `FOO'"
+    end
+
+    it "returns failures without user-visible information" do
+      commit = create(:commit, :with_repository)
+      repo = commit.repository
+      allow(commit).to receive(:create_github_status)
+        .with(anything, anything)
+        .and_return(nil)
+      commit.notify_check_fatal_failure!(Cocov::Manifest::InvalidManifestError.new(
+        :manifest_missing_version,
+        "Manifest missing version"
+      ))
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
+      get "/v1/repositories/#{repo.name}/commits/#{commit.sha}/checks", headers: authenticated
+      expect(response).to have_http_status(:ok)
+      expect(response.json[:status]).to eq "failure"
+      expect(response.json[:failure_reason]).to eq "manifest_missing_version"
+      expect(response.json).not_to have_key(:failure_details)
+    end
   end
 
   describe "#show" do
@@ -329,7 +369,8 @@ RSpec.describe "V1::Checks" do
         commit.sha,
         "error",
         description: "An internal error occurred",
-        context: "cocov"
+        context: "cocov",
+        target_url: "#{Cocov::UI_BASE_URL}/repos/#{commit.repository.name}/commits/#{commit.sha}/checks"
       )
 
       post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/wrap_up",
@@ -487,9 +528,10 @@ RSpec.describe "V1::Checks" do
       expect(gh_app).to receive(:create_status).with(
         "#{@github_organization_name}/#{repo.name}",
         commit.sha,
-        "error",
+        "failure",
         description: "Checks were canceled",
-        context: "cocov"
+        context: "cocov",
+        target_url: "#{Cocov::UI_BASE_URL}/repos/#{commit.repository.name}/commits/#{commit.sha}/checks"
       )
 
       post "/v1/repositories/#{repo.id}/commits/#{commit.sha}/checks/wrap_up",

@@ -7,12 +7,14 @@ module V1
 
     def index
       repo = Repository.with_context(auth_context).find_by!(name: params[:repo_name])
-      commit = repo.commits.includes(:checks, :user).find_by!(sha: params[:commit_sha])
+      commit = repo.commits
+        .includes(:checks, :user, :check_set)
+        .find_by!(sha: params[:commit_sha])
       checks = commit.checks.order(plugin_name: :asc)
       issues = commit.issues.group(:check_source).count
-
+      check_set = commit.check_set
       render "v1/checks/index",
-        locals: { checks:, commit:, repo:, issues: }
+        locals: { checks:, commit:, repo:, issues:, check_set: }
     end
 
     def show

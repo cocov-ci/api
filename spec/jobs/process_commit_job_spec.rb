@@ -18,7 +18,10 @@ RSpec.describe ProcessCommitJob do
       .and_raise(StandardError.new("boom!"))
 
     expect(commit).to receive(:create_github_status)
-      .with(:failure, context: "cocov", description: "Could not fetch this commit")
+      .with(:error,
+        context: "cocov",
+        description: "Could not fetch this commit",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{commit.repository.name}/commits/#{commit.sha}/checks")
 
     expect(ChecksRunService).not_to receive(:call)
 
@@ -42,10 +45,40 @@ RSpec.describe ProcessCommitJob do
       .with(commit, path: ".cocov.yaml")
       .and_return(["yaml", "lolsies, this is an invalid manifest!"])
     expect(commit).to receive(:create_github_status)
-      .with(:failure, context: "cocov", description: "Invalid manifest: Root should be a mapping")
+      .with(:error,
+        context: "cocov",
+        description: "Invalid manifest: Root should be a mapping",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{commit.repository.name}/commits/#{commit.sha}/checks")
       .ordered
 
     job.perform(commit.id)
+
+    expect(commit.check_set.error_kind).to eq "manifest_root_must_be_mapping"
+    expect(commit.check_set.error_extra).to be_nil
+  end
+
+  it "updates statuses for commits with invalid manifests (unknown secret)" do
+    allow(GitService).to receive(:clone_commit) { expect(_1.id).to eq commit.id }
+    expect(GitService).to receive(:file_for_commit)
+      .with(commit, path: ".cocov.yaml")
+      .and_return(["yaml", fixture_file("manifests/v0.1alpha/complete.yaml")])
+    expect(commit).to receive(:create_github_status)
+      .with(:pending,
+        context: "cocov",
+        description: "Checks are running...",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{commit.repository.name}/commits/#{commit.sha}/checks")
+      .ordered
+    expect(commit).to receive(:create_github_status)
+      .with(:error,
+        context: "cocov",
+        description: "Failure: Unknown secret",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{commit.repository.name}/commits/#{commit.sha}/checks")
+      .ordered
+
+    job.perform(commit.id)
+
+    expect(commit.check_set.error_kind).to eq "manifest_unknown_secret"
+    expect(commit.check_set.error_extra).to eq "Unknown secret `FOO'"
   end
 
   it "returns a successful status for manifests without checks" do
@@ -61,7 +94,10 @@ RSpec.describe ProcessCommitJob do
       .and_return(fake_manifest)
 
     expect(commit).to receive(:create_github_status)
-      .with(:success, context: "cocov", description: "Looking good!")
+      .with(:success,
+        context: "cocov",
+        description: "Looking good!",
+        url: "#{Cocov::UI_BASE_URL}/repos/#{commit.repository.name}/commits/#{commit.sha}/checks")
       .ordered
 
     expect(commit).not_to receive(:checks)

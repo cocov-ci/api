@@ -13,6 +13,8 @@
 #  started_at  :datetime
 #  job_id      :string
 #  canceling   :boolean          default(FALSE), not null
+#  error_kind  :integer          default(NULL), not null
+#  error_extra :string
 #
 # Indexes
 #

@@ -3,7 +3,15 @@
 module Cocov
   module Manifest
     class Error < StandardError; end
-    class InvalidManifestError < Error; end
+
+    class InvalidManifestError < Error
+      attr_reader :code
+
+      def initialize(code, message)
+        super(message)
+        @code = code
+      end
+    end
 
     VERSIONS = {
       "0.1.alpha" => V01Alpha
@@ -18,16 +26,36 @@ module Cocov
     def parse(contents)
       data = YAML.load(contents)
 
-      raise InvalidManifestError, "Invalid manifest: Root should be a mapping" unless data.is_a? Hash
+      unless data.is_a? Hash
+        raise InvalidManifestError.new(
+          :manifest_root_must_be_mapping,
+          "Invalid manifest: Root should be a mapping"
+        )
+      end
 
       data = data.with_indifferent_access
       version = data[:version]
 
-      raise InvalidManifestError, "Invalid manifest: Missing version field" if version.blank?
+      if version.blank?
+        raise InvalidManifestError.new(
+          :manifest_missing_version,
+          "Invalid manifest: Missing version field"
+        )
+      end
 
-      raise InvalidManifestError, "Invalid manifest: Version must be a string" unless version.is_a? String
+      unless version.is_a? String
+        raise InvalidManifestError.new(
+          :manifest_version_type_mismatch,
+          "Invalid manifest: Version must be a string"
+        )
+      end
 
-      raise InvalidManifestError, "Invalid manifest: Unsupported version #{version}" unless VERSIONS.key? version
+      unless VERSIONS.key? version
+        raise InvalidManifestError.new(
+          :manifest_version_unsupported,
+          "Invalid manifest: Unsupported version #{version}"
+        )
+      end
 
       VERSIONS[version].new(data)
     end

@@ -18,6 +18,7 @@ RSpec.describe DestroyRepositoryJob do
     create(:issue_history, repository: repo, branch:)
     create(:coverage_history, repository: repo, branch:)
     create(:coverage_info, :with_file, commit:)
+    create(:cache_artifact, repository: repo)
 
     job.perform(repo.id)
 
