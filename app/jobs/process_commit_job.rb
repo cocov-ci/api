@@ -10,10 +10,7 @@ class ProcessCommitJob < ApplicationJob
       GitService.clone_commit(commit)
     rescue StandardError => e
       commit.clone_errored!
-      commit.create_github_status(:failure,
-        context: "cocov",
-        description: "Could not fetch this commit",
-        url: commit.checks_url)
+      commit.notify_check_fatal_failure!(:commit_fetch_failed)
       raise e
     end
 

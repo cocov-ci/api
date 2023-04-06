@@ -13,7 +13,7 @@ checks:
       TEST: 'true'
   - plugin: cocov/brakeman:v0.1
     mounts:
-      # process_commit_job_spec.rb has this commit hardcoded, and uses it for its
+      # process_commit_job_spec.rb has this file hardcoded, and uses it for its
       # assertions. Make sure to update the aforementioned file in case this
       # example file is changed.
       - source: secrets:FOO

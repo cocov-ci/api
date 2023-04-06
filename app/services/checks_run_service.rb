@@ -12,7 +12,10 @@ class ChecksRunService < ApplicationService
 
       name = m.source.gsub(/^secrets:/, "")
       secret = @commit.repository.find_secret(name)
-      raise Cocov::Manifest::InvalidManifestError, "Unknown secret `#{name}'" if secret.nil?
+      if secret.nil?
+        raise Cocov::Manifest::InvalidManifestError.new(:manifest_unknown_secret,
+          "Unknown secret `#{name}'")
+      end
 
       mounts << {
         kind: :secret,
@@ -41,27 +44,23 @@ class ChecksRunService < ApplicationService
     begin
       manifest = ManifestService.manifest_for_commit(@commit)
     rescue Cocov::Manifest::InvalidManifestError => e
-      commit.create_github_status(:failure,
-        context: "cocov",
-        description: e.message,
-        url: commit.checks_url)
+      commit.notify_check_fatal_failure!(e)
       return
     end
 
     if manifest.nil?
+      # Say nothing. Repo is present, but has no manifest.
       commit.check_set.not_configured!
       return
     end
 
     if manifest.checks.empty?
       commit.check_set.not_configured!
-      commit.create_github_status(:success, context: "cocov", description: "Looking good!")
+      commit.notify_check_status(:no_manifest)
       return
     end
 
-    commit.create_github_status(:pending, context: "cocov",
-      description: "Checks are running...",
-      url: @commit.checks_url)
+    commit.notify_check_status(:running)
 
     checks = begin
       manifest.checks.map do |check|
@@ -70,10 +69,7 @@ class ChecksRunService < ApplicationService
         end
       end
     rescue Cocov::Manifest::InvalidManifestError => e
-      commit.create_github_status(:failure,
-        context: "cocov",
-        description: e.message,
-        url: commit.checks_url)
+      commit.notify_check_fatal_failure!(e)
       nil
     end
 

@@ -1,0 +1,16 @@
+# Matching CheckSet.error_kinds
+commit_fetch_failed: "Could not fetch this commit"
+manifest_root_must_be_mapping: "Invalid manifest: Root should be a mapping"
+manifest_missing_version: "Failure: Invalid manifest"
+manifest_version_type_mismatch: "Failure: Invalid manifest"
+manifest_unknown_secret: "Failure: Unknown secret"
+manifest_duplicated_mount_destination: "Failure: Duplicated mount destination"
+manifest_invalid_mount_source: "Failure: Invalid mount source"
+manifest_invalid_or_missing_data: "Failure: Invalid or Missing Data in Manifest"
+
+# Other general statuses
+canceled: "Checks were canceled"
+internal_error: "An internal error occurred"
+no_issues: "No issues detected"
+no_manifest: "Looking good!"
+running: "Checks are running..."
