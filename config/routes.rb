@@ -40,6 +40,9 @@ Rails.application.routes.draw do
     post "/repositories/:name/settings/regen-token", to: "repository_settings#regen_token"
     post "/repositories/:name/settings/sync-github", to: "repository_settings#sync_github"
     post "/repositories/:name/settings/delete", to: "repository_settings#delete"
+    get "/repositories/:name/settings/cache", to: "repository_cache_settings#index"
+    post "/repositories/:name/settings/cache/purge", to: "repository_cache_settings#purge"
+    delete "/repositories/:name/settings/cache/:id", to: "repository_cache_settings#delete"
 
     # Badges
     get "/repositories/:name/badges/coverage", to: "badges#coverage"

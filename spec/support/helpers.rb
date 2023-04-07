@@ -39,6 +39,15 @@ module Cocov
       stub_const("Cocov::CRYPTOGRAPHIC_KEY", "6a3094175b97cc4eff61630452425b1d")
     end
 
+    def with_caching_enabled(max_size: 0)
+      stub_const("Cocov::REPOSITORY_CACHE_MAX_SIZE", max_size)
+      stub_const("Cocov::CACHE_SERVICE_URL", "https://cache.invalid")
+    end
+
+    def with_caching_disabled
+      stub_const("Cocov::CACHE_SERVICE_URL", nil)
+    end
+
     def self.http_mime(named)
       Mime::LOOKUP.find { |_k, v| v.symbol == named }.first
     end

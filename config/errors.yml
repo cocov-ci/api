@@ -3,10 +3,14 @@ errors:
     status: not_found
     message: The requested resource could not be found.
 
+  cache_settings:
+    cache_disabled:
+      status: bad_request
+      message: Cache is disabled on this instance
   cache:
     invalid_order:
       status: bad_request
-      message: invalid value for "order". Valid values are (none), "created_at", and "stale"
+      message: Invalid value for "order". Valid values are (none), "created_at", and "stale"
     missing_name:
       status: bad_request
       message: The parameter "name" is required
