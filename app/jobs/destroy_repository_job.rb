@@ -6,11 +6,10 @@ class DestroyRepositoryJob < ApplicationJob
   def perform(id)
     r = Repository.find(id)
 
-    r.cache_artifacts.in_batches do |group|
-      Cocov::Redis.request_cache_eviction(id, object_ids: group.pluck(:id))
-    end
+    Cocov::Redis.request_cache_purge(r.id) if Cocov::CACHE_SERVICE_URL.present?
 
     ActiveRecord::Base.transaction do
+      CacheArtifact.where(repository: r).delete_all
       IssueHistory.where(repository: r).delete_all
       CoverageHistory.where(repository: r).delete_all
       r.destroy!

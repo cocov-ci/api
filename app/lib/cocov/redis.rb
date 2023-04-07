@@ -99,6 +99,14 @@ module Cocov
         }.to_json)
       end
 
+      def request_cache_purge(repository_id)
+        instance.rpush("cocov:cached:housekeeping_tasks", {
+          task: :purge,
+          task_id: SecureRandom.uuid,
+          repository: repository_id
+        }.to_json)
+      end
+
       def lock(resource, timeout)
         timeout = timeout.to_i * 1000 if timeout.is_a? ActiveSupport::Duration
         manager = Redlock::Client.new([REDIS_URL])
