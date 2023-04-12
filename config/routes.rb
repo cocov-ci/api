@@ -110,6 +110,9 @@ Rails.application.routes.draw do
     # Admin
     post "/admin/sidekiq_panel_token", to: "admin#sidekiq_panel_token"
     get "/admin/sidekiq_panel", to: "admin#sidekiq_panel"
+    get "/admin/tool_cache", to: "admin#tool_cache"
+    post "/admin/tool_cache/purge", to: "admin#purge_tool_cache"
+    delete "/admin/tool_cache/:id", to: "admin#delete_tool_cache"
 
     # GitHub
     post "/github/events", to: "github_events#create"

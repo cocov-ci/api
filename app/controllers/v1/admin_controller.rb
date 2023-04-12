@@ -15,5 +15,37 @@ module V1
       session[:cocov_sidekiq_session_id] = auth_id
       redirect_to "/sidekiq"
     end
+
+    def tool_cache
+      if Cocov::CACHE_SERVICE_URL.nil?
+        render "v1/admin/tool_cache", locals: {
+          enabled: false
+        }
+        return
+      end
+
+      artifacts = CacheTool.all.order("last_used_at DESC NULLS LAST")
+
+      render "v1/admin/tool_cache", locals: {
+        enabled: true,
+        artifacts: paginating(artifacts)
+      }
+    end
+
+    def delete_tool_cache
+      error! :cache_settings, :cache_disabled if Cocov::CACHE_SERVICE_URL.nil?
+
+      object = CacheTool.find params[:id]
+      Cocov::Redis.request_tool_eviction(object_ids: [object.id])
+
+      head :no_content
+    end
+
+    def purge_tool_cache
+      error! :cache_settings, :cache_disabled if Cocov::CACHE_SERVICE_URL.nil?
+      Cocov::Redis.request_tool_purge
+
+      head :no_content
+    end
   end
 end

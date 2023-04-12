@@ -24,7 +24,7 @@ RSpec.describe RequestCacheEvictionJob do
     expect(@redis.llen("cocov:cached:housekeeping_tasks")).to eq 1
     task = JSON.parse(@redis.lindex("cocov:cached:housekeeping_tasks", 0), symbolize_names: true)
 
-    expect(task[:task]).to eq "evict"
+    expect(task[:task]).to eq "evict-artifact"
     expect(task[:repository]).to eq repo.id
     expect(task[:objects]).to eq [items[2].id, items[1].id]
   end

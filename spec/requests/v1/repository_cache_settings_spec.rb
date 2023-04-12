@@ -111,7 +111,7 @@ RSpec.describe "V1::RepositoryCacheSettings" do
       expect(@redis.llen(queue)).to eq 1
       data = JSON.parse(@redis.lpop(queue), symbolize_names: true)
 
-      expect(data[:task]).to eq "evict"
+      expect(data[:task]).to eq "evict-artifact"
       expect(data[:repository]).to eq repo.id
       expect(data[:objects]).to eq [artifact.id]
     end
@@ -151,7 +151,7 @@ RSpec.describe "V1::RepositoryCacheSettings" do
       expect(@redis.llen(queue)).to eq 1
       data = JSON.parse(@redis.lpop(queue), symbolize_names: true)
 
-      expect(data[:task]).to eq "purge"
+      expect(data[:task]).to eq "purge-repository"
       expect(data[:repository]).to eq repo.id
     end
   end
