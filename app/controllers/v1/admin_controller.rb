@@ -32,7 +32,7 @@ module V1
       }
     end
 
-    def delete_tool_cache
+    def tool_cache_delete
       error! :cache_settings, :cache_disabled if Cocov::CACHE_SERVICE_URL.nil?
 
       object = CacheTool.find params[:id]
@@ -41,7 +41,7 @@ module V1
       head :no_content
     end
 
-    def purge_tool_cache
+    def tool_cache_purge
       error! :cache_settings, :cache_disabled if Cocov::CACHE_SERVICE_URL.nil?
       Cocov::Redis.request_tool_purge
 
