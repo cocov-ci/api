@@ -132,6 +132,7 @@ class Commit < ApplicationRecord
 
   def conditionally_update_repo_info
     return unless saved_change_to_clone_size?
+
     ComputeRepositoryCommitsSizeJob.perform_later(repository_id)
   end
 
