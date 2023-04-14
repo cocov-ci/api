@@ -80,6 +80,10 @@ RSpec.describe GitService::Git do
         .with(commit, at: target)
         .and_return(true)
         .ordered
+      expect(git).to receive(:update_commit_size)
+        .with(commit, at: target)
+        .and_return(true)
+        .ordered
 
       result = git.clone(commit, into: @target_path)
       expect(target.exist?).to be true
@@ -97,6 +101,21 @@ RSpec.describe GitService::Git do
 
       expect { git.clone(commit, into: @target_path) }.to raise_error(err)
       expect(target.exist?).to be false
+    end
+
+    it "calculates directory size and updates commit" do
+      commit = create(:commit, :with_repository)
+      Dir.mktmpdir do |d|
+        path = Pathname.new(d)
+        File.write(path.join("#{commit.sha}.tar"), "a" * 100)
+        File.write(path.join("#{commit.sha}.tar.zst"), "a" * 50)
+        File.write(path.join("#{commit.sha}.tar.zst.sha256"), "a" * 32)
+        path.join(commit.sha).mkpath
+        File.write(path.join(commit.sha, "file"), "a" * 128)
+        expect { git.update_commit_size(commit, at: path.join(commit.sha)) }
+          .to have_enqueued_job
+      end
+      expect(commit.clone_size).to eq 310
     end
   end
 end

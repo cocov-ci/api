@@ -37,6 +37,22 @@ class GitService
       File.write(at.join("#{commit.sha}.tar.zst.shasum").to_s, "sha256:#{shasum}")
     end
 
+    def update_commit_size(commit, at:)
+      dir_size = Dir["#{at}/**/*"]
+        .select { |f| File.file?(f) }
+        .sum { |f| File.size(f) }
+
+      sizes = [dir_size]
+      sizes << File.size(at.parent.join("#{commit.sha}.tar"))
+      sizes << File.size(at.parent.join("#{commit.sha}.tar.zst"))
+      sizes << File.size(at.parent.join("#{commit.sha}.tar.zst.sha256"))
+
+      commit.clone_size = sizes.sum
+      commit.save!
+
+      true
+    end
+
     def clone(commit, into:)
       into = Pathname.new(into) unless into.is_a? Pathname
       into.mkpath
@@ -44,6 +60,7 @@ class GitService
       begin
         initialize_repository(commit, at: into)
         create_compressed_image(commit, at: into)
+        update_commit_size(commit, at: into)
       rescue StandardError => e
         FileUtils.rm_rf into
         FileUtils.rm_rf into.parent.join("#{commit.sha}.tar")

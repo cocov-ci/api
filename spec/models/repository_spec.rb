@@ -14,6 +14,7 @@
 #  github_id                :integer          not null
 #  issue_ignore_rules_count :integer          default(0), not null
 #  cache_size               :bigint           default(0), not null
+#  commits_size             :bigint           default(0), not null
 #
 # Indexes
 #

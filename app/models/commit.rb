@@ -17,6 +17,7 @@
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  minimum_coverage :integer
+#  clone_size       :bigint
 #
 # Indexes
 #
@@ -41,6 +42,7 @@ class Commit < ApplicationRecord
   }, _prefix: :clone
 
   before_validation :ensure_statuses
+  after_commit :conditionally_update_repo_info
 
   validates :author_email, presence: true
   validates :author_name, presence: true
@@ -127,6 +129,11 @@ class Commit < ApplicationRecord
   def coverage_url = "#{Cocov::UI_BASE_URL}/repos/#{repository.name}/commits/#{sha}/coverage"
 
   private
+
+  def conditionally_update_repo_info
+    return unless saved_change_to_clone_size?
+    ComputeRepositoryCommitsSizeJob.perform_later(repository_id)
+  end
 
   def ensure_statuses
     self.clone_status = :queued if clone_status.blank?

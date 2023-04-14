@@ -17,6 +17,7 @@
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  minimum_coverage :integer
+#  clone_size       :bigint
 #
 # Indexes
 #

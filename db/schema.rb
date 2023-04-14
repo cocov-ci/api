@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_06_135146) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_14_024737) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_trgm"
@@ -103,6 +103,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_06_135146) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "minimum_coverage"
+    t.bigint "clone_size"
     t.index ["repository_id"], name: "index_commits_on_repository_id"
     t.index ["sha", "repository_id"], name: "index_commits_on_sha_and_repository_id", unique: true
     t.index ["sha"], name: "index_commits_on_sha"
@@ -221,6 +222,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_06_135146) do
     t.integer "github_id", null: false
     t.integer "issue_ignore_rules_count", default: 0, null: false
     t.bigint "cache_size", default: 0, null: false
+    t.bigint "commits_size", default: 0, null: false
     t.index ["github_id"], name: "index_repositories_on_github_id", unique: true
     t.index ["name"], name: "index_repositories_on_name", unique: true
     t.index ["token"], name: "index_repositories_on_token", unique: true
