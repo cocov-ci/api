@@ -45,7 +45,7 @@ class GitService
       sizes = [dir_size]
       sizes << File.size(at.parent.join("#{commit.sha}.tar"))
       sizes << File.size(at.parent.join("#{commit.sha}.tar.zst"))
-      sizes << File.size(at.parent.join("#{commit.sha}.tar.zst.sha256"))
+      sizes << File.size(at.parent.join("#{commit.sha}.tar.zst.shasum"))
 
       commit.clone_size = sizes.sum
       commit.save!
@@ -65,7 +65,7 @@ class GitService
         FileUtils.rm_rf into
         FileUtils.rm_rf into.parent.join("#{commit.sha}.tar")
         FileUtils.rm_rf into.parent.join("#{commit.sha}.tar.zst")
-        FileUtils.rm_rf into.parent.join("#{commit.sha}.tar.zst.sha256")
+        FileUtils.rm_rf into.parent.join("#{commit.sha}.tar.zst.shasum")
         raise e
       end
     end

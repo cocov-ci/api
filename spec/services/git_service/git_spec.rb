@@ -109,7 +109,7 @@ RSpec.describe GitService::Git do
         path = Pathname.new(d)
         File.write(path.join("#{commit.sha}.tar"), "a" * 100)
         File.write(path.join("#{commit.sha}.tar.zst"), "a" * 50)
-        File.write(path.join("#{commit.sha}.tar.zst.sha256"), "a" * 32)
+        File.write(path.join("#{commit.sha}.tar.zst.shasum"), "a" * 32)
         path.join(commit.sha).mkpath
         File.write(path.join(commit.sha, "file"), "a" * 128)
         expect { git.update_commit_size(commit, at: path.join(commit.sha)) }
