@@ -49,7 +49,13 @@ module V1
     end
 
     def users
-      users = paginating(User.all.order(:login))
+      users = if params[:search].present?
+        User.where("login LIKE :prefix", prefix: "#{params[:search]}%")
+      else
+        User.all
+      end
+
+      users = paginating(users.order(:login))
       counts = RepositoryMember.count_users_permissions(users: users.reject(&:admin?))
 
       render "v1/admin/users", locals: {

@@ -194,6 +194,23 @@ RSpec.describe "V1::Issues" do
       expect(user).to have_key(:permissions)
       expect(user[:permissions]).to eq({ "user" => 0, "admin" => 2, "maintainer" => 1 })
     end
+
+    it "allows searching" do
+      create(:user, login: "foobar")
+      create(:user, login: "foofoo")
+      create(:user, login: "barfoo")
+
+      @user = create(:user, :admin)
+      get "/v1/admin/users",
+        params: { search: "foo" },
+        headers: authenticated
+
+      expect(response).to have_http_status(:ok)
+      all_users = response.json[:users].map { _1.dig(:user, :login) }
+      expect(all_users).to include("foobar")
+      expect(all_users).to include("foofoo")
+      expect(all_users).not_to include("barfoo")
+    end
   end
 
   describe "#users_sync_perms" do
