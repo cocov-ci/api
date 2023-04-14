@@ -96,5 +96,27 @@ module V1
 
       head :no_content
     end
+
+    def repositories
+      repositories = if params[:search].present?
+        Repository.where("name LIKE :prefix", prefix: "#{params[:search]}%")
+      else
+        Repository.all
+      end
+
+      repositories = paginating(repositories.order(:name))
+      counts = RepositoryMember.count_repo_members(ids: repositories.map(&:id))
+
+      render "v1/admin/repositories", locals: {
+        repositories:, counts:
+      }
+    end
+
+    def repositories_delete
+      r = Repository.find(params[:id])
+      r.destroy
+
+      head :no_content
+    end
   end
 end

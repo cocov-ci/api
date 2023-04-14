@@ -64,4 +64,20 @@ class RepositoryMember < ApplicationRecord
       [users.find { _1.github_id == k }.id, v]
     end
   end
+
+  def self.count_repo_members(ids:)
+    conn = ActiveRecord::Base.connection
+    data = conn.execute(<<-SQL.squish)
+      SELECT repository_id, COALESCE(count(*), 0) as count
+      FROM repository_members
+      WHERE repository_id IN (#{ids.map { conn.quote(_1) }.join(",")})
+      GROUP BY repository_id
+    SQL
+
+    data
+      .to_h { |row| [row["repository_id"], row["count"]] }
+      .tap do |result|
+        (ids - result.keys).each { |id| result[id] = 0 }
+      end
+  end
 end

@@ -67,4 +67,22 @@ RSpec.describe RepositoryMember do
     expect(result[u2.id]["maintainer"]).to eq 1
     expect(result[u2.id]["admin"]).to eq 2
   end
+
+  it "counts members for repositories" do
+    u1 = create(:user)
+    u2 = create(:user)
+
+    r1 = create(:repository)
+    r2 = create(:repository)
+    r3 = create(:repository)
+
+    grant(u1, access_to: r1, as: :user)
+    grant(u2, access_to: r1, as: :user)
+    grant(u2, access_to: r2, as: :user)
+
+    result = described_class.count_repo_members(ids: [r1, r2, r3].map(&:id))
+    expect(result[r3.id]).to be_zero
+    expect(result[r2.id]).to eq 1
+    expect(result[r1.id]).to eq 2
+  end
 end

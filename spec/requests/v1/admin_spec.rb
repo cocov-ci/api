@@ -353,4 +353,95 @@ RSpec.describe "V1::Issues" do
       expect(response).to have_http_status(:no_content)
     end
   end
+
+  describe "#repositories" do
+    it "returns forbidden for non-admin users" do
+      get "/v1/admin/repositories",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "lists repositories" do
+      r1 = create(:repository, cache_size: 10)
+      r2 = create(:repository, commits_size: 20)
+      r3 = create(:repository)
+
+      u = create(:user)
+      grant(u, access_to: r3, as: :user)
+      grant(u, access_to: r2, as: :user)
+
+      @user = create(:user, :admin)
+      get "/v1/admin/repositories",
+        headers: authenticated
+
+      expect(response).to have_http_status(:ok)
+      json = response.json
+      expect(json[:repositories].length).to eq 3
+      expect(json[:repositories].find { _1[:id] == r1.id }).to eq({
+        "id" => r1.id,
+        "name" => r1.name,
+        "created_at" => r1.created_at.iso8601,
+        "cache_size" => 10,
+        "commits_size" => 0,
+        "accessible_by_count" => 0
+      })
+      expect(json[:repositories].find { _1[:id] == r2.id }).to eq({
+        "id" => r2.id,
+        "name" => r2.name,
+        "created_at" => r2.created_at.iso8601,
+        "cache_size" => 0,
+        "commits_size" => 20,
+        "accessible_by_count" => 1
+      })
+      expect(json[:repositories].find { _1[:id] == r3.id }).to eq({
+        "id" => r3.id,
+        "name" => r3.name,
+        "created_at" => r3.created_at.iso8601,
+        "cache_size" => 0,
+        "commits_size" => 0,
+        "accessible_by_count" => 1
+      })
+    end
+
+    it "allows searching" do
+      create(:repository, name: "foobar")
+      create(:repository, name: "foofoo")
+      create(:repository, name: "barfoo")
+
+      @user = create(:user, :admin)
+      get "/v1/admin/repositories",
+        params: { search: "foo" },
+        headers: authenticated
+
+      expect(response).to have_http_status(:ok)
+      all_repos = response.json[:repositories].pluck(:name)
+      expect(all_repos).to include("foobar")
+      expect(all_repos).to include("foofoo")
+      expect(all_repos).not_to include("barfoo")
+    end
+  end
+
+  describe "#repositories_delete" do
+    it "returns forbidden for non-admin users" do
+      delete "/v1/admin/repositories/1",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "returns 404 in case repository does not exist" do
+      @user = create(:user, :admin)
+      delete "/v1/admin/repositories/0",
+        headers: authenticated
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "deletes a repository" do
+      r = create(:repository)
+      @user = create(:user, :admin)
+      delete "/v1/admin/repositories/#{r.id}",
+        headers: authenticated
+      expect(response).to have_http_status(:no_content)
+      expect(Repository.find_by(id: r.id)).to be_nil
+    end
+  end
 end

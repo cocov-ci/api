@@ -118,6 +118,8 @@ Rails.application.routes.draw do
     post "/admin/users/:id/sync_perms", to: "admin#users_sync_perms"
     post "/admin/users/:id/logout", to: "admin#users_logout"
     delete "/admin/users/:id", to: "admin#users_delete"
+    get "/admin/repositories", to: "admin#repositories"
+    delete "/admin/repositories/:id", to: "admin#repositories_delete"
 
     # GitHub
     post "/github/events", to: "github_events#create"
