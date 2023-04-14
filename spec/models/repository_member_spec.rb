@@ -42,4 +42,29 @@ RSpec.describe RepositoryMember do
     other_member = described_class.new(github_member_id: member.github_member_id, repository: member.repository)
     expect(other_member).not_to be_valid
   end
+
+  it "counts members per repository level" do
+    u1 = create(:user)
+    u2 = create(:user)
+
+    r1 = create(:repository)
+    r2 = create(:repository)
+    r3 = create(:repository)
+
+    grant(u1, access_to: r1, as: :user)
+    grant(u2, access_to: r1, as: :maintainer)
+    grant(u2, access_to: r2, as: :admin)
+    grant(u2, access_to: r3, as: :admin)
+
+    # u1 has 1 user, nothing else
+    # u2 has 1 maintainer, 2 admin
+
+    result = described_class.count_users_permissions(users: [u1, u2])
+    expect(result[u1.id]["user"]).to eq 1
+    expect(result[u1.id]["maintainer"]).to eq 0
+    expect(result[u1.id]["admin"]).to eq 0
+    expect(result[u2.id]["user"]).to eq 0
+    expect(result[u2.id]["maintainer"]).to eq 1
+    expect(result[u2.id]["admin"]).to eq 2
+  end
 end

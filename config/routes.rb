@@ -113,6 +113,11 @@ Rails.application.routes.draw do
     get "/admin/tool_cache", to: "admin#tool_cache"
     post "/admin/tool_cache/purge", to: "admin#tool_cache_purge"
     delete "/admin/tool_cache/:id", to: "admin#tool_cache_delete"
+    get "/admin/users", to: "admin#users"
+    patch "/admin/users/:id/membership", to: "admin#users_update_membership"
+    post "/admin/users/:id/sync_perms", to: "admin#users_sync_perms"
+    post "/admin/users/:id/logout", to: "admin#users_logout"
+    delete "/admin/users/:id", to: "admin#users_delete"
 
     # GitHub
     post "/github/events", to: "github_events#create"

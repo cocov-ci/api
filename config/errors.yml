@@ -3,6 +3,16 @@ errors:
     status: not_found
     message: The requested resource could not be found.
 
+  admin:
+    cannot_demote_last_admin:
+      status: bad_request
+      message: Cannot demote last system administrator
+    unknown_role:
+      status: bad_request
+      message: Unknown role. valid values are "admin", and "user"
+    cannot_delete_self:
+      status: bad_request
+      message: Cannot delete your own account
   cache_settings:
     cache_disabled:
       status: bad_request

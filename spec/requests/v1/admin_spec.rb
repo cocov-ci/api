@@ -145,4 +145,195 @@ RSpec.describe "V1::Issues" do
       expect(obj[:task]).to eq "purge-tool"
     end
   end
+
+  describe "#users" do
+    it "returns forbidden for non-admin users" do
+      get "/v1/admin/users",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "returns a list of users and permissions" do
+      u1 = create(:user)
+      u2 = create(:user)
+
+      r1 = create(:repository)
+      r2 = create(:repository)
+      r3 = create(:repository)
+
+      grant(u1, access_to: r1, as: :user)
+      grant(u2, access_to: r1, as: :maintainer)
+      grant(u2, access_to: r2, as: :admin)
+      grant(u2, access_to: r3, as: :admin)
+
+      # u1 has 1 user, nothing else
+      # u2 has 1 maintainer, 2 admin
+
+      @user = create(:user, :admin)
+      get "/v1/admin/users",
+        headers: authenticated
+
+      # Admin. No permission data.
+      admin = response.json[:users].find { _1[:user][:id] == @user.id }
+      expect(admin).not_to be_nil
+      expect(admin).to have_key(:user)
+      expect(admin.dig(:user, :login)).to eq @user.login
+      expect(admin).not_to have_key(:permissions)
+
+      user = response.json[:users].find { _1[:user][:id] == u1.id }
+      expect(user).not_to be_nil
+      expect(user).to have_key(:user)
+      expect(user.dig(:user, :login)).to eq u1.login
+      expect(user).to have_key(:permissions)
+      expect(user[:permissions]).to eq({ "user" => 1, "admin" => 0, "maintainer" => 0 })
+
+      user = response.json[:users].find { _1[:user][:id] == u2.id }
+      expect(user).not_to be_nil
+      expect(user).to have_key(:user)
+      expect(user.dig(:user, :login)).to eq u2.login
+      expect(user).to have_key(:permissions)
+      expect(user[:permissions]).to eq({ "user" => 0, "admin" => 2, "maintainer" => 1 })
+    end
+  end
+
+  describe "#users_sync_perms" do
+    it "returns forbidden for non-admin users" do
+      post "/v1/admin/users/1/sync_perms",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "returns 404 if the user does not exist" do
+      @user = create(:user, :admin)
+      post "/v1/admin/users/0/sync_perms",
+        headers: authenticated
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "requests resync for users" do
+      @user = create(:user, :admin)
+      expect do
+        post "/v1/admin/users/#{@user.id}/sync_perms",
+          headers: authenticated
+      end.to enqueue_job
+
+      expect(response).to have_http_status(:no_content)
+    end
+  end
+
+  describe "#users_logout" do
+    it "returns forbidden for non-admin users" do
+      post "/v1/admin/users/1/logout",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "returns 404 if the user does not exist" do
+      @user = create(:user, :admin)
+      post "/v1/admin/users/0/logout",
+        headers: authenticated
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "requests resync for users" do
+      @user = create(:user, :admin)
+
+      other = create(:user)
+      other.tokens.create(kind: :auth)
+
+      post "/v1/admin/users/#{other.id}/logout",
+        headers: authenticated
+
+      expect(response).to have_http_status(:no_content)
+
+      expect(other.tokens.count).to be_zero
+    end
+  end
+
+  describe "#users_delete" do
+    it "returns forbidden for non-admin users" do
+      delete "/v1/admin/users/1",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "returns 404 if user does not exist" do
+      @user = create(:user, :admin)
+      delete "/v1/admin/users/0",
+        headers: authenticated
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "deletes a single user" do
+      other = create(:user)
+
+      @user = create(:user, :admin)
+      delete "/v1/admin/users/#{other.id}",
+        headers: authenticated
+
+      expect(response).to have_http_status(:no_content)
+
+      expect(User.find_by(id: other.id)).to be_nil
+    end
+
+    it "refuses to delete the current authenticated user" do
+      @user = create(:user, :admin)
+      delete "/v1/admin/users/#{@user.id}",
+        headers: authenticated
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response).to be_a_json_error(:admin, :cannot_delete_self)
+    end
+  end
+
+  describe "#users_update_membership" do
+    it "returns forbidden for non-admin users" do
+      delete "/v1/admin/users/1",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "returns 404 if user does not exist" do
+      @user = create(:user, :admin)
+      delete "/v1/admin/users/0",
+        headers: authenticated
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "rejects unknown roles" do
+      @user = create(:user, :admin)
+      patch "/v1/admin/users/#{@user.id}/membership",
+        params: { role: :staff },
+        headers: authenticated
+      expect(response).to have_http_status(:bad_request)
+      expect(response).to be_a_json_error(:admin, :unknown_role)
+    end
+
+    it "refuses to demote the last admin" do
+      @user = create(:user, :admin)
+      patch "/v1/admin/users/#{@user.id}/membership",
+        params: { role: :user },
+        headers: authenticated
+      expect(response).to have_http_status(:bad_request)
+      expect(response).to be_a_json_error(:admin, :cannot_demote_last_admin)
+    end
+
+    it "updates admin to user" do
+      @user = create(:user, :admin)
+      other = create(:user, :admin)
+      patch "/v1/admin/users/#{other.id}/membership",
+        params: { role: :user },
+        headers: authenticated
+      expect(response).to have_http_status(:no_content)
+    end
+
+    it "updates user to admin" do
+      @user = create(:user, :admin)
+      other = create(:user)
+      patch "/v1/admin/users/#{other.id}/membership",
+        params: { role: :admin },
+        headers: authenticated
+      expect(response).to have_http_status(:no_content)
+    end
+  end
 end

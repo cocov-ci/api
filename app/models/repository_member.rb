@@ -38,4 +38,30 @@ class RepositoryMember < ApplicationRecord
 
     :user
   end
+
+  def self.count_users_permissions(users:)
+    raise ArgumentError, "Only User objects are accepted by #count_users_permissions" if users.any? { !_1.is_a? User }
+
+    conn = ActiveRecord::Base.connection
+    query = %{
+        SELECT repository_members.level AS level,
+               count(repository_members.level) AS count,
+               repository_members.github_member_id AS github_member_id
+        FROM repository_members
+        WHERE github_member_id IN (#{users.map { conn.quote(_1.github_id) }.join(",")})
+        GROUP BY level, github_member_id
+    }
+    data = conn.execute(query)
+    result = Hash.new { [] }
+    data.each do |row|
+      result[row["github_member_id"]] += [row.slice("level", "count").with_indifferent_access]
+    end
+
+    result.to_h do |k, v|
+      v = levels.transform_values do |val|
+        v.find { _1["level"] == val }&.fetch(:count) || 0
+      end
+      [users.find { _1.github_id == k }.id, v]
+    end
+  end
 end

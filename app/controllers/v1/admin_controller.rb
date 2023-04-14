@@ -47,5 +47,48 @@ module V1
 
       head :no_content
     end
+
+    def users
+      users = paginating(User.all.order(:login))
+      counts = RepositoryMember.count_users_permissions(users: users.reject(&:admin?))
+
+      render "v1/admin/users", locals: {
+        users:, counts:
+      }
+    end
+
+    def users_sync_perms
+      user = User.find(params[:id])
+      UpdateUserPermissionsJob.perform_later(user.id)
+      head :no_content
+    end
+
+    def users_logout
+      user = User.find(params[:id])
+      user.tokens.where(kind: :auth).destroy_all
+      head :no_content
+    end
+
+    def users_delete
+      user = User.find(params[:id])
+      error! :admin, :cannot_delete_self if user.id == @user.id
+
+      user.destroy
+
+      head :no_content
+    end
+
+    def users_update_membership
+      user = User.find(params[:id])
+      role = params[:role].to_s
+      error! :admin, :unknown_role unless %w[user admin].include? role
+
+      error! :admin, :cannot_demote_last_admin if user.admin? && role != "admin" && User.where(admin: true).count == 1
+
+      user.admin = role == "admin"
+      user.save!
+
+      head :no_content
+    end
   end
 end
