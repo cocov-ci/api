@@ -4,15 +4,14 @@
 #
 # Table name: users
 #
-#  id            :bigint           not null, primary key
-#  login         :citext           not null
-#  github_id     :integer          not null
-#  admin         :boolean          default(FALSE), not null
-#  github_token  :text             not null
-#  github_scopes :text             not null
-#  avatar_url    :text
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
+#  id           :bigint           not null, primary key
+#  login        :citext           not null
+#  github_id    :integer          not null
+#  admin        :boolean          default(FALSE), not null
+#  github_token :text             not null
+#  avatar_url   :text
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
 #
 # Indexes
 #
@@ -28,7 +27,6 @@ RSpec.describe User do
     login
     github_id
     github_token
-    github_scopes
   ]
 
   it "does not allow duplicated github ids" do
