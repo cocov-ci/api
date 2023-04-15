@@ -120,6 +120,9 @@ Rails.application.routes.draw do
     delete "/admin/users/:id", to: "admin#users_delete"
     get "/admin/repositories", to: "admin#repositories"
     delete "/admin/repositories/:id", to: "admin#repositories_delete"
+    get "/admin/service_tokens", to: "admin#service_tokens"
+    post "/admin/service_tokens", to: "admin#service_tokens_create"
+    delete "/admin/service_tokens/:id", to: "admin#service_tokens_delete"
 
     # GitHub
     post "/github/events", to: "github_events#create"

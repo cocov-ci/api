@@ -118,5 +118,28 @@ module V1
 
       head :no_content
     end
+
+    def service_tokens
+      render "v1/admin/service_tokens", locals: {
+        tokens: ServiceToken.includes(:owner).order(:id)
+      }
+    end
+
+    def service_tokens_create
+      description = params[:description]
+      error! :admin, :service_token_description_missing if description.blank?
+
+      token = ServiceToken.create!(owner: @user, description:)
+      render "v1/admin/service_tokens_create",
+        status: :created,
+        locals: { token: }
+    end
+
+    def service_tokens_delete
+      token = ServiceToken.find(params[:id])
+      token.destroy
+
+      head :no_content
+    end
   end
 end

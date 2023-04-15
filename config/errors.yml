@@ -4,6 +4,9 @@ errors:
     message: The requested resource could not be found.
 
   admin:
+    service_token_description_missing:
+      status: bad_request
+      message: The parameter "description" is required
     cannot_demote_last_admin:
       status: bad_request
       message: Cannot demote last system administrator

@@ -444,4 +444,97 @@ RSpec.describe "V1::Issues" do
       expect(Repository.find_by(id: r.id)).to be_nil
     end
   end
+
+  describe "#service_tokens" do
+    it "returns forbidden for non-admin users" do
+      get "/v1/admin/service_tokens",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "returns a list of service tokens" do
+      @user = create(:user, :admin)
+      used_at = Time.now.utc
+      token1 = create(:service_token, last_used_at: used_at, owner: @user)
+      token2 = create(:service_token, owner: @user)
+
+      get "/v1/admin/service_tokens",
+        headers: authenticated
+      expect(response).to have_http_status(:ok)
+      json = response.json
+
+      expect(json[:tokens].length).to eq 2
+      expect(json[:tokens].first).to eq({
+        "id" => token1.id,
+        "description" => token1.description,
+        "created_by" => @user.login,
+        "created_at" => token1.created_at.iso8601,
+        "last_used_at" => used_at.iso8601
+      })
+      expect(json[:tokens].last).to eq({
+        "id" => token2.id,
+        "description" => token2.description,
+        "created_by" => @user.login,
+        "created_at" => token2.created_at.iso8601,
+        "last_used_at" => nil
+      })
+    end
+  end
+
+  describe "#service_tokens_create" do
+    it "returns forbidden for non-admin users" do
+      post "/v1/admin/service_tokens",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "rejects tokens without description" do
+      @user = create(:user, :admin)
+      post "/v1/admin/service_tokens",
+        headers: authenticated
+      expect(response).to have_http_status(:bad_request)
+      expect(response).to be_a_json_error(:admin, :service_token_description_missing)
+    end
+
+    it "creates a new token" do
+      @user = create(:user, :admin)
+      post "/v1/admin/service_tokens",
+        params: { description: "Test" },
+        headers: authenticated
+      expect(response).to have_http_status(:created)
+      token = ServiceToken.last
+      expect(response.json).to eq({
+        "id" => token.id,
+        "description" => token.description,
+        "created_by" => @user.login,
+        "created_at" => token.created_at.iso8601,
+        "last_used_at" => nil
+      })
+    end
+  end
+
+  describe "#service_tokens_delete" do
+    it "returns forbidden for non-admin users" do
+      delete "/v1/admin/service_tokens/1",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "returns 404 in case token does not exist" do
+      @user = create(:user, :admin)
+      delete "/v1/admin/service_tokens/0",
+        headers: authenticated
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "deletes a token" do
+      @user = create(:user, :admin)
+      token = create(:service_token, owner: @user)
+      delete "/v1/admin/service_tokens/#{token.id}",
+        headers: authenticated
+
+      expect(response).to have_http_status(:no_content)
+      expect(ServiceToken.find_by(id: token.id)).to be_nil
+    end
+  end
 end
