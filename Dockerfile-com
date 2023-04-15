@@ -88,4 +88,4 @@ ENV PIDFILE=/dev/null
 ENV RAILS_LOG_TO_STDOUT=true
 
 EXPOSE 3000/tcp
-CMD ["rails", "s", "--binding=0.0.0.0", "--pid=/dev/null"]
+CMD ["bundle", "exec", "rails", "s", "--binding=0.0.0.0", "--pid=/dev/null"]
