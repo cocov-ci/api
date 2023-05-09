@@ -19,9 +19,11 @@ RUN addgroup -gid 1000 cocov && \
     adduser --shell /bin/bash --disabled-password \
    --uid 1000 --ingroup cocov cocov
 
-USER cocov
-
 WORKDIR /app
+
+RUN chown -R cocov:cocov /app
+
+USER cocov
 
 RUN bundle config set --global deployment true
 RUN bundle config set --global without development test
@@ -31,6 +33,8 @@ ENV PATH $GEM_HOME/bin:$GEM_HOME/gems/bin:$PATH
 
 COPY --chown=cocov .ruby-version .
 COPY --chown=cocov Gemfile* ./
+
+RUN ls -latch .
 RUN bundle install
 
 COPY --chown=cocov app ./app
