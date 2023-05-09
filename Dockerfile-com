@@ -9,7 +9,7 @@ ENV BUNDLE_JOBS=2
 
 WORKDIR /tmp
 
-RUN apt update && apt install -y zstd cmake
+RUN apt update && apt install -y zstd cmake vim
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o awscliv2.zip && \
     unzip awscliv2.zip && \
     ./aws/install && \
@@ -29,22 +29,22 @@ RUN bundle config set --global without development test
 ENV GEM_HOME="/usr/local/bundle"
 ENV PATH $GEM_HOME/bin:$GEM_HOME/gems/bin:$PATH
 
-COPY .ruby-version .
-COPY Gemfile* ./
+COPY --chown=cocov .ruby-version .
+COPY --chown=cocov Gemfile* ./
 RUN bundle install
 
-COPY app ./app
-COPY bin ./bin
-COPY config ./config
-COPY db ./db
-COPY lib ./lib
+COPY --chown=cocov app ./app
+COPY --chown=cocov bin ./bin
+COPY --chown=cocov config ./config
+COPY --chown=cocov db ./db
+COPY --chown=cocov lib ./lib
 RUN mkdir log
-COPY public ./public
+COPY --chown=cocov public ./public
 RUN mkdir tmp
-COPY vendor ./vendor
-COPY config.ru .
-COPY LICENSE .
-COPY Rakefile .
+COPY --chown=cocov vendor ./vendor
+COPY --chown=cocov config.ru .
+COPY --chown=cocov LICENSE .
+COPY --chown=cocov Rakefile .
 
 # Garbage Collection Tunning
 
