@@ -3,15 +3,17 @@
 require "sidekiq/web"
 
 Rails.application.routes.draw do
+  mount Sidekiq::Web => "/sidekiq", :constraints => Cocov::SidekiqRouteConstraint.new
+
+  # Probes
+  get "/system/probes/startup", to: "probes#startup"
+  get "/system/probes/health", to: "probes#health"
+
+  # Authentication
   post "/auth/begin", to: "session#begin_authentication"
   post "/auth/exchange", to: "session#exchange"
 
-  mount Sidekiq::Web => "/sidekiq", :constraints => Cocov::SidekiqRouteConstraint.new
-
   namespace :v1 do
-    # Ping
-    get "/ping", to: "ping#index"
-
     # Secrets
     get "/secrets", to: "secrets#index"
     post "/secrets", to: "secrets#create"
