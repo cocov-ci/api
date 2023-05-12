@@ -17,7 +17,7 @@ module Cocov
 
       def start
         @thread = Thread.new { run }
-        Timeout.timeout(2) { :wait until @running }
+        Timeout.timeout(5) { sleep(0.01) until @running }
       end
 
       private
