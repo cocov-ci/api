@@ -43,6 +43,8 @@ gem "rouge", "~> 4.0"
 
 gem "webrick", "~> 1.8.1", require: false
 
+gem "silencer", require: false
+
 group :development, :test do
   gem "factory_bot_rails"
   gem "faker"
