@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ProbesController < ApplicationController
   def health
     render json: { pong: true }
