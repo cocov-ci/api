@@ -498,6 +498,7 @@ RSpec.describe "V1::Issues" do
 
     it "creates a new token" do
       @user = create(:user, :admin)
+      allow(SecureRandom).to receive(:hex).with(32).and_return("yay")
       post "/v1/admin/service_tokens",
         params: { description: "Test" },
         headers: authenticated
@@ -508,7 +509,8 @@ RSpec.describe "V1::Issues" do
         "description" => token.description,
         "created_by" => @user.login,
         "created_at" => token.created_at.iso8601,
-        "last_used_at" => nil
+        "last_used_at" => nil,
+        "token_value" => "cos_yay"
       })
     end
   end
