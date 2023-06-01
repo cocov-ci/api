@@ -141,5 +141,16 @@ module V1
 
       head :no_content
     end
+
+    def sidebar_counters
+      tokens = ServiceToken.count
+      secrets = Secret.where(scope: :organization).count
+      repositories = Repository.count
+      users = User.count
+
+      render "v1/admin/sidebar_counters", locals: {
+        tokens:, secrets:, repositories:, users:
+      }
+    end
   end
 end

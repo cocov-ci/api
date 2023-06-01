@@ -110,6 +110,7 @@ Rails.application.routes.draw do
     patch "/cache/tools/:name_hash/touch", to: "tool_cache#touch"
 
     # Admin
+    get "/admin/sidebar_counters", to: "admin#sidebar_counters"
     post "/admin/sidekiq_panel_token", to: "admin#sidekiq_panel_token"
     get "/admin/sidekiq_panel", to: "admin#sidekiq_panel"
     get "/admin/tool_cache", to: "admin#tool_cache"

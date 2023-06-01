@@ -539,4 +539,38 @@ RSpec.describe "V1::Issues" do
       expect(ServiceToken.find_by(id: token.id)).to be_nil
     end
   end
+
+  describe "#sidebar_counters" do
+    it "returns forbidden for non-admin users" do
+      get "/v1/admin/sidebar_counters",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "returns a list of counters for sidebar items" do
+      stub_crypto_key!
+
+      @user = create(:user, :admin)
+      create(:service_token, owner: @user)
+      create(:service_token, owner: @user)
+      create(:service_token, owner: @user)
+      create(:service_token, owner: @user)
+
+      create(:secret, name: "admin_secret_a", scope: :organization, owner: @user)
+      create(:secret, name: "admin_secret_b", scope: :organization, owner: @user)
+      create(:secret, name: "admin_secret_c", scope: :organization, owner: @user)
+
+      create(:repository)
+      create(:repository)
+
+      get "/v1/admin/sidebar_counters",
+        headers: authenticated
+
+      expect(response).to have_http_status :ok
+      expect(response.json["tokens"]).to eq 4
+      expect(response.json["secrets"]).to eq 3
+      expect(response.json["repositories"]).to eq 2
+      expect(response.json["users"]).to eq 1
+    end
+  end
 end
