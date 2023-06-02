@@ -383,7 +383,8 @@ RSpec.describe "V1::Issues" do
         "created_at" => r1.created_at.iso8601,
         "cache_size" => 10,
         "commits_size" => 0,
-        "accessible_by_count" => 0
+        "accessible_by_count" => 0,
+        "description" => r1.description
       })
       expect(json[:repositories].find { _1[:id] == r2.id }).to eq({
         "id" => r2.id,
@@ -391,7 +392,8 @@ RSpec.describe "V1::Issues" do
         "created_at" => r2.created_at.iso8601,
         "cache_size" => 0,
         "commits_size" => 20,
-        "accessible_by_count" => 1
+        "accessible_by_count" => 1,
+        "description" => r2.description
       })
       expect(json[:repositories].find { _1[:id] == r3.id }).to eq({
         "id" => r3.id,
@@ -399,7 +401,8 @@ RSpec.describe "V1::Issues" do
         "created_at" => r3.created_at.iso8601,
         "cache_size" => 0,
         "commits_size" => 0,
-        "accessible_by_count" => 1
+        "accessible_by_count" => 1,
+        "description" => r3.description
       })
     end
 
