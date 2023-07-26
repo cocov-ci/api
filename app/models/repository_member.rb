@@ -40,6 +40,8 @@ class RepositoryMember < ApplicationRecord
   end
 
   def self.count_users_permissions(users:)
+    return {} if users.empty?
+
     raise ArgumentError, "Only User objects are accepted by #count_users_permissions" if users.any? { !_1.is_a? User }
 
     conn = ActiveRecord::Base.connection
