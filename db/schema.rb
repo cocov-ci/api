@@ -194,6 +194,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_15_014042) do
     t.index ["commit_id"], name: "index_issues_on_commit_id"
     t.index ["ignore_rule_id"], name: "index_issues_on_ignore_rule_id"
     t.index ["ignore_user_id"], name: "index_issues_on_ignore_user_id"
+    t.index ["ignored_at"], name: "index_issues_on_ignored_at"
     t.index ["uid", "commit_id"], name: "index_issues_on_uid_and_commit_id", unique: true
     t.index ["uid"], name: "index_issues_on_uid"
   end

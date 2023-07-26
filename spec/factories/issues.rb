@@ -26,6 +26,7 @@
 #  index_issues_on_commit_id          (commit_id)
 #  index_issues_on_ignore_rule_id     (ignore_rule_id)
 #  index_issues_on_ignore_user_id     (ignore_user_id)
+#  index_issues_on_ignored_at         (ignored_at)
 #  index_issues_on_uid                (uid)
 #  index_issues_on_uid_and_commit_id  (uid,commit_id) UNIQUE
 #
