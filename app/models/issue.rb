@@ -82,8 +82,16 @@ class Issue < ApplicationRecord
   end
 
   def update_commit_counter_cache
-    commit.issues_count = Issue.count_for_commit(commit_id)["active"]
-    commit.save
+    ActiveRecord::Base.transaction do
+      count = Issue.count_for_commit(commit_id)["active"]
+      commit.issues_count = count
+      commit.save!
+
+      Branch.where(head_id: commit_id).each do |b|
+        b.issues = count
+        b.save!
+      end
+    end
   end
 
   def ignored_by

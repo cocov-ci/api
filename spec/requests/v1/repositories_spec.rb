@@ -23,6 +23,35 @@ RSpec.describe "V1::Repositories" do
       expect(r_repo[:coverage]).to eq 90
       expect(r_repo[:issues]).to eq 2
     end
+
+    it "correctly counts active issues" do
+      issue = create(:issue, :with_commit)
+      commit = issue.commit
+      repo = commit.repository
+      branch = repo.branches.create! name: "master", issues: 1, coverage: 90
+      branch.head = commit
+      branch.save!
+
+      @user = create(:user)
+      grant(@user, access_to: repo)
+
+      get "/v1/repositories", params: { per_page: 1 }, headers: authenticated
+      expect(response).to have_http_status :ok
+      json = response.json
+
+      r_repo = json.dig("repositories", 0)
+      expect(r_repo[:issues]).to eq 1
+
+      issue.ignore!(user: @user, reason: nil)
+
+      get "/v1/repositories", params: { per_page: 1 }, headers: authenticated
+      expect(response).to have_http_status(:ok)
+      json = response.json
+
+      r_repo = json.dig("repositories", 0)
+      expect(r_repo[:issues]).to eq 0
+
+    end
   end
 
   describe "#create" do
