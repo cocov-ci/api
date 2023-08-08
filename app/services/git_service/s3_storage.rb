@@ -36,5 +36,10 @@ class GitService
     rescue Aws::S3::Errors::NoSuchKey
       file_not_found! path
     end
+
+    def destroy_repository(repository)
+      key = repository_path(repository.name)
+      @bucket.objects(prefix: "#{key}/").batch_delete!
+    end
   end
 end

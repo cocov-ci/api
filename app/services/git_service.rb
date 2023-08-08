@@ -14,7 +14,7 @@ class GitService < ApplicationService
       end
     end
 
-    delegate :commit_path, to: :storage
+    delegate :commit_path, :destroy_repository, to: :storage
 
     def clone_commit(commit)
       commit.locking(timeout: 5.minutes) do

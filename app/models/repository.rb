@@ -26,6 +26,7 @@ class Repository < ApplicationRecord
   MAX_CACHE_SIZE = Cocov::REPOSITORY_CACHE_MAX_SIZE
 
   before_validation :ensure_token
+  after_destroy :cleanup_storage
 
   validates :name, presence: true, uniqueness: true
   validates :github_id, presence: true, uniqueness: true
@@ -116,5 +117,9 @@ class Repository < ApplicationRecord
 
   def ensure_token
     self.token = "crt_#{SecureRandom.hex(21)}" if token.blank?
+  end
+
+  def cleanup_storage
+    GitService.destroy_repository(self)
   end
 end

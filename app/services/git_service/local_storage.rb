@@ -26,5 +26,10 @@ class GitService
       file_not_found! path unless Pathname.new(path).exist?
       File.read(path)
     end
+
+    def destroy_repository(repository)
+      path = repo_path(repository.name)
+      FileUtils.rm_rf path
+    end
   end
 end
