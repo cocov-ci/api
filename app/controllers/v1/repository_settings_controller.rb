@@ -39,6 +39,8 @@ module V1
       name_changed = @repository.name_changed?
       @repository.save!
 
+      UpdateRepoPermissionsJob.perform_later(repo.id)
+
       return render json: { new_name: repo.name } if name_changed
 
       head :no_content

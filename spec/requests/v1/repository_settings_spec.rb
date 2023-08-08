@@ -32,9 +32,12 @@ RSpec.describe "V1::RepositorySettings" do
       allow(gh_app).to receive(:repo).with(repo.github_id).and_return(fake_repo)
       allow(fake_repo).to receive(:name).and_return("foobar")
       allow(fake_repo).to receive(:description).and_return(repo.description)
+      allow(fake_repo).to receive(:id).and_return 10
 
-      post "/v1/repositories/#{repo.name}/settings/sync-github",
-        headers: authenticated
+      expect do
+        post "/v1/repositories/#{repo.name}/settings/sync-github",
+          headers: authenticated
+      end.to enqueue_job
 
       expect(response).to have_http_status(:ok)
       expect(response.json).to eq({ "new_name" => "foobar" })
@@ -48,9 +51,12 @@ RSpec.describe "V1::RepositorySettings" do
       allow(gh_app).to receive(:repo).with(repo.github_id).and_return(fake_repo)
       allow(fake_repo).to receive(:name).and_return(repo.name)
       allow(fake_repo).to receive(:description).and_return("foobar")
+      allow(fake_repo).to receive(:id).and_return(10)
 
-      post "/v1/repositories/#{repo.name}/settings/sync-github",
-        headers: authenticated
+      expect do
+        post "/v1/repositories/#{repo.name}/settings/sync-github",
+          headers: authenticated
+      end.to enqueue_job
 
       expect(response).to have_http_status(:no_content)
       expect(repo.reload.description).to eq "foobar"
