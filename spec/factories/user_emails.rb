@@ -21,7 +21,7 @@
 #
 FactoryBot.define do
   factory :user_email do
-    email { Faker::Internet.safe_email }
+    email { Faker::Internet.email }
     user { nil }
 
     trait :with_user do

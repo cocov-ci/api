@@ -152,7 +152,7 @@ RSpec.describe "Sessions" do
 
       emails = {}
       email = proc do |verified|
-        em = Faker::Internet.safe_email
+        em = Faker::Internet.email
         dbl = double("email-resource")
         allow(dbl).to receive(:email).and_return(em)
         allow(dbl).to receive(:verified?).and_return(verified)
@@ -207,7 +207,7 @@ RSpec.describe "Sessions" do
 
       emails = {}
       email = proc do |verified|
-        em = Faker::Internet.safe_email
+        em = Faker::Internet.email
         dbl = double("email-resource")
         allow(dbl).to receive(:email).and_return(em)
         allow(dbl).to receive(:verified?).and_return(verified)
