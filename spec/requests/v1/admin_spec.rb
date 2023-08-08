@@ -441,10 +441,10 @@ RSpec.describe "V1::Issues" do
     it "deletes a repository" do
       r = create(:repository)
       @user = create(:user, :admin)
-      delete "/v1/admin/repositories/#{r.id}",
-        headers: authenticated
-      expect(response).to have_http_status(:no_content)
-      expect(Repository.find_by(id: r.id)).to be_nil
+      expect do
+        delete "/v1/admin/repositories/#{r.id}",
+          headers: authenticated
+      end.to enqueue_job
     end
   end
 

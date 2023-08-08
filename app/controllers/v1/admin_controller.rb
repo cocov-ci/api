@@ -114,7 +114,7 @@ module V1
 
     def repositories_delete
       r = Repository.find(params[:id])
-      r.destroy
+      DestroyRepositoryJob.perform_later(r.id)
 
       head :no_content
     end
