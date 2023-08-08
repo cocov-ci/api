@@ -87,7 +87,7 @@ class Issue < ApplicationRecord
       commit.issues_count = count
       commit.save!
 
-      Branch.where(head_id: commit_id).each do |b|
+      Branch.where(head_id: commit_id).find_each do |b|
         b.issues = count
         b.save!
       end

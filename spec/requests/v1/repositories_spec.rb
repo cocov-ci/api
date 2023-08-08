@@ -50,7 +50,6 @@ RSpec.describe "V1::Repositories" do
 
       r_repo = json.dig("repositories", 0)
       expect(r_repo[:issues]).to eq 0
-
     end
   end
 
