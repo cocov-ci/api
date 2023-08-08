@@ -83,8 +83,7 @@ RSpec.describe ProcessCoverageJob do
   it "ignores excluded files" do
     manifest = double(:manifest)
     cov = Cocov::Manifest::V01Alpha::Coverage.new(min_percent: 20)
-    allow(manifest).to receive(:coverage).and_return(cov)
-    allow(manifest).to receive(:path_excluded?).and_return(true)
+    allow(manifest).to receive_messages(coverage: cov, path_excluded?: true)
     allow(ManifestService).to receive(:manifest_for_commit).with(anything).and_return(manifest)
 
     app = double(:app)

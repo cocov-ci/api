@@ -45,8 +45,7 @@ RSpec.describe GitService::S3Storage do
     fake_repo = double(:repo)
     allow(fake_repo).to receive(:name).and_return(repo_name)
     fake_commit = double(:commit)
-    allow(fake_commit).to receive(:sha).and_return(commit_sha)
-    allow(fake_commit).to receive(:repository).and_return(fake_repo)
+    allow(fake_commit).to receive_messages(sha: commit_sha, repository: fake_repo)
 
     expect(GitService::Git).to receive(:clone).with(fake_commit, into: anything)
 

@@ -12,7 +12,7 @@ module TimeNormalizer
     def normalize_time_array(range, data, last_known)
       # In case data is empty, there's not much we can do. Just synthesise it
       # from the provided range
-      return range.map { |d| { date: d, value: last_known } } if data.length.zero?
+      return range.map { |d| { date: d, value: last_known } } if data.empty?
 
       [].tap do |arr|
         range.each.with_index do |ex, idx|

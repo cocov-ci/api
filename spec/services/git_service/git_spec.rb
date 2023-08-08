@@ -15,8 +15,7 @@ RSpec.describe GitService::Git do
       allow(fake_repo).to receive(:name).and_return("the_repo")
 
       fake_commit = double(:commit)
-      allow(fake_commit).to receive(:repository).and_return(fake_repo)
-      allow(fake_commit).to receive(:sha).and_return "the_sha"
+      allow(fake_commit).to receive_messages(repository: fake_repo, sha: "the_sha")
       stub_const("Cocov::GITHUB_ORGANIZATION_NAME", "the_org")
 
       expected_commands = [

@@ -8,7 +8,7 @@ class WebhookProcessorService
 
     def validate
       changes = event[:changes].keys.map(&:to_sym)
-      (WANTED_CHANGES & changes).any?
+      WANTED_CHANGES.intersect?(changes)
     end
 
     def handle
