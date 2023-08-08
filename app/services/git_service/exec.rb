@@ -6,7 +6,7 @@ class GitService
       attr_reader :stdout, :stderr, :status, :cmd, :env
 
       def initialize(status, stdout, stderr, cmd, env)
-        super("Process #{cmd.split.first} exited with status #{status}")
+        super("Process #{cmd.split.first} exited with status #{status}: #{stdout}\n#{stderr}")
         @status = status
         @stdout = stdout
         @stderr = stderr
