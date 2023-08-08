@@ -90,10 +90,7 @@ RSpec.describe "V1::Repositories" do
       gh_app = double(:github)
       allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
       repo = double(:repo)
-      allow(repo).to receive(:name).and_return("foobar")
-      allow(repo).to receive(:default_branch).and_return("master")
-      allow(repo).to receive(:description).and_return("foos the bar")
-      allow(repo).to receive(:id).and_return(10_000)
+      allow(repo).to receive_messages(name: "foobar", default_branch: "master", description: "foos the bar", id: 10_000)
       expect(gh_app).to receive(:repo).with("#{@github_organization_name}/foobar").and_return(repo)
 
       post "/v1/repositories", params: { name: "foobar" }, headers: authenticated

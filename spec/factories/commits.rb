@@ -35,7 +35,7 @@ FactoryBot.define do
   factory :commit do
     sha { SecureRandom.hex(32) }
     author_name { Faker::Name.name }
-    author_email { Faker::Internet.safe_email }
+    author_email { Faker::Internet.email }
     message { "Commit message" }
     user_id { nil }
     issues_count { 0 }

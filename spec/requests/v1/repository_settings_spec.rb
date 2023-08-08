@@ -30,9 +30,7 @@ RSpec.describe "V1::RepositorySettings" do
       allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
       fake_repo = double(:fake_repo)
       allow(gh_app).to receive(:repo).with(repo.github_id).and_return(fake_repo)
-      allow(fake_repo).to receive(:name).and_return("foobar")
-      allow(fake_repo).to receive(:description).and_return(repo.description)
-      allow(fake_repo).to receive(:id).and_return 10
+      allow(fake_repo).to receive_messages(name: "foobar", description: repo.description, id: 10)
 
       expect do
         post "/v1/repositories/#{repo.name}/settings/sync-github",
@@ -49,9 +47,7 @@ RSpec.describe "V1::RepositorySettings" do
       allow(Cocov::GitHub).to receive(:app).and_return(gh_app)
       fake_repo = double(:fake_repo)
       allow(gh_app).to receive(:repo).with(repo.github_id).and_return(fake_repo)
-      allow(fake_repo).to receive(:name).and_return(repo.name)
-      allow(fake_repo).to receive(:description).and_return("foobar")
-      allow(fake_repo).to receive(:id).and_return(10)
+      allow(fake_repo).to receive_messages(name: repo.name, description: "foobar", id: 10)
 
       expect do
         post "/v1/repositories/#{repo.name}/settings/sync-github",

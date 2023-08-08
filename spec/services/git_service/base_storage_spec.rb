@@ -36,8 +36,7 @@ RSpec.describe GitService::BaseStorage do
         fake_repo = double(:repo)
         allow(fake_repo).to receive(:name).and_return(repo_name)
         fake_commit = double(:commit)
-        allow(fake_commit).to receive(:sha).and_return(commit_sha)
-        allow(fake_commit).to receive(:repository).and_return(fake_repo)
+        allow(fake_commit).to receive_messages(sha: commit_sha, repository: fake_repo)
 
         expect(storage.commit_path(fake_commit)).to be_a Pathname
         expect(storage.commit_path(fake_commit).to_s).to eq "/tmp/#{repo_sha}/#{commit_sha}"
@@ -58,8 +57,7 @@ RSpec.describe GitService::BaseStorage do
         fake_repo = double(:repo)
         allow(fake_repo).to receive(:name).and_return(repo_name)
         fake_commit = double(:commit)
-        allow(fake_commit).to receive(:sha).and_return(commit_sha)
-        allow(fake_commit).to receive(:repository).and_return(fake_repo)
+        allow(fake_commit).to receive_messages(sha: commit_sha, repository: fake_repo)
 
         expect(storage.commit_path(fake_commit)).to be_a String
         expect(storage.commit_path(fake_commit)).to eq "/tmp/#{repo_sha}/#{commit_sha}"

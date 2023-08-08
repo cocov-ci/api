@@ -143,26 +143,23 @@ RSpec.describe "Sessions" do
         scope: "user:email"
       })
 
-      usr = double(:user)
-      usr_usr = double(:user_user)
-      allow(usr).to receive(:user).and_return(usr_usr)
-      allow(usr_usr).to receive(:login).and_return("dummy")
-      allow(usr_usr).to receive(:avatar_url).and_return(nil)
-      allow(usr_usr).to receive(:id).and_return(27)
-
       emails = {}
-      email = proc do |verified|
-        em = Faker::Internet.safe_email
+      email = lambda do |verified|
+        em = Faker::Internet.email
         dbl = double("email-resource")
-        allow(dbl).to receive(:email).and_return(em)
-        allow(dbl).to receive(:verified?).and_return(verified)
+        allow(dbl).to receive_messages(email: em, verified?: verified)
         emails[em] = verified
         dbl
       end
 
-      allow(usr).to receive(:emails).and_return([
-                                                  email[true], email[false], email[true]
-                                                ])
+      usr = double(:user)
+      usr_usr = double(:user_user)
+      allow(usr).to receive_messages(user: usr_usr, emails: [
+                                       email[true], email[false], email[true]
+                                     ])
+      allow(usr_usr).to receive_messages(login: "dummy", avatar_url: nil, id: 27)
+
+      emails = {}
 
       expect(Cocov::GitHub).to receive(:user_membership).with("dummy").and_return(:member)
       allow(Cocov::GitHub).to receive(:for_user).with("gh-token").and_return(usr)
@@ -198,26 +195,21 @@ RSpec.describe "Sessions" do
         scope: "user:email"
       })
 
-      usr = double(:user)
-      usr_usr = double(:user_user)
-      allow(usr).to receive(:user).and_return(usr_usr)
-      allow(usr_usr).to receive(:login).and_return("dummy")
-      allow(usr_usr).to receive(:avatar_url).and_return(nil)
-      allow(usr_usr).to receive(:id).and_return(27)
-
       emails = {}
-      email = proc do |verified|
-        em = Faker::Internet.safe_email
+      email = lambda do |verified|
+        em = Faker::Internet.email
         dbl = double("email-resource")
-        allow(dbl).to receive(:email).and_return(em)
-        allow(dbl).to receive(:verified?).and_return(verified)
+        allow(dbl).to receive_messages(email: em, verified?: verified)
         emails[em] = verified
         dbl
       end
 
-      allow(usr).to receive(:emails).and_return([
-                                                  email[true], email[false], email[true]
-                                                ])
+      usr = double(:user)
+      usr_usr = double(:user_user)
+      allow(usr).to receive_messages(user: usr_usr, emails: [
+                                       email[true], email[false], email[true]
+                                     ])
+      allow(usr_usr).to receive_messages(login: "dummy", avatar_url: nil, id: 27)
 
       expect(Cocov::GitHub).to receive(:user_membership).twice.with("dummy").and_return(:member)
       allow(Cocov::GitHub).to receive(:for_user).with("gh-token").and_return(usr)
