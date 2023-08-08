@@ -576,4 +576,23 @@ RSpec.describe "V1::Issues" do
       expect(response.json["users"]).to eq 1
     end
   end
+
+  describe "#resync_global_permissions" do
+    it "returns forbidden for non-admin users" do
+      post "/v1/admin/resync_permissions",
+        headers: authenticated
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "requests a job for each repository" do
+      @user = create(:user, :admin)
+      create(:repository)
+
+      expect do
+        post "/v1/admin/resync_permissions",
+          headers: authenticated
+        expect(response).to have_http_status :no_content
+      end.to enqueue_job
+    end
+  end
 end

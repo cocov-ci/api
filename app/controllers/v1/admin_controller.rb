@@ -152,5 +152,15 @@ module V1
         tokens:, secrets:, repositories:, users:
       }
     end
+
+    def resync_global_permissions
+      Repository.in_batches.each do |relation|
+        relation.each do |repo|
+          UpdateRepoPermissionsJob.perform_later(repo.id)
+        end
+      end
+
+      head :no_content
+    end
   end
 end

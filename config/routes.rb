@@ -126,6 +126,7 @@ Rails.application.routes.draw do
     get "/admin/service_tokens", to: "admin#service_tokens"
     post "/admin/service_tokens", to: "admin#service_tokens_create"
     delete "/admin/service_tokens/:id", to: "admin#service_tokens_delete"
+    post "/admin/resync_permissions", to: "admin#resync_global_permissions"
 
     # GitHub
     post "/github/events", to: "github_events#create"
