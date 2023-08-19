@@ -9,7 +9,7 @@ gem "rails", "~> 7.0.5"
 
 gem "pg", "~> 1.1"
 
-gem "puma", "~> 5.0"
+gem "puma", "~> 5.6"
 
 gem "jbuilder"
 
