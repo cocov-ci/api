@@ -35,7 +35,7 @@ gem "bootsnap", require: false
 
 gem "aws-sdk-s3", "~> 1.117"
 
-gem "sidekiq", "~> 7.0"
+gem "sidekiq", "~> 7.1"
 
 gem "github-linguist", "~> 7.24"
 
